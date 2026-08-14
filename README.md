@@ -23,7 +23,9 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Lalu jalankan seed data: `packages/supabase/seed.sql`
+3. Lalu jalankan seed data (urut):
+   - `packages/supabase/seed.sql` — kategori **Pasangan**
+   - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
 4. Copy URL dan anon key ke `apps/web/.env.local`:
 
 ```bash
@@ -49,6 +51,16 @@ packages/
   supabase/            # SQL migrations & seed
   config/              # Shared configs
 ```
+
+## Konten
+
+| Kategori | Section |
+| --- | --- |
+| **Pasangan** | Warm Up · Appreciation · Deep Talk · Intimate · Future & Dreams |
+| **Anak & Orang Tua** | Orang Tua & Anak · Kids & Life |
+
+- **Orang Tua & Anak** — pertanyaan dua arah antara orang tua dan anak, plus action ringan untuk dilakukan bareng.
+- **Kids & Life** — role play dan studi kasus dari cerita serta pengalaman anak di sekolah.
 
 ## Fitur MVP (Phase 1)
 
