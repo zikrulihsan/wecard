@@ -23,15 +23,43 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Lalu jalankan seed data (urut):
+3. Jalankan migration AI deck: `packages/supabase/migrations/00002_ai_decks.sql`
+4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
-4. Copy URL dan anon key ke `apps/web/.env.local`:
+5. Copy URL dan anon key ke `apps/web/.env.local`:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 ```
+
+### 2b. Setup AI (fitur generate deck)
+
+Fitur generate mendukung dua provider. Isi salah satu (atau dua-duanya) di `apps/web/.env.local`:
+
+```bash
+# Google Gemini
+GEMINI_API_KEY=xxx
+
+# Anthropic Claude
+ANTHROPIC_API_KEY=sk-ant-xxx
+```
+
+**Provider mana yang dipakai:**
+
+1. Kalau `AI_PROVIDER` diisi (`gemini` atau `anthropic`), itu yang menang.
+2. Kalau tidak, dipakai key yang tersedia — Gemini lebih dulu.
+
+Opsional, untuk mengunci versi model:
+
+```bash
+AI_PROVIDER=gemini          # paksa provider tertentu
+GEMINI_MODEL=gemini-3.5-flash
+ANTHROPIC_MODEL=claude-opus-5
+```
+
+Key hanya dipakai di server (route handler `/api/decks/generate`) dan tidak pernah dikirim ke browser. Jangan pakai prefix `NEXT_PUBLIC_`.
 
 ### 3. Run dev server
 
@@ -76,6 +104,37 @@ packages/
   - Completion screen
 - [x] Profile + logout
 - [x] Store placeholder
+- [x] Generate deck pakai AI (`/create`) — kartu ditulis Claude berdasarkan input user, tersimpan sebagai deck privat milik akun tersebut
+
+## Generate Deck dengan AI
+
+Halaman `/create` membuat deck baru lewat LLM dengan structured output. Provider bisa Gemini (default `gemini-3.5-flash`) atau Claude (default `claude-opus-5`) — lihat setup di atas. Prompt, validasi, dan penyimpanan sama persis untuk keduanya; yang berbeda hanya file di `apps/web/src/lib/ai/providers/`.
+
+**Field input:**
+
+| Field | Wajib | Keterangan |
+| --- | --- | --- |
+| Mau dimainkan sama siapa | ya | pasangan / sahabat / keluarga / anak & orang tua / rekan kerja / kenalan baru / lainnya |
+| Nuansa | ya | santai · romantis · reflektif · seru · mendalam |
+| Kedalaman | ya | ringan · sedang · dalam — menentukan sebaran `difficulty` |
+| Jumlah section | ya | 2–5 |
+| Kartu per section | ya | 5–15 |
+| Sertakan kartu Action | — | default aktif; ±⅓ kartu jadi tipe `action` |
+| Sertakan kartu Special | — | default nonaktif; 1 kartu Free Pass/Switch/Double per section |
+| Nama deck | — | kosong = dibuatkan AI |
+| Konteks tambahan | — | maks 500 karakter, situasi spesifik pemain |
+| Topik yang dihindari | — | maks 300 karakter |
+
+**Yang dihasilkan:** satu row `categories` (`is_ai_generated = true`, `created_by = user`), N row `sections`, dan N×M row `cards` — langsung bisa dimainkan lewat flow `/play/[deckId]` yang sudah ada.
+
+**Batasan:**
+
+- 5 generate per user per jam (dicek lewat tabel `ai_generations`).
+- Output model divalidasi ulang dengan zod sebelum masuk DB; kartu `special` tanpa `special_kind` dan kartu kelebihan dibuang di server.
+- Deck AI hanya terlihat oleh pembuatnya; kategori kurasi (`created_by IS NULL`) tetap publik. Dijaga di level RLS, bukan di query.
+- Input user disisipkan ke prompt sebagai data, bukan instruksi, dan setiap generate dicatat di `ai_generations` (input, provider, model, token, status).
+
+> Konteks yang diisi user tersimpan apa adanya di `ai_generations.input`. Kalau fitur ini dipakai di produksi, pastikan ada dasar pemrosesan dan kebijakan retensi untuk kolom itu sebelum rilis.
 
 ## Roadmap
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 
@@ -18,6 +18,7 @@ export default async function HomePage() {
       description,
       is_free,
       price_idr,
+      is_ai_generated,
       sections:sections(id)
     `
     )
@@ -32,6 +33,10 @@ export default async function HomePage() {
 
   const unlockedIds = new Set(purchases?.map((p) => p.category_id) ?? []);
 
+  // Deck bawaan (seed) tetap tampil apa adanya; deck AI ditaruh di grup sendiri.
+  const curated = categories?.filter((c) => !c.is_ai_generated) ?? [];
+  const aiDecks = categories?.filter((c) => c.is_ai_generated) ?? [];
+
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-8">
       <header className="mb-8">
@@ -44,24 +49,59 @@ export default async function HomePage() {
       {!categories || categories.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid gap-4">
-          {categories.map((category) => {
-            const isUnlocked = category.is_free || unlockedIds.has(category.id);
-            return (
-              <CategoryCard
-                key={category.id}
-                id={category.id}
-                slug={category.slug}
-                name={category.name}
-                description={category.description}
-                priceIdr={category.price_idr}
-                isFree={category.is_free}
-                isUnlocked={isUnlocked}
-              />
-            );
-          })}
+        <div className="space-y-8">
+          <DeckGrid
+            categories={curated}
+            unlockedIds={unlockedIds}
+          />
+
+          {aiDecks.length > 0 && (
+            <section>
+              <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+                <Sparkles className="size-4" />
+                Deck buatanmu
+              </h2>
+              <DeckGrid categories={aiDecks} unlockedIds={unlockedIds} />
+            </section>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+type CategoryRow = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  is_free: boolean;
+  price_idr: number | null;
+  is_ai_generated: boolean;
+};
+
+function DeckGrid({
+  categories,
+  unlockedIds,
+}: {
+  categories: CategoryRow[];
+  unlockedIds: Set<string>;
+}) {
+  return (
+    <div className="grid gap-4">
+      {categories.map((category) => (
+        <CategoryCard
+          key={category.id}
+          id={category.id}
+          slug={category.slug}
+          name={category.name}
+          description={category.description}
+          priceIdr={category.price_idr}
+          isFree={category.is_free}
+          isUnlocked={category.is_free || unlockedIds.has(category.id)}
+          isAiGenerated={category.is_ai_generated}
+        />
+      ))}
     </div>
   );
 }
@@ -74,6 +114,7 @@ function CategoryCard({
   priceIdr,
   isFree,
   isUnlocked,
+  isAiGenerated,
 }: {
   id: string;
   slug: string;
@@ -82,10 +123,20 @@ function CategoryCard({
   priceIdr: number | null;
   isFree: boolean;
   isUnlocked: boolean;
+  isAiGenerated: boolean;
 }) {
   const content = (
     <div className="relative p-6 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
       <div className="absolute top-4 right-4 flex gap-2">
+        {isAiGenerated && (
+          <Badge
+            variant="secondary"
+            className="bg-white/20 text-white border-0 gap-1"
+          >
+            <Sparkles className="size-3" />
+            AI
+          </Badge>
+        )}
         {isFree ? (
           <Badge variant="secondary" className="bg-white/20 text-white border-0">
             Gratis
@@ -134,8 +185,11 @@ function CategoryCard({
 
 function EmptyState() {
   return (
-    <div className="text-center py-16 text-muted-foreground">
+    <div className="text-center py-16 text-muted-foreground space-y-3">
       <p>Belum ada kategori yang tersedia.</p>
+      <Link href="/create" className="inline-block underline">
+        Bikin deck sendiri pakai AI
+      </Link>
     </div>
   );
 }
