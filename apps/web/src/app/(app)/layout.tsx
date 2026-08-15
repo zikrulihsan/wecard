@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Home, User, ShoppingBag } from "lucide-react";
+import { Home, User, ShoppingBag, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({
@@ -30,6 +30,11 @@ function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-neutral-200 safe-bottom z-40">
       <div className="max-w-screen-sm mx-auto flex items-center justify-around py-2">
         <NavItem href="/home" icon={<Home className="size-5" />} label="Home" />
+        <NavItem
+          href="/create"
+          icon={<Sparkles className="size-5" />}
+          label="Bikin"
+        />
         <NavItem
           href="/store"
           icon={<ShoppingBag className="size-5" />}
