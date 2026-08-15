@@ -14,21 +14,18 @@ export default async function DeckDetailPage({
   const { deckId } = await params;
   const supabase = await createClient();
 
-  const { data: category } = await supabase
-    .from("categories")
-    .select("id, slug, name, description, is_free")
-    .eq("id", deckId)
-    .eq("is_active", true)
-    .single();
-
-  if (!category) {
-    notFound();
-  }
-
-  const { data: sections } = await supabase
-    .from("sections")
-    .select(
-      `
+  // sections difilter pakai deckId juga, jadi tidak perlu nunggu category.
+  const [{ data: category }, { data: sections }] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("id, slug, name, description, is_free")
+      .eq("id", deckId)
+      .eq("is_active", true)
+      .single(),
+    supabase
+      .from("sections")
+      .select(
+        `
       id,
       slug,
       name,
@@ -36,9 +33,14 @@ export default async function DeckDetailPage({
       sort_order,
       cards:cards(id, card_type, difficulty)
     `
-    )
-    .eq("category_id", category.id)
-    .order("sort_order", { ascending: true });
+      )
+      .eq("category_id", deckId)
+      .order("sort_order", { ascending: true }),
+  ]);
+
+  if (!category) {
+    notFound();
+  }
 
   const sectionData =
     sections?.map((s) => ({

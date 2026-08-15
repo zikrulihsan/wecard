@@ -8,28 +8,26 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const { data: categories } = await supabase
-    .from("categories")
-    .select(
-      `
+  // Dua query ini tidak saling bergantung — jalankan barengan.
+  const [{ data: categories }, { data: purchases }] = await Promise.all([
+    supabase
+      .from("categories")
+      .select(
+        `
       id,
       slug,
       name,
       description,
       is_free,
       price_idr,
-      is_ai_generated,
-      sections:sections(id)
+      is_ai_generated
     `
-    )
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-
-  // Check unlocked categories for the current user
-  const { data: purchases } = await supabase
-    .from("purchases")
-    .select("category_id")
-    .eq("status", "completed");
+      )
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    // Check unlocked categories for the current user
+    supabase.from("purchases").select("category_id").eq("status", "completed"),
+  ]);
 
   const unlockedIds = new Set(purchases?.map((p) => p.category_id) ?? []);
 
