@@ -1,26 +1,68 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { readAuthSnapshot } from "./session";
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  const { pathname } = request.nextUrl;
-
-  // Protected routes: /home, /play, /profile, /store
-  const isProtectedRoute =
+function isProtectedPath(pathname: string) {
+  return (
     pathname.startsWith("/home") ||
     pathname.startsWith("/play") ||
     pathname.startsWith("/profile") ||
-    pathname.startsWith("/store");
+    pathname.startsWith("/store") ||
+    pathname.startsWith("/create")
+  );
+}
 
-  // Auth routes: redirect to home if already logged in
-  const isAuthRoute = pathname === "/login" || pathname === "/register";
+function isAuthPath(pathname: string) {
+  return pathname === "/login" || pathname === "/register";
+}
 
-  // Selain itu (landing, /callback, /api, aset) tidak butuh cek user —
-  // hindari roundtrip ke Supabase Auth di setiap request.
-  if (!isProtectedRoute && !isAuthRoute) {
-    return supabaseResponse;
+function routeFor(request: NextRequest, isSignedIn: boolean) {
+  const { pathname } = request.nextUrl;
+
+  if (!isSignedIn && isProtectedPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
   }
+
+  if (isSignedIn && isAuthPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/home";
+    return NextResponse.redirect(url);
+  }
+
+  return null;
+}
+
+export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Selain rute terproteksi & rute auth (landing, /callback, /api, aset)
+  // tidak butuh cek sesi sama sekali.
+  if (!isProtectedPath(pathname) && !isAuthPath(pathname)) {
+    return NextResponse.next({ request });
+  }
+
+  const snapshot = readAuthSnapshot(
+    (name) => request.cookies.get(name)?.value,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!
+  );
+
+  // ── Jalur cepat ────────────────────────────────────────────────────────
+  // Token masih hidup dan belum mendekati kedaluwarsa, atau memang tidak ada
+  // sesi sama sekali. Keputusan routing diambil dari klaim JWT yang dibaca
+  // lokal — nol roundtrip ke Supabase. Ini yang terjadi di hampir semua
+  // navigasi; jalur lambat di bawah cuma kena sekali per umur token.
+  if (!snapshot || !snapshot.needsRefresh) {
+    return routeFor(request, Boolean(snapshot)) ?? NextResponse.next({ request });
+  }
+
+  // ── Jalur lambat ───────────────────────────────────────────────────────
+  // Token sudah lewat atau tinggal < 90 detik. getSession() memakai refresh
+  // token untuk menerbitkan access token baru, lalu cookienya ditulis ulang
+  // lewat setAll di bawah.
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,23 +85,19 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // getClaims() memverifikasi JWT secara lokal pakai JWKS (project ini pakai
-  // ES256), jadi tidak ada roundtrip ke Supabase Auth seperti getUser().
-  const { data: claims } = await supabase.auth.getClaims();
-  const user = claims?.claims.sub ? claims.claims : null;
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (!user && isProtectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
+  const redirect = routeFor(request, Boolean(session));
+  if (!redirect) {
+    return supabaseResponse;
   }
 
-  if (user && isAuthRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
+  // Cookie hasil refresh harus ikut terbawa ke response redirect, kalau tidak
+  // token barunya hilang dan request berikutnya me-refresh lagi.
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    redirect.cookies.set(cookie);
+  });
+  return redirect;
 }
