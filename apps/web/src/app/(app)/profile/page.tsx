@@ -1,19 +1,23 @@
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { createClient, getAuthSnapshot } from "@/lib/supabase/server";
 import { LogoutButton } from "./logout-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Klaim dibaca dari cookie, bukan lewat getUser() yang selalu roundtrip
+  // ke Supabase Auth. Query profil di bawah tetap dijaga RLS.
+  const auth = await getAuthSnapshot();
+  if (!auth) {
+    redirect("/login");
+  }
 
+  const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
     .select("display_name, avatar_url")
-    .eq("id", user!.id)
+    .eq("id", auth.userId)
     .single();
 
   return (
@@ -27,7 +31,7 @@ export default async function ProfilePage() {
           <CardTitle>{profile?.display_name ?? "Player"}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">{user?.email}</p>
+          <p className="text-sm text-muted-foreground">{auth.email}</p>
         </CardContent>
       </Card>
 
