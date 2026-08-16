@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m } from "framer-motion";
 import type { GameCard } from "@wecard/types";
 import { cn } from "@/lib/utils";
 
@@ -31,14 +31,18 @@ const difficultyStyles: Record<
   },
 };
 
-const typeLabel: Record<GameCard["cardType"], string> = {
-  talk: "💬 TALK",
-  action: "🎯 ACTION",
-  special: "✨ SPECIAL",
+const typeStyles: Record<
+  GameCard["cardType"],
+  { emoji: string; label: string }
+> = {
+  talk: { emoji: "💬", label: "TALK" },
+  action: { emoji: "🎯", label: "ACTION" },
+  special: { emoji: "✨", label: "SPECIAL" },
 };
 
 export function CardDisplay({ card, isRevealed, onFlip }: CardDisplayProps) {
   const style = difficultyStyles[card.difficulty];
+  const type = typeStyles[card.cardType];
 
   return (
     <div
@@ -46,8 +50,8 @@ export function CardDisplay({ card, isRevealed, onFlip }: CardDisplayProps) {
       style={{ perspective: "1200px" }}
       onClick={onFlip}
     >
-      <motion.div
-        className="relative w-full h-full"
+      <m.div
+        className="relative w-full h-full will-change-transform"
         animate={{ rotateY: isRevealed ? 180 : 0 }}
         transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
         style={{ transformStyle: "preserve-3d" }}
@@ -62,9 +66,9 @@ export function CardDisplay({ card, isRevealed, onFlip }: CardDisplayProps) {
           style={{ backfaceVisibility: "hidden" }}
         >
           <div className="text-center text-white space-y-4">
-            <div className="text-6xl">{typeLabel[card.cardType].split(" ")[0]}</div>
+            <div className="text-6xl">{type.emoji}</div>
             <div className="text-sm uppercase tracking-widest font-semibold opacity-90">
-              {typeLabel[card.cardType].split(" ")[1]}
+              {type.label}
             </div>
             <div className="text-xs opacity-75 mt-6">Ketuk untuk buka</div>
           </div>
@@ -80,7 +84,7 @@ export function CardDisplay({ card, isRevealed, onFlip }: CardDisplayProps) {
         >
           <div className="flex items-center justify-between mb-6">
             <span className="text-xs uppercase tracking-widest font-semibold text-neutral-500">
-              {typeLabel[card.cardType]}
+              {type.emoji} {type.label}
             </span>
             <span
               className={cn(
@@ -93,25 +97,16 @@ export function CardDisplay({ card, isRevealed, onFlip }: CardDisplayProps) {
           </div>
 
           <div className="flex-1 flex items-center justify-center">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={card.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ delay: 0.3 }}
-                className="text-xl md:text-2xl font-medium text-center leading-relaxed text-neutral-800"
-              >
-                {card.content}
-              </motion.p>
-            </AnimatePresence>
+            <p className="text-xl md:text-2xl font-medium text-center leading-relaxed text-neutral-800">
+              {card.content}
+            </p>
           </div>
 
           <div className="text-xs text-neutral-400 text-center pt-4 border-t border-neutral-100">
             {card.sectionName}
           </div>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

@@ -51,7 +51,6 @@ export default async function HomePage() {
               <CategoryCard
                 key={category.id}
                 id={category.id}
-                slug={category.slug}
                 name={category.name}
                 description={category.description}
                 priceIdr={category.price_idr}
@@ -68,7 +67,6 @@ export default async function HomePage() {
 
 function CategoryCard({
   id,
-  slug,
   name,
   description,
   priceIdr,
@@ -76,7 +74,6 @@ function CategoryCard({
   isUnlocked,
 }: {
   id: string;
-  slug: string;
   name: string;
   description: string | null;
   priceIdr: number | null;

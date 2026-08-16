@@ -9,11 +9,11 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Middleware sudah memvalidasi sesi via getUser() di setiap request;
+  // di sini cukup cek klaim JWT lokal tanpa roundtrip ke Supabase Auth.
+  const { data } = await supabase.auth.getClaims();
 
-  if (!user) {
+  if (!data?.claims) {
     redirect("/login");
   }
 
