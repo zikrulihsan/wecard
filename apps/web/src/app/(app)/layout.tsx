@@ -1,22 +1,13 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Home, User, ShoppingBag } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { Home, User, ShoppingBag, Sparkles } from "lucide-react";
 
-export default async function AppLayout({
+// Guard auth ada di middleware; layout ini sengaja statis supaya pindah tab
+// tidak memicu roundtrip ke Supabase Auth.
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  // Middleware sudah memvalidasi sesi via getUser() di setiap request;
-  // di sini cukup cek klaim JWT lokal tanpa roundtrip ke Supabase Auth.
-  const { data } = await supabase.auth.getClaims();
-
-  if (!data?.claims) {
-    redirect("/login");
-  }
-
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 pb-20">{children}</main>
@@ -30,6 +21,11 @@ function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-neutral-200 safe-bottom z-40">
       <div className="max-w-screen-sm mx-auto flex items-center justify-around py-2">
         <NavItem href="/home" icon={<Home className="size-5" />} label="Home" />
+        <NavItem
+          href="/create"
+          icon={<Sparkles className="size-5" />}
+          label="Bikin"
+        />
         <NavItem
           href="/store"
           icon={<ShoppingBag className="size-5" />}
