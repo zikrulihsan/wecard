@@ -75,3 +75,18 @@ body {
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/*
+ * Tinggi bottom nav termasuk safe area, dipakai bersama oleh dua pihak:
+ * padding bawah <main> di AppLayout, dan tinggi layar sesi permainan
+ * (h-[calc(100dvh-var(--bottom-nav-h))]). Keduanya harus memakai angka yang
+ * sama supaya layar sesi persis mengisi ruang di atas nav — tidak ter-scroll,
+ * tidak pula tertutup nav di ponsel bernotch.
+ */
+:root {
+  --bottom-nav-h: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pb-bottom-nav {
+  padding-bottom: var(--bottom-nav-h);
+}
