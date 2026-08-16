@@ -1,21 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  AnimatePresence,
+  m,
+  useMotionValue,
+  useTransform,
+  type PanInfo,
+  type Variants,
+} from "framer-motion";
 import { X, ChevronLeft, SkipForward } from "lucide-react";
 import { useGameStore } from "@/stores/game-store";
 import { CardDisplay } from "@/components/cards/card-display";
 import { GameProgressBar } from "@/components/game/progress-bar";
 import { Button } from "@/components/ui/button";
+import type { GameCard } from "@wecard/types";
+
+// Gerbang hidrasi: false saat SSR/hidrasi, true setelahnya — store zustand
+// baru terisi dari localStorage di client, jadi render pertama harus netral.
+const emptySubscribe = () => () => {};
+const useMounted = () =>
+  useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+const cardVariants: Variants = {
+  enter: { opacity: 0, scale: 0.92 },
+  center: { opacity: 1, scale: 1 },
+  exit: (direction: number) => ({
+    opacity: 0,
+    scale: 0.92,
+    x: direction * 320,
+    transition: { duration: 0.18, ease: "easeIn" },
+  }),
+};
 
 export default function SessionPage() {
   const router = useRouter();
   const params = useParams();
   const deckId = params.deckId as string;
 
-  const [mounted, setMounted] = useState(false);
-  const [dragX, setDragX] = useState(0);
+  const mounted = useMounted();
+  // Arah exit kartu: -1 = maju (terbang ke kiri), 1 = mundur (ke kanan).
+  // Di-set bersamaan dengan aksi store di handler yang sama, jadi keduanya
+  // ter-batch dalam satu render.
+  const [exitDir, setExitDir] = useState(-1);
 
   const {
     cards,
@@ -29,10 +61,6 @@ export default function SessionPage() {
     skipCard,
     endSession,
   } = useGameStore();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Redirect if no active session or wrong deck
   useEffect(() => {
@@ -57,14 +85,19 @@ export default function SessionPage() {
     return <CompletionScreen deckId={deckId} onEnd={endSession} />;
   }
 
-  const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
-    setDragX(0);
-    const threshold = 100;
-    if (info.offset.x < -threshold && isCardRevealed) {
-      nextCard();
-    } else if (info.offset.x > threshold && currentIndex > 0) {
-      previousCard();
-    }
+  const goNext = () => {
+    setExitDir(-1);
+    nextCard();
+  };
+
+  const goPrevious = () => {
+    setExitDir(1);
+    previousCard();
+  };
+
+  const goSkip = () => {
+    setExitDir(-1);
+    skipCard();
   };
 
   const handleExit = () => {
@@ -94,32 +127,21 @@ export default function SessionPage() {
       </header>
 
       {/* Card area */}
-      <div className="flex-1 flex items-center justify-center px-6 py-4 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
+      <div className="relative flex-1 flex items-center justify-center px-6 py-4 overflow-hidden">
+        <AnimatePresence
+          mode="popLayout"
+          initial={false}
+          custom={exitDir}
+        >
+          <SwipeableCard
             key={currentCard.id}
-            drag={isCardRevealed ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.4}
-            onDrag={(_, info) => setDragX(info.offset.x)}
-            onDragEnd={handleDragEnd}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              rotate: dragX * 0.05,
-              x: dragX * 0.1,
-            }}
-            exit={{ opacity: 0, scale: 0.9, x: dragX < 0 ? -300 : 300 }}
-            transition={{ duration: 0.25 }}
-            className="w-full flex justify-center"
-          >
-            <CardDisplay
-              card={currentCard}
-              isRevealed={isCardRevealed}
-              onFlip={() => !isCardRevealed && revealCard()}
-            />
-          </motion.div>
+            card={currentCard}
+            isRevealed={isCardRevealed}
+            canGoBack={currentIndex > 0}
+            onFlip={revealCard}
+            onNext={goNext}
+            onPrevious={goPrevious}
+          />
         </AnimatePresence>
       </div>
 
@@ -136,7 +158,7 @@ export default function SessionPage() {
         ) : (
           <div className="flex items-center gap-3">
             <Button
-              onClick={previousCard}
+              onClick={goPrevious}
               disabled={currentIndex === 0}
               variant="outline"
               size="lg"
@@ -146,14 +168,14 @@ export default function SessionPage() {
               <ChevronLeft className="size-5" />
             </Button>
             <Button
-              onClick={nextCard}
+              onClick={goNext}
               size="lg"
               className="flex-1 rounded-full"
             >
               Kartu Berikutnya
             </Button>
             <Button
-              onClick={skipCard}
+              onClick={goSkip}
               variant="outline"
               size="lg"
               className="rounded-full"
@@ -163,13 +185,72 @@ export default function SessionPage() {
             </Button>
           </div>
         )}
-        {isCardRevealed && (
-          <p className="text-center text-xs text-muted-foreground">
-            Geser kartu ke kiri untuk lanjut, ke kanan untuk kembali
-          </p>
-        )}
+        {/* Selalu di-render agar tinggi area tombol konstan — kalau muncul
+            hanya saat revealed, kartu ikut bergeser di tengah animasi flip. */}
+        <p
+          aria-hidden={!isCardRevealed}
+          className={`text-center text-xs text-muted-foreground transition-opacity duration-200 ${
+            isCardRevealed ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          Geser kartu ke kiri untuk lanjut, ke kanan untuk kembali
+        </p>
       </div>
     </div>
+  );
+}
+
+function SwipeableCard({
+  card,
+  isRevealed,
+  canGoBack,
+  onFlip,
+  onNext,
+  onPrevious,
+}: {
+  card: GameCard;
+  isRevealed: boolean;
+  canGoBack: boolean;
+  onFlip: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
+}) {
+  // Drag menulis langsung ke motion value — tidak ada setState per frame,
+  // React tidak re-render selama jari bergerak.
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-240, 240], [-7, 7]);
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    // Gabungkan jarak + kecepatan supaya flick pendek tapi cepat tetap dihitung.
+    const swipe = info.offset.x + info.velocity.x * 0.2;
+    if (swipe < -140) {
+      onNext();
+    } else if (swipe > 140 && canGoBack) {
+      onPrevious();
+    }
+  };
+
+  return (
+    <m.div
+      drag={isRevealed ? "x" : false}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.5}
+      dragMomentum={false}
+      onDragEnd={handleDragEnd}
+      style={{ x, rotate }}
+      variants={cardVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      transition={{ duration: 0.22, ease: "easeOut" }}
+      className="w-full flex justify-center"
+    >
+      <CardDisplay
+        card={card}
+        isRevealed={isRevealed}
+        onFlip={() => !isRevealed && onFlip()}
+      />
+    </m.div>
   );
 }
 
@@ -194,7 +275,7 @@ function CompletionScreen({
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-md text-center space-y-6"
@@ -221,7 +302,7 @@ function CompletionScreen({
             Kembali ke Deck
           </Button>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

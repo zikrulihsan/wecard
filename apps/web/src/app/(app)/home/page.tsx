@@ -91,7 +91,6 @@ function DeckGrid({
         <CategoryCard
           key={category.id}
           id={category.id}
-          slug={category.slug}
           name={category.name}
           description={category.description}
           priceIdr={category.price_idr}
@@ -106,7 +105,6 @@ function DeckGrid({
 
 function CategoryCard({
   id,
-  slug,
   name,
   description,
   priceIdr,
@@ -115,7 +113,6 @@ function CategoryCard({
   isAiGenerated,
 }: {
   id: string;
-  slug: string;
   name: string;
   description: string | null;
   priceIdr: number | null;

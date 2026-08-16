@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 export function GameProgressBar({
   current,
@@ -20,10 +20,12 @@ export function GameProgressBar({
         <span>{Math.round(progress * 100)}%</span>
       </div>
       <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden">
-        <motion.div
-          className="h-full bg-gradient-to-r from-pink-500 to-rose-500"
-          animate={{ width: `${progress * 100}%` }}
-          transition={{ duration: 0.3 }}
+        {/* scaleX, bukan width — animasi width memicu layout per frame */}
+        <m.div
+          className="h-full w-full origin-left bg-gradient-to-r from-pink-500 to-rose-500"
+          initial={false}
+          animate={{ scaleX: progress }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         />
       </div>
     </div>
