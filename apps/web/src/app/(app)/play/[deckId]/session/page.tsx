@@ -27,14 +27,34 @@ const useMounted = () =>
     () => false
   );
 
+// direction: 1 = maju (kartu baru masuk dari kanan), -1 = mundur (dari kiri).
+// Jarak masuk sengaja pendek (56px) — kartu baru lebih banyak muncul lewat
+// fade + scale daripada meluncur jauh, jadi tidak terbaca "melompat".
 const cardVariants: Variants = {
-  enter: { opacity: 0, scale: 0.92 },
-  center: { opacity: 1, scale: 1 },
+  enter: (direction: number) => ({
+    opacity: 0,
+    scale: 0.96,
+    x: direction * 56,
+  }),
+  center: {
+    opacity: 1,
+    scale: 1,
+    x: 0,
+    transition: {
+      x: { type: "spring", stiffness: 420, damping: 38, mass: 0.7 },
+      opacity: { duration: 0.16, ease: "easeOut" },
+      scale: { duration: 0.22, ease: "easeOut" },
+    },
+  },
   exit: (direction: number) => ({
     opacity: 0,
-    scale: 0.92,
-    x: direction * 320,
-    transition: { duration: 0.18, ease: "easeIn" },
+    scale: 0.96,
+    x: direction * -300,
+    transition: {
+      x: { duration: 0.2, ease: [0.4, 0, 1, 1] },
+      opacity: { duration: 0.14, ease: "easeIn" },
+      scale: { duration: 0.2 },
+    },
   }),
 };
 
@@ -44,10 +64,9 @@ export default function SessionPage() {
   const deckId = params.deckId as string;
 
   const mounted = useMounted();
-  // Arah exit kartu: -1 = maju (terbang ke kiri), 1 = mundur (ke kanan).
-  // Di-set bersamaan dengan aksi store di handler yang sama, jadi keduanya
-  // ter-batch dalam satu render.
-  const [exitDir, setExitDir] = useState(-1);
+  // Arah navigasi: 1 = maju, -1 = mundur. Di-set bersamaan dengan aksi store
+  // di handler yang sama, jadi keduanya ter-batch dalam satu render.
+  const [direction, setDirection] = useState(1);
 
   const {
     cards,
@@ -72,7 +91,7 @@ export default function SessionPage() {
 
   if (!mounted || !isActive || cards.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex h-[calc(100dvh-var(--bottom-nav-h))] items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Memuat...</div>
       </div>
     );
@@ -86,17 +105,17 @@ export default function SessionPage() {
   }
 
   const goNext = () => {
-    setExitDir(-1);
+    setDirection(1);
     nextCard();
   };
 
   const goPrevious = () => {
-    setExitDir(1);
+    setDirection(-1);
     previousCard();
   };
 
   const goSkip = () => {
-    setExitDir(-1);
+    setDirection(1);
     skipCard();
   };
 
@@ -108,34 +127,37 @@ export default function SessionPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-neutral-50 via-pink-50/40 to-rose-50/40">
+    // Tinggi dikunci ke area yang benar-benar terlihat: viewport dikurangi
+    // tinggi bottom nav (--bottom-nav-h, dipakai bersama AppLayout).
+    // Sebelumnya min-h-screen di dalam <main> yang sudah ber-padding-bawah
+    // membuat halaman lebih tinggi dari layar sehingga ikut ter-scroll — itu
+    // yang bikin jarak atas-bawah kartu terasa timpang.
+    <div className="flex flex-col h-[calc(100dvh-var(--bottom-nav-h))] min-h-[26rem] overflow-hidden bg-gradient-to-br from-neutral-50 via-pink-50/40 to-rose-50/40">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3">
+      <header className="shrink-0 flex items-center gap-1 px-4 pt-3 pb-2">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleExit}
-          className="rounded-full"
+          className="rounded-full shrink-0"
           aria-label="Keluar"
         >
           <X className="size-5" />
         </Button>
-        <div className="flex-1 px-4">
+        <div className="flex-1 px-2">
           <GameProgressBar current={currentIndex} total={cards.length} />
         </div>
-        <div className="w-10" />
+        <div className="size-8 shrink-0" />
       </header>
 
-      {/* Card area */}
-      <div className="relative flex-1 flex items-center justify-center px-6 py-4 overflow-hidden">
-        <AnimatePresence
-          mode="popLayout"
-          initial={false}
-          custom={exitDir}
-        >
+      {/* Card area — kedua kartu absolut sejak awal, jadi kartu masuk dan
+          keluar tidak pernah saling mendorong lewat layout. */}
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        <AnimatePresence initial={false} custom={direction}>
           <SwipeableCard
             key={currentCard.id}
             card={currentCard}
+            direction={direction}
             isRevealed={isCardRevealed}
             canGoBack={currentIndex > 0}
             onFlip={revealCard}
@@ -146,7 +168,7 @@ export default function SessionPage() {
       </div>
 
       {/* Action buttons */}
-      <div className="px-6 py-6 space-y-3">
+      <div className="shrink-0 px-6 pt-3 pb-4 space-y-2">
         {!isCardRevealed ? (
           <Button
             onClick={revealCard}
@@ -202,6 +224,7 @@ export default function SessionPage() {
 
 function SwipeableCard({
   card,
+  direction,
   isRevealed,
   canGoBack,
   onFlip,
@@ -209,6 +232,7 @@ function SwipeableCard({
   onPrevious,
 }: {
   card: GameCard;
+  direction: number;
   isRevealed: boolean;
   canGoBack: boolean;
   onFlip: () => void;
@@ -237,13 +261,13 @@ function SwipeableCard({
       dragElastic={0.5}
       dragMomentum={false}
       onDragEnd={handleDragEnd}
-      style={{ x, rotate }}
+      style={{ x, rotate, willChange: "transform, opacity" }}
+      custom={direction}
       variants={cardVariants}
       initial="enter"
       animate="center"
       exit="exit"
-      transition={{ duration: 0.22, ease: "easeOut" }}
-      className="w-full flex justify-center"
+      className="absolute inset-0 flex items-center justify-center px-6 py-2"
     >
       <CardDisplay
         card={card}
@@ -274,7 +298,7 @@ function CompletionScreen({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
+    <div className="flex min-h-[calc(100dvh-var(--bottom-nav-h))] items-center justify-center px-6 bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
       <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

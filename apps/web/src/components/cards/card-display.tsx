@@ -45,8 +45,10 @@ export function CardDisplay({ card, isRevealed, onFlip }: CardDisplayProps) {
   const type = typeStyles[card.cardType];
 
   return (
+    // max-h-full menjaga kartu tetap muat di layar pendek (HP kecil /
+    // lanskap) tanpa memaksa halaman ikut ter-scroll.
     <div
-      className="w-full aspect-[3/4] max-w-sm mx-auto cursor-pointer no-select"
+      className="w-full max-w-sm max-h-full aspect-[3/4] cursor-pointer no-select"
       style={{ perspective: "1200px" }}
       onClick={onFlip}
     >
