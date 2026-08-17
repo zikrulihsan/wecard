@@ -23,7 +23,7 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck: `packages/supabase/migrations/00002_ai_decks.sql`
+3. Jalankan migration AI deck: `packages/supabase/migrations/00002_ai_decks.sql`, lalu `packages/supabase/migrations/00003_ai_access.sql`
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
@@ -110,6 +110,27 @@ packages/
 
 Halaman `/create` membuat deck baru lewat LLM dengan structured output. Provider bisa Gemini (default `gemini-3.5-flash`) atau Claude (default `claude-opus-5`) — lihat setup di atas. Prompt, validasi, dan penyimpanan sama persis untuk keduanya; yang berbeda hanya file di `apps/web/src/lib/ai/providers/`.
 
+### Akses terbatas
+
+Fitur ini **mati secara default** untuk semua akun (`profiles.ai_enabled` default `false`). Untuk membuka akses:
+
+```sql
+UPDATE profiles SET ai_enabled = true WHERE id = '<user-id>';
+```
+
+Atau centang kolom `ai_enabled` lewat Table Editor Supabase. Mencabut akses tinggal set kembali ke `false` — deck AI yang sudah terlanjur dibuat tetap bisa dimainkan pemiliknya.
+
+Gerbangnya berlapis, dan urutannya penting:
+
+| Lapis | Letak | Yang dicegah |
+| --- | --- | --- |
+| API route | `api/decks/generate`, sebelum `generateDeck()` | biaya token AI — panggilan LLM terjadi sebelum insert apa pun |
+| RLS | policy `Insert own AI categories` + `has_ai_access()` | insert langsung ke Supabase pakai anon key, melewati API route |
+| Privilege kolom | `REVOKE UPDATE ON profiles` + `GRANT UPDATE (display_name, …)` | user memberi akses ke dirinya sendiri lewat `update({ ai_enabled: true })` |
+| UI | nav "Bikin" bergembok, `/create` menampilkan status terkunci | menu yang menggoda tapi selalu gagal |
+
+Lapis privilege kolom perlu karena RLS tidak mengenal batasan per kolom: policy `Update own profile` mengizinkan user menulis ke baris profilnya sendiri, termasuk kolom `ai_enabled`, kalau tidak dibatasi lewat `GRANT`. Setelah migration `00003`, kolom itu hanya bisa diubah lewat `service_role` / SQL Editor.
+
 **Field input:**
 
 | Field | Wajib | Keterangan |
@@ -129,6 +150,7 @@ Halaman `/create` membuat deck baru lewat LLM dengan structured output. Provider
 
 **Batasan:**
 
+- Hanya untuk akun dengan `profiles.ai_enabled = true` (lihat "Akses terbatas" di atas).
 - 5 generate per user per jam (dicek lewat tabel `ai_generations`).
 - Output model divalidasi ulang dengan zod sebelum masuk DB; kartu `special` tanpa `special_kind` dan kartu kelebihan dibuang di server.
 - Deck AI hanya terlihat oleh pembuatnya; kategori kurasi (`created_by IS NULL`) tetap publik. Dijaga di level RLS, bukan di query.
