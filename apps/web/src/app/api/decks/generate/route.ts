@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAiAccess } from "@/lib/ai/access";
 import { generateDeckInputSchema } from "@/lib/ai/deck-schema";
 import {
   GenerationFailed,
@@ -21,6 +22,15 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Belum login" }, { status: 401 });
+  }
+
+  // Dicek sedini mungkin: generateDeck() di bawah memanggil LLM dan itu
+  // berbiaya, sementara RLS baru menolak jauh setelahnya di tahap insert.
+  if (!(await getAiAccess())) {
+    return NextResponse.json(
+      { error: "Fitur bikin deck AI belum terbuka untuk akunmu." },
+      { status: 403 }
+    );
   }
 
   const body = await request.json().catch(() => null);
