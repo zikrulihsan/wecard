@@ -15,7 +15,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-1 pb-20">{children}</main>
+      <main className="flex-1 pb-bottom-nav">{children}</main>
       <BottomNav canUseAi={canUseAi} />
     </div>
   );
