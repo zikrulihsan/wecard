@@ -158,6 +158,27 @@ Lapis privilege kolom perlu karena RLS tidak mengenal batasan per kolom: policy 
 
 > Konteks yang diisi user tersimpan apa adanya di `ai_generations.input`. Kalau fitur ini dipakai di produksi, pastikan ada dasar pemrosesan dan kebijakan retensi untuk kolom itu sebelum rilis.
 
+### Kalau fitur tetap terkunci padahal `ai_enabled` sudah `true`
+
+Cek log server (Netlify/Vercel/Cloudflare). Helper `getAiAccess()` mencatat penyebabnya, bukan sekadar gagal diam-diam:
+
+| Baris log | Artinya |
+| --- | --- |
+| `[ai-access] gagal membaca profiles` dengan `code: 42703` | kolom `ai_enabled` tidak ada — migration `00003` belum jalan di project itu |
+| `[ai-access] baris profil tidak terlihat untuk sesi ini` | tidak ada baris `profiles` untuk `userId` tersebut, atau RLS menyembunyikannya |
+| tidak ada log sama sekali, tapi tetap terkunci | baris terbaca dan `ai_enabled` memang `false` |
+
+Setiap baris log menyertakan `supabaseHost` dan `userId`. Dua hal itu yang paling sering jadi biang masalah:
+
+- **`supabaseHost` bukan project yang Anda kira.** `NEXT_PUBLIC_SUPABASE_URL` ditanam saat build, jadi mengubah env di hosting tanpa redeploy tidak berpengaruh. Gejalanya menipu: halaman home tetap normal karena deck bawaan bisa dibaca tanpa login.
+- **`userId` bukan baris yang Anda update.** Tabel `profiles` tidak punya kolom email, jadi cocokkan lewat `auth.users`:
+
+```sql
+select u.id, u.email, (p.id is not null) as punya_baris_profil, p.ai_enabled
+from auth.users u left join public.profiles p on p.id = u.id
+where u.email = 'email@anda.com';
+```
+
 ## Roadmap
 
 - **Phase 2**: PWA, SEO landing polish, Google OAuth, OG image
