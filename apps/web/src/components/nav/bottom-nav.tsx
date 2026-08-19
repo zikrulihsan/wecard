@@ -39,7 +39,10 @@ function isCurrent(entry: NavEntry, pathname: string) {
   );
 }
 
-export function BottomNav({ canUseAi }: { canUseAi: boolean }) {
+// `canUseAi` belum diketahui (undefined) saat nav dirender duluan, sebelum
+// status akses AI selesai dibaca. Selama itu gemboknya tidak digambar —
+// lebih baik menyusul daripada sempat salah tampil.
+export function BottomNav({ canUseAi }: { canUseAi?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -83,7 +86,7 @@ export function BottomNav({ canUseAi }: { canUseAi: boolean }) {
           const active = navigatingTo
             ? navigatingTo === entry.href
             : isCurrent(entry, pathname);
-          const locked = entry.href === "/create" && !canUseAi;
+          const locked = entry.href === "/create" && canUseAi === false;
           const Icon = entry.icon;
 
           return (

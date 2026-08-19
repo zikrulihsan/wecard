@@ -1,5 +1,5 @@
-export const dynamic = "force-dynamic";
-
+// Tidak ada data yang diambil di halaman ini, jadi tidak ada yang perlu
+// ditunggu — biarkan dirender statis supaya muncul seketika saat dibuka.
 export default function StorePage() {
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-8">
