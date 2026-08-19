@@ -44,9 +44,12 @@ export type GenerateResult = {
 };
 
 export async function generateDeck(
-  input: GenerateDeckInput
+  input: GenerateDeckInput,
+  // Pemanggil sudah me-resolve provider lebih dulu untuk dicatat di baris log
+  // sebelum LLM dipanggil. Dipakai ulang di sini supaya nama provider/model di
+  // log dijamin sama dengan yang benar-benar dipakai.
+  provider: DeckProvider = resolveProvider()
 ): Promise<GenerateResult> {
-  const provider = resolveProvider();
   const { deck, usage } = await provider.generate(input);
 
   return {

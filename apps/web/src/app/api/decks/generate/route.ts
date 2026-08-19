@@ -12,6 +12,12 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+/**
+ * Angka ini dikirim ke `claim_ai_generation()`; Postgres yang benar-benar
+ * menegakkannya, di dalam satu transaksi berkunci. Kuota tidak lagi dihitung
+ * di sini karena tabel `ai_generations` tertutup untuk penulisan dari klien —
+ * lihat migration 00004.
+ */
 const RATE_LIMIT_PER_HOUR = 5;
 
 export async function POST(request: Request) {
@@ -45,50 +51,85 @@ export async function POST(request: Request) {
 
   const input = parsed.data;
 
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count } = await supabase
-    .from("ai_generations")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", oneHourAgo);
-
-  if ((count ?? 0) >= RATE_LIMIT_PER_HOUR) {
+  // Provider di-resolve lebih dulu supaya nama & model bisa ikut tercatat di
+  // baris log saat slot diambil, sebelum satu token pun keluar.
+  let provider;
+  try {
+    provider = resolveProvider();
+  } catch (error) {
+    console.error("[generate-deck] provider", error);
     return NextResponse.json(
-      {
-        error: `Batas generate tercapai (${RATE_LIMIT_PER_HOUR} deck per jam). Coba lagi nanti.`,
-      },
-      { status: 429 }
+      { error: "Layanan AI belum dikonfigurasi." },
+      { status: 500 }
     );
   }
 
+  // Ambil satu slot kuota. Fungsi ini menghitung dan menyisipkan baris log
+  // dalam satu transaksi berkunci, jadi request paralel tidak bisa saling
+  // membalap — dan karena klien tidak punya hak tulis ke tabelnya, jejak
+  // kuota tidak bisa dihapus untuk mereset hitungan.
+  const { data: generationId, error: claimError } = await supabase.rpc(
+    "claim_ai_generation",
+    {
+      p_input: input,
+      p_provider: provider.name,
+      p_model: provider.model,
+      p_limit: RATE_LIMIT_PER_HOUR,
+    }
+  );
+
+  if (claimError) {
+    if (claimError.message.includes("rate_limited")) {
+      return NextResponse.json(
+        {
+          error: `Batas generate tercapai (${RATE_LIMIT_PER_HOUR} deck per jam). Coba lagi nanti.`,
+        },
+        { status: 429 }
+      );
+    }
+    if (claimError.message.includes("ai_not_enabled")) {
+      return NextResponse.json(
+        { error: "Fitur bikin deck AI belum terbuka untuk akunmu." },
+        { status: 403 }
+      );
+    }
+
+    console.error("[generate-deck] claim", claimError);
+    return NextResponse.json(
+      { error: "Gagal memulai generate. Coba lagi sebentar." },
+      { status: 500 }
+    );
+  }
+
+  /** Tutup baris log yang sudah diambil, apa pun hasilnya. */
+  const finish = (
+    status: "success" | "error",
+    fields: {
+      categoryId?: string;
+      inputTokens?: number;
+      outputTokens?: number;
+      errorMessage?: string;
+    } = {}
+  ) =>
+    supabase.rpc("finish_ai_generation", {
+      p_id: generationId,
+      p_status: status,
+      p_category_id: fields.categoryId ?? null,
+      p_input_tokens: fields.inputTokens ?? null,
+      p_output_tokens: fields.outputTokens ?? null,
+      p_error_message: fields.errorMessage ?? null,
+    });
+
   let result;
   try {
-    result = await generateDeck(input);
+    result = await generateDeck(input, provider);
   } catch (error) {
     const message =
       error instanceof GenerationRefused || error instanceof GenerationFailed
         ? error.message
         : "Gagal menghubungi layanan AI. Coba lagi sebentar.";
 
-    // Provider bisa gagal di-resolve (key hilang) — jangan bikin log gagal juga.
-    let provider = "unknown";
-    let model = "unknown";
-    try {
-      const resolved = resolveProvider();
-      provider = resolved.name;
-      model = resolved.model;
-    } catch {
-      // biarkan "unknown"
-    }
-
-    await supabase.from("ai_generations").insert({
-      user_id: user.id,
-      input,
-      provider,
-      model,
-      status: "error",
-      error_message: message,
-    });
+    await finish("error", { errorMessage: message });
 
     console.error("[generate-deck]", error);
     return NextResponse.json(
@@ -97,7 +138,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const { deck, usage, provider, model } = result;
+  const { deck, usage } = result;
+
+  const saveFailed = async (step: string, error: unknown) => {
+    await finish("error", { errorMessage: `gagal menyimpan (${step})` });
+    return saveFailedResponse(step, error);
+  };
 
   const { data: category, error: categoryError } = await supabase
     .from("categories")
@@ -163,15 +209,10 @@ export async function POST(request: Request) {
     return saveFailed("cards", cardError);
   }
 
-  await supabase.from("ai_generations").insert({
-    user_id: user.id,
-    category_id: category.id,
-    input,
-    provider,
-    model,
-    input_tokens: usage.inputTokens,
-    output_tokens: usage.outputTokens,
-    status: "success",
+  await finish("success", {
+    categoryId: category.id,
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
   });
 
   return NextResponse.json({
@@ -187,7 +228,7 @@ export async function POST(request: Request) {
  * (migration belum jalan, RLS menolak) langsung kelihatan, bukan tertutup
  * pesan generik.
  */
-function saveFailed(step: string, error: unknown) {
+function saveFailedResponse(step: string, error: unknown) {
   console.error(`[generate-deck] insert ${step}`, error);
 
   const detail = error as { code?: string; message?: string } | null;

@@ -23,7 +23,7 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck: `packages/supabase/migrations/00002_ai_decks.sql`, lalu `packages/supabase/migrations/00003_ai_access.sql`
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `packages/supabase/migrations/00003_ai_access.sql`, lalu `packages/supabase/migrations/00004_ai_quota.sql`
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
@@ -128,6 +128,7 @@ Gerbangnya berlapis, dan urutannya penting:
 | RLS | policy `Insert own AI categories` + `has_ai_access()` | insert langsung ke Supabase pakai anon key, melewati API route |
 | Privilege kolom | `REVOKE UPDATE ON profiles` + `GRANT UPDATE (display_name, …)` | user memberi akses ke dirinya sendiri lewat `update({ ai_enabled: true })` |
 | UI | nav "Bikin" bergembok, `/create` menampilkan status terkunci | menu yang menggoda tapi selalu gagal |
+| Kuota | `claim_ai_generation()` + `REVOKE INSERT, UPDATE, DELETE` di `ai_generations` | kuota direset sendiri lewat anon key, dan balapan request paralel |
 
 Lapis privilege kolom perlu karena RLS tidak mengenal batasan per kolom: policy `Update own profile` mengizinkan user menulis ke baris profilnya sendiri, termasuk kolom `ai_enabled`, kalau tidak dibatasi lewat `GRANT`. Setelah migration `00003`, kolom itu hanya bisa diubah lewat `service_role` / SQL Editor.
 
@@ -151,7 +152,7 @@ Lapis privilege kolom perlu karena RLS tidak mengenal batasan per kolom: policy 
 **Batasan:**
 
 - Hanya untuk akun dengan `profiles.ai_enabled = true` (lihat "Akses terbatas" di atas).
-- 5 generate per user per jam (dicek lewat tabel `ai_generations`).
+- 5 generate per user per jam. Ditegakkan Postgres lewat `claim_ai_generation()`, bukan dihitung di route handler: fungsinya mengambil kunci per user lalu menghitung dan mencatat dalam satu transaksi, dan tabel `ai_generations` tertutup untuk penulisan dari klien. Tanpa itu, kuota bisa direset sendiri dengan `delete()` lewat anon key, dan request paralel bisa saling membalap.
 - Output model divalidasi ulang dengan zod sebelum masuk DB; kartu `special` tanpa `special_kind` dan kartu kelebihan dibuang di server.
 - Deck AI hanya terlihat oleh pembuatnya; kategori kurasi (`created_by IS NULL`) tetap publik. Dijaga di level RLS, bukan di query.
 - Input user disisipkan ke prompt sebagai data, bukan instruksi, dan setiap generate dicatat di `ai_generations` (input, provider, model, token, status).
