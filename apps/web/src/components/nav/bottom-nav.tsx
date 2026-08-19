@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NavigatingView } from "./navigating-view";
 
 interface NavEntry {
   href: string;
@@ -35,7 +36,7 @@ function covers(base: string, pathname: string) {
 
 function isCurrent(entry: NavEntry, pathname: string) {
   return [entry.href, ...(entry.alsoActiveOn ?? [])].some((base) =>
-    covers(base, pathname)
+    covers(base, pathname),
   );
 }
 
@@ -100,69 +101,106 @@ export function BottomNav() {
   // bentuk nav tidak berubah-ubah saat berpindah halaman.
   const navigatingTo = isPending ? target : null;
 
-  const handleTap = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
-    // Biarkan buka-di-tab-baru dan klik non-kiri ditangani browser.
-    if (
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-    ) {
-      return;
-    }
-    event.preventDefault();
-    if (href === pathname) return;
-    setTarget(href);
-    startTransition(() => router.push(href));
-  };
+  // Tanggapan berlapis. Lapis pertama (warna tab) menyala seketika. Lapis
+  // kedua ini menggambar halaman tujuan dari klien, dan sengaja ditahan
+  // sesaat: navigasi yang kerangkanya sudah ada di Router Cache selesai jauh
+  // di bawah ambang ini, jadi di jalur cepat ia tidak pernah sempat berkedip.
+  const [pendingViewFor, setPendingViewFor] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!navigatingTo) return;
+
+    const id = setTimeout(() => setPendingViewFor(navigatingTo), 150);
+    return () => clearTimeout(id);
+  }, [navigatingTo]);
+
+  // Diturunkan, bukan disimpan: begitu transisinya selesai `navigatingTo`
+  // kembali null dan lapisan ini padam sendiri — tidak ada state yang perlu
+  // dibereskan, jadi ia tidak bisa tersangkut menutupi halaman.
+  const showPendingView =
+    navigatingTo !== null && pendingViewFor === navigatingTo;
+
+  const handleTap =
+    (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+      // Biarkan buka-di-tab-baru dan klik non-kiri ditangani browser.
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      event.preventDefault();
+      if (href === pathname) return;
+      // Sisa tujuan sebelumnya dibuang, kalau tidak ketukan berikutnya ke tab
+      // yang sama akan menampilkan lapisan tanpa melewati ambang 150 ms.
+      setPendingViewFor(null);
+      setTarget(href);
+      startTransition(() => router.push(href));
+    };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-neutral-200 safe-bottom z-40">
-      <div className="max-w-screen-sm mx-auto flex items-center justify-around py-2">
-        {ENTRIES.map((entry) => {
-          // Saat berpindah, hanya tab tujuan yang menyala — supaya tidak ada
-          // dua tab menyala sekaligus selama halaman baru dimuat.
-          const active = navigatingTo
-            ? navigatingTo === entry.href
-            : isCurrent(entry, pathname);
-          const locked = entry.href === "/create" && canUseAi === false;
-          const Icon = entry.icon;
+    <>
+      {showPendingView && navigatingTo && (
+        // Berhenti tepat di atas nav (z-40 > z-30) supaya pemain tetap bisa
+        // berpindah tujuan selagi yang ini belum sampai.
+        <div
+          data-pending-view=""
+          className="fixed inset-x-0 top-0 z-30 overflow-y-auto bg-background"
+          style={{ bottom: "var(--bottom-nav-h)" }}
+        >
+          <NavigatingView href={navigatingTo} />
+        </div>
+      )}
 
-          return (
-            <Link
-              key={entry.href}
-              href={entry.href}
-              onClick={handleTap(entry.href)}
-              aria-label={locked ? `${entry.label} (terbatas)` : undefined}
-              aria-current={isCurrent(entry, pathname) ? "page" : undefined}
-              className="flex flex-col items-center gap-1 px-4 py-2"
-            >
-              <span
-                className={cn(
-                  "relative transition-colors",
-                  active ? "text-primary" : "text-neutral-600"
-                )}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-neutral-200 safe-bottom z-40">
+        <div className="max-w-screen-sm mx-auto flex items-center justify-around py-2">
+          {ENTRIES.map((entry) => {
+            // Saat berpindah, hanya tab tujuan yang menyala — supaya tidak ada
+            // dua tab menyala sekaligus selama halaman baru dimuat.
+            const active = navigatingTo
+              ? navigatingTo === entry.href
+              : isCurrent(entry, pathname);
+            const locked = entry.href === "/create" && canUseAi === false;
+            const Icon = entry.icon;
+
+            return (
+              <Link
+                key={entry.href}
+                href={entry.href}
+                onClick={handleTap(entry.href)}
+                aria-label={locked ? `${entry.label} (terbatas)` : undefined}
+                aria-current={isCurrent(entry, pathname) ? "page" : undefined}
+                className="flex flex-col items-center gap-1 px-4 py-2"
               >
-                <Icon className="size-5" />
-                {locked && (
-                  <span className="absolute -top-1 -right-1.5 rounded-full bg-white p-px text-neutral-400">
-                    <Lock className="size-2.5" />
-                  </span>
-                )}
-              </span>
-              <span
-                className={cn(
-                  "text-xs transition-colors",
-                  active ? "text-primary font-medium" : "text-neutral-600"
-                )}
-              >
-                {entry.label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                <span
+                  className={cn(
+                    "relative transition-colors",
+                    active ? "text-primary" : "text-neutral-600",
+                  )}
+                >
+                  <Icon className="size-5" />
+                  {locked && (
+                    <span className="absolute -top-1 -right-1.5 rounded-full bg-white p-px text-neutral-400">
+                      <Lock className="size-2.5" />
+                    </span>
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    "text-xs transition-colors",
+                    active ? "text-primary font-medium" : "text-neutral-600",
+                  )}
+                >
+                  {entry.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }
