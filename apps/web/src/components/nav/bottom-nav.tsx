@@ -9,7 +9,6 @@ import {
   ShoppingBag,
   Sparkles,
   Lock,
-  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -53,7 +52,9 @@ export function BottomNav({ canUseAi }: { canUseAi: boolean }) {
   const [target, setTarget] = useState<string | null>(null);
 
   // Terikat ke transisi yang sedang berjalan, jadi padam sendiri saat navigasi
-  // selesai, gagal, maupun dibatalkan — tidak bisa tersangkut.
+  // selesai, gagal, maupun dibatalkan — tidak bisa tersangkut. Penandanya cuma
+  // perpindahan warna: ikonnya sengaja tidak pernah ditukar spinner, supaya
+  // bentuk nav tidak berubah-ubah saat berpindah halaman.
   const navigatingTo = isPending ? target : null;
 
   const handleTap = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
@@ -77,11 +78,10 @@ export function BottomNav({ canUseAi }: { canUseAi: boolean }) {
     <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-neutral-200 safe-bottom z-40">
       <div className="max-w-screen-sm mx-auto flex items-center justify-around py-2">
         {ENTRIES.map((entry) => {
-          const pending = navigatingTo === entry.href;
           // Saat berpindah, hanya tab tujuan yang menyala — supaya tidak ada
           // dua tab menyala sekaligus selama halaman baru dimuat.
           const active = navigatingTo
-            ? pending
+            ? navigatingTo === entry.href
             : isCurrent(entry, pathname);
           const locked = entry.href === "/create" && !canUseAi;
           const Icon = entry.icon;
@@ -101,12 +101,8 @@ export function BottomNav({ canUseAi }: { canUseAi: boolean }) {
                   active ? "text-primary" : "text-neutral-600"
                 )}
               >
-                {pending ? (
-                  <Loader2 className="size-5 animate-spin" />
-                ) : (
-                  <Icon className="size-5" />
-                )}
-                {locked && !pending && (
+                <Icon className="size-5" />
+                {locked && (
                   <span className="absolute -top-1 -right-1.5 rounded-full bg-white p-px text-neutral-400">
                     <Lock className="size-2.5" />
                   </span>
