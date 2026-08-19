@@ -50,7 +50,7 @@ function LoginForm() {
     <Card className="border-none shadow-xl">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Selamat Datang Kembali</CardTitle>
-        <CardDescription>Masuk ke akun WeCard kamu</CardDescription>
+        <CardDescription>Masuk ke akun FlipCard kamu</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">

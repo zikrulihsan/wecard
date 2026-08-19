@@ -1,7 +1,7 @@
 "use client";
 
 import { m } from "framer-motion";
-import type { GameCard } from "@wecard/types";
+import type { GameCard } from "@flipcard/types";
 import { cn } from "@/lib/utils";
 
 interface CardDisplayProps {
@@ -31,6 +31,18 @@ const difficultyStyles: Record<
   },
 };
 
+/**
+ * Label kesulitan dibaca berbeda tergantung tipe kartu. Di kartu talk ia
+ * menandai bobot emosional ("Intimate"), tapi di kartu action yang menantang
+ * itu tidak masuk akal — apalagi sejak deck bisa berisi tantangan saja untuk
+ * dimainkan bersama anak.
+ */
+const actionDifficultyLabel: Record<GameCard["difficulty"], string> = {
+  easy: "Santai",
+  medium: "Sedang",
+  hard: "Sulit",
+};
+
 const typeStyles: Record<
   GameCard["cardType"],
   { emoji: string; label: string }
@@ -43,6 +55,10 @@ const typeStyles: Record<
 export function CardDisplay({ card, isRevealed, onFlip }: CardDisplayProps) {
   const style = difficultyStyles[card.difficulty];
   const type = typeStyles[card.cardType];
+  const difficultyLabel =
+    card.cardType === "action"
+      ? actionDifficultyLabel[card.difficulty]
+      : style.label;
 
   return (
     // max-h-full menjaga kartu tetap muat di layar pendek (HP kecil /
@@ -94,7 +110,7 @@ export function CardDisplay({ card, isRevealed, onFlip }: CardDisplayProps) {
                 style.badge
               )}
             >
-              {style.label}
+              {difficultyLabel}
             </span>
           </div>
 

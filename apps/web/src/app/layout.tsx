@@ -3,9 +3,9 @@ import { MotionProvider } from "@/components/motion-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "WeCard — Ruang Kita untuk Ngobrol & Main Bareng",
+  title: "FlipCard — Kartu Buat Ngobrol Bareng",
   description:
-    "Kartu pertanyaan & tantangan seru untuk pasangan. Perdalam hubunganmu lewat obrolan yang bermakna.",
+    "Kartu pertanyaan & tantangan untuk ngobrol sama teman, keluarga, pasangan, atau siapa pun. Balik kartunya, obrolannya jalan sendiri.",
 };
 
 export const viewport: Viewport = {

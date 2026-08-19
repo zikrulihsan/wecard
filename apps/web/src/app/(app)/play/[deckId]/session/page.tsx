@@ -15,7 +15,7 @@ import { useGameStore } from "@/stores/game-store";
 import { CardDisplay } from "@/components/cards/card-display";
 import { GameProgressBar } from "@/components/game/progress-bar";
 import { Button } from "@/components/ui/button";
-import type { GameCard } from "@wecard/types";
+import type { GameCard } from "@flipcard/types";
 
 // Gerbang hidrasi: false saat SSR/hidrasi, true setelahnya — store zustand
 // baru terisi dari localStorage di client, jadi render pertama harus netral.
