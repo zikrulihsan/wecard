@@ -14,6 +14,7 @@ import { X, ChevronLeft, SkipForward } from "lucide-react";
 import { useGameStore } from "@/stores/game-store";
 import { CardDisplay } from "@/components/cards/card-display";
 import { GameProgressBar } from "@/components/game/progress-bar";
+import { SessionSkeleton } from "@/components/game/session-skeleton";
 import { Button } from "@/components/ui/button";
 import type { GameCard } from "@flipcard/types";
 
@@ -90,11 +91,9 @@ export default function SessionPage() {
   }, [mounted, isActive, storedDeckId, deckId, cards.length, router]);
 
   if (!mounted || !isActive || cards.length === 0) {
-    return (
-      <div className="flex h-[calc(100dvh-var(--bottom-nav-h))] items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Memuat...</div>
-      </div>
-    );
+    // Kerangka yang sama dengan layar mainnya, bukan teks "Memuat..." —
+    // supaya pergantian ke kartu asli tidak terasa seperti layar berganti.
+    return <SessionSkeleton />;
   }
 
   const isComplete = currentIndex >= cards.length;
