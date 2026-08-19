@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { deckThemeVars, resolveDeckTheme } from "@/lib/deck-theme";
 import { BackLink } from "@/components/nav/back-link";
 import { CardLoader } from "@/components/ui/card-loader";
 import { SectionPicker } from "./section-picker";
@@ -39,7 +40,7 @@ async function DeckBody({
   const [{ data: category }, { data: sections }] = await Promise.all([
     supabase
       .from("categories")
-      .select("id, slug, name, description, is_free")
+      .select("id, slug, name, description, is_free, theme")
       .eq("id", deckId)
       .eq("is_active", true)
       .single(),
@@ -72,8 +73,12 @@ async function DeckBody({
       cardCount: s.cards?.length ?? 0,
     })) ?? [];
 
+  const theme = resolveDeckTheme(category.theme);
+
   return (
-    <>
+    // Warna deck dipasang di pembungkus, jadi kontrol di dalamnya (checkbox,
+    // cincin fokus, tombol mulai) ikut warnanya tanpa di-override satu-satu.
+    <div style={deckThemeVars(theme)}>
       <header className="mb-6">
         <h1 className="text-3xl font-bold">{category.name}</h1>
         {category.description && (
@@ -84,8 +89,9 @@ async function DeckBody({
       <SectionPicker
         deckId={category.id}
         deckName={category.name}
+        deckTheme={theme}
         sections={sectionData}
       />
-    </>
+    </div>
   );
 }

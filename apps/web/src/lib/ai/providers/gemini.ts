@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { DECK_THEMES } from "@flipcard/types";
 import { generatedDeckSchema, type GenerateDeckInput } from "../deck-schema";
 import { SYSTEM_PROMPT, buildUserPrompt } from "../prompt";
 import {
@@ -27,6 +28,11 @@ const RESPONSE_SCHEMA = {
     description: {
       type: "string",
       description: "1-2 kalimat: deck ini untuk siapa dan isinya apa",
+    },
+    theme: {
+      type: "string",
+      enum: [...DECK_THEMES],
+      description: "Tema warna deck, dipilih dari daftar di prompt",
     },
     sections: {
       type: "array",
@@ -78,8 +84,8 @@ const RESPONSE_SCHEMA = {
       },
     },
   },
-  required: ["name", "description", "sections"],
-  propertyOrdering: ["name", "description", "sections"],
+  required: ["name", "description", "theme", "sections"],
+  propertyOrdering: ["name", "description", "theme", "sections"],
 };
 
 let client: GoogleGenAI | null = null;

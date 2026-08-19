@@ -105,6 +105,7 @@ export async function POST(request: Request) {
       slug: buildSlug(deck.name),
       name: deck.name,
       description: deck.description,
+      theme: deck.theme,
       is_free: true,
       price_idr: null,
       sort_order: 100,
@@ -177,6 +178,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     categoryId: category.id,
     name: deck.name,
+    theme: deck.theme,
     sectionCount: deck.sections.length,
     cardCount: cardRows.length,
   });
@@ -204,7 +206,7 @@ function saveFailed(step: string, error: unknown) {
             code: detail?.code,
             hint:
               detail?.code === "42703" || detail?.code === "PGRST205"
-                ? "Jalankan packages/supabase/migrations/00002_ai_decks.sql di SQL Editor Supabase."
+                ? "Ada migration yang belum jalan. Jalankan packages/supabase/migrations/00002_ai_decks.sql dan 00004_deck_theme.sql di SQL Editor Supabase."
                 : detail?.code === "42501"
                   ? "Insert ditolak RLS — pastikan policy di migration 00002 sudah terpasang."
                   : undefined,

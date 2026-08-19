@@ -6,12 +6,32 @@ export type CardDifficulty = "easy" | "medium" | "hard";
 export type SpecialCardKind = "free_pass" | "switch" | "double";
 export type PurchaseStatus = "pending" | "completed" | "refunded";
 
+/**
+ * Tema warna deck. Nilainya disimpan di kolom `categories.theme`; kelas
+ * Tailwind untuk tiap tema ada di apps/web/src/lib/deck-theme.ts. Nilai yang
+ * tidak dikenal (misal deck lama atau hasil AI yang meleset) jatuh ke tema
+ * bawaan, jadi kolomnya sengaja tidak dikunci CHECK di database.
+ */
+export const DECK_THEMES = [
+  "pink",
+  "amber",
+  "emerald",
+  "sky",
+  "indigo",
+  "violet",
+  "teal",
+  "slate",
+] as const;
+
+export type DeckTheme = (typeof DECK_THEMES)[number];
+
 export interface Category {
   id: string;
   slug: string;
   name: string;
   description: string | null;
   cover_image: string | null;
+  theme: DeckTheme;
   is_free: boolean;
   price_idr: number | null;
   sort_order: number;

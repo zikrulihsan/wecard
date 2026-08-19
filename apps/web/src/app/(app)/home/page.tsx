@@ -2,8 +2,10 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Lock, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { deckThemeStyle } from "@/lib/deck-theme";
 import { Badge } from "@/components/ui/badge";
 import { CardLoader } from "@/components/ui/card-loader";
+import { cn } from "@/lib/utils";
 import { HomeHeader } from "./header";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +45,8 @@ async function DeckList() {
       description,
       is_free,
       price_idr,
-      is_ai_generated
+      is_ai_generated,
+      theme
     `
       )
       .eq("is_active", true)
@@ -87,6 +90,7 @@ type CategoryRow = {
   is_free: boolean;
   price_idr: number | null;
   is_ai_generated: boolean;
+  theme: string | null;
 };
 
 function DeckGrid({
@@ -108,6 +112,7 @@ function DeckGrid({
           isFree={category.is_free}
           isUnlocked={category.is_free || unlockedIds.has(category.id)}
           isAiGenerated={category.is_ai_generated}
+          theme={category.theme}
         />
       ))}
     </div>
@@ -122,6 +127,7 @@ function CategoryCard({
   isFree,
   isUnlocked,
   isAiGenerated,
+  theme,
 }: {
   id: string;
   name: string;
@@ -130,9 +136,15 @@ function CategoryCard({
   isFree: boolean;
   isUnlocked: boolean;
   isAiGenerated: boolean;
+  theme: string | null;
 }) {
   const content = (
-    <div className="relative p-6 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+    <div
+      className={cn(
+        "relative p-6 rounded-2xl bg-gradient-to-br text-white shadow-lg hover:shadow-xl transition-shadow overflow-hidden",
+        deckThemeStyle(theme).card
+      )}
+    >
       <div className="absolute top-4 right-4 flex gap-2">
         {isAiGenerated && (
           <Badge
@@ -161,7 +173,7 @@ function CategoryCard({
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">{name}</h2>
         {description && (
-          <p className="text-pink-50 text-sm leading-relaxed line-clamp-2">
+          <p className="text-white/85 text-sm leading-relaxed line-clamp-2">
             {description}
           </p>
         )}
