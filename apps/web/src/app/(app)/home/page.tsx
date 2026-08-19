@@ -1,11 +1,33 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Lock, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+// Judul dan sub-judul tidak menunggu apa pun, jadi langsung dirender. Hanya
+// daftar deck yang datanya dari Supabase yang dibungkus Suspense — kerangka
+// abu-abu cuma muncul di bagian yang memang sedang diambil.
+export default function HomePage() {
+  return (
+    <div className="max-w-screen-sm mx-auto px-4 py-8">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold">Pilih Kategori</h1>
+        <p className="text-muted-foreground mt-1">
+          Mau main kartu apa hari ini?
+        </p>
+      </header>
+
+      <Suspense fallback={<DeckListSkeleton />}>
+        <DeckList />
+      </Suspense>
+    </div>
+  );
+}
+
+async function DeckList() {
   const supabase = await createClient();
 
   // Dua query ini tidak saling bergantung — jalankan barengan.
@@ -29,41 +51,39 @@ export default async function HomePage() {
     supabase.from("purchases").select("category_id").eq("status", "completed"),
   ]);
 
+  if (!categories || categories.length === 0) {
+    return <EmptyState />;
+  }
+
   const unlockedIds = new Set(purchases?.map((p) => p.category_id) ?? []);
 
   // Deck bawaan (seed) tetap tampil apa adanya; deck AI ditaruh di grup sendiri.
-  const curated = categories?.filter((c) => !c.is_ai_generated) ?? [];
-  const aiDecks = categories?.filter((c) => c.is_ai_generated) ?? [];
+  const curated = categories.filter((c) => !c.is_ai_generated);
+  const aiDecks = categories.filter((c) => c.is_ai_generated);
 
   return (
-    <div className="max-w-screen-sm mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">Pilih Kategori</h1>
-        <p className="text-muted-foreground mt-1">
-          Mau main kartu apa hari ini?
-        </p>
-      </header>
+    <div className="space-y-8">
+      <DeckGrid categories={curated} unlockedIds={unlockedIds} />
 
-      {!categories || categories.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="space-y-8">
-          <DeckGrid
-            categories={curated}
-            unlockedIds={unlockedIds}
-          />
-
-          {aiDecks.length > 0 && (
-            <section>
-              <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
-                <Sparkles className="size-4" />
-                Deck buatanmu
-              </h2>
-              <DeckGrid categories={aiDecks} unlockedIds={unlockedIds} />
-            </section>
-          )}
-        </div>
+      {aiDecks.length > 0 && (
+        <section>
+          <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+            <Sparkles className="size-4" />
+            Deck buatanmu
+          </h2>
+          <DeckGrid categories={aiDecks} unlockedIds={unlockedIds} />
+        </section>
       )}
+    </div>
+  );
+}
+
+function DeckListSkeleton() {
+  return (
+    <div className="grid gap-4">
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} className="h-36 rounded-2xl" />
+      ))}
     </div>
   );
 }

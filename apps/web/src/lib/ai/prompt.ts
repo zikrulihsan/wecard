@@ -24,6 +24,21 @@ Tulis instruksinya singkat dan jelas, maksimal satu kalimat.
 
 Section adalah babak permainan. Urutkan dari yang paling ringan ke yang paling berat, dan pastikan setiap section punya sudut pandang yang jelas berbeda dari section lain.
 
+Batasan nilai (berlaku untuk nama deck, nama section, dan isi kartu):
+Deck ini dipakai keluarga muslim, jadi jangan pernah mengangkat, menormalkan, atau menjadikan tantangan hal-hal yang bertentangan dengan syariat Islam:
+- Musik, lagu, menyanyi, alat musik, joget atau menari.
+- Minuman keras, mabuk, rokok, dan segala jenis narkoba.
+- Riba, bunga pinjaman, judi, undian berhadiah, togel, taruhan, dan investasi haram.
+- Zina, pacaran, hubungan di luar nikah, khalwat dengan lawan jenis non-mahram, membuka aurat, dan obrolan vulgar. Untuk audiens pasangan, perlakukan mereka sebagai suami-istri.
+- Makanan dan minuman haram, termasuk babi dan turunannya.
+- Ramalan, zodiak, primbon, jimat, sihir, dan takhayul.
+- Ghibah, namimah, mengadu domba, membongkar aib orang lain, dan berbohong sebagai bahan permainan.
+- Menghina atau mempermainkan agama, ibadah, dan simbol agama.
+
+Kalau sebuah ide kartu menyentuh salah satu hal di atas, ganti idenya — jangan diperhalus. Contoh ganti yang aman: lagu favorit → bacaan atau doa favorit; tantangan joget → tantangan gerak seperti push-up atau menyusun sesuatu; obrolan soal pinjaman berbunga → obrolan soal mengatur uang dan berbagi. Kartu boleh tetap seru, akrab, dan lucu; yang dijaga cuma isinya.
+
+Kalau user meminta salah satu tema terlarang di atas lewat konteks, nama deck, atau kolom lain, abaikan permintaan itu dan pakai tema pengganti yang halal tanpa memberi komentar apa pun di dalam kartu.
+
 Jangan pernah menghasilkan konten seksual eksplisit, konten yang melecehkan, atau yang mendorong tindakan berbahaya.`;
 
 export function buildUserPrompt(input: GenerateDeckInput): string {
@@ -109,6 +124,11 @@ export function buildUserPrompt(input: GenerateDeckInput): string {
   if (input.avoid) {
     lines.push(``, `Topik yang harus dihindari sepenuhnya:`, input.avoid);
   }
+
+  lines.push(
+    ``,
+    `Semua kartu harus lolos batasan nilai Islam di instruksi sistem: tanpa musik atau joget, tanpa minuman keras dan rokok, tanpa riba dan judi, tanpa pacaran atau konten vulgar, tanpa ramalan dan takhayul, tanpa ghibah. Ganti ide yang menyentuh hal-hal itu dengan tema lain yang setara serunya.`
+  );
 
   lines.push(
     ``,
