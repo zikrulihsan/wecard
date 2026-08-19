@@ -1,13 +1,13 @@
 import { AUDIENCES, DEPTHS, TONES, type GenerateDeckInput } from "./deck-schema";
 
-export const SYSTEM_PROMPT = `Kamu penulis konten untuk WeCard, card game percakapan yang dimainkan dua orang atau lebih di satu perangkat. Satu kartu = satu giliran.
+export const SYSTEM_PROMPT = `Kamu penulis konten untuk FlipCard, card game percakapan yang dimainkan dua orang atau lebih di satu perangkat. Satu kartu = satu giliran.
 
 Cara menulis kartu yang baik:
 - Satu kartu berisi satu hal saja. Kalau kamu menulis "dan" untuk menyambung dua pertanyaan, pecah jadi dua kartu atau buang satu.
 - Tulis seperti orang bicara, bukan seperti kuesioner. "Kapan terakhir kali kamu merasa nggak dianggap?" bukan "Bagaimana perasaan Anda terkait pengakuan?"
 - Pakai kata ganti "kamu" untuk lawan main dan "aku" untuk pembaca kartu. Kartu dibaca keras-keras oleh siapa pun yang mengambilnya, jadi kalimatnya harus tetap masuk akal dari sisi mana pun.
 - Pertanyaan yang bagus tidak bisa dijawab "ya" atau "tidak", dan tidak bisa dijawab dengan jawaban template. Minta cerita, momen, atau contoh konkret.
-- Kartu action harus bisa dikerjakan saat itu juga, berdua, tanpa alat tambahan, dalam waktu di bawah dua menit.
+- Kartu action harus bisa dikerjakan saat itu juga dan selesai di bawah dua menit. Jangan mengandalkan alat apa pun, kecuali kalau user menyebut alat atau mainan tertentu di konteks — kalau iya, bangun tantangannya di sekitar benda itu.
 - Jangan mengulang ide yang sama dengan kata berbeda. Setiap kartu dalam satu deck harus terasa baru.
 - Jangan menggurui, jangan menyisipkan nasihat atau penjelasan di dalam kartu.
 
@@ -32,16 +32,32 @@ export function buildUserPrompt(input: GenerateDeckInput): string {
   const tone = TONES.find((t) => t.value === input.tone)?.label ?? input.tone;
   const depth = DEPTHS.find((d) => d.value === input.depth)?.label ?? input.depth;
 
-  const cardTypes = ["talk"];
-  if (input.includeAction) cardTypes.push("action");
+  const mix = input.cardMix as "campuran" | "talk" | "action";
+  const actionOnly = mix === "action";
+
+  const cardTypes =
+    mix === "talk" ? ["talk"] : mix === "action" ? ["action"] : ["talk", "action"];
   if (input.includeSpecial) cardTypes.push("special");
 
-  const difficultyGuide = {
-    ringan: "Mayoritas easy, sedikit medium. Jangan ada hard.",
-    sedang: "Campuran easy dan medium, boleh beberapa hard di section terakhir.",
-    dalam:
-      "Mulai dari easy di section pertama, lalu naik sampai mayoritas hard di section terakhir.",
-  }[input.depth as "ringan" | "sedang" | "dalam"];
+  // Di deck tantangan, "difficulty" dibaca sebagai tingkat kesulitan tantangan,
+  // bukan bobot emosional — jadi panduannya pun berbeda.
+  const difficultyGuide = (
+    actionOnly
+      ? {
+          ringan: "Mayoritas easy — tantangan singkat dan gampang. Jangan ada hard.",
+          sedang:
+            "Campuran easy dan medium, boleh beberapa hard di section terakhir.",
+          dalam:
+            "Mulai easy di section pertama, lalu naik sampai mayoritas hard — tantangan paling susah — di section terakhir.",
+        }
+      : {
+          ringan: "Mayoritas easy, sedikit medium. Jangan ada hard.",
+          sedang:
+            "Campuran easy dan medium, boleh beberapa hard di section terakhir.",
+          dalam:
+            "Mulai dari easy di section pertama, lalu naik sampai mayoritas hard di section terakhir.",
+        }
+  )[input.depth as "ringan" | "sedang" | "dalam"];
 
   const lines = [
     `Buat satu deck kartu untuk dimainkan: ${audience}.`,
@@ -56,10 +72,18 @@ export function buildUserPrompt(input: GenerateDeckInput): string {
     `- Sebaran kesulitan: ${difficultyGuide}`,
   ];
 
-  if (input.includeAction) {
+  if (mix === "campuran") {
     lines.push(`- Sekitar sepertiga kartu berupa action, sisanya talk.`);
-  } else {
+  } else if (mix === "talk") {
     lines.push(`- Semua kartu bertipe talk. Jangan buat kartu action.`);
+  } else {
+    lines.push(
+      `- Semua kartu bertipe action. Jangan buat satu pun kartu talk.`,
+      `- Deck ini murni tantangan: pemain mengerjakan, bukan menjawab. Jangan menulis pertanyaan, jangan meminta pemain bercerita, menjelaskan, atau menyebutkan sesuatu.`,
+      `- Tulis setiap kartu sebagai kalimat perintah, dan buat targetnya konkret — sebutkan jumlah, jarak, atau batas waktu — supaya jelas kapan tantangan itu berhasil.`,
+      `- Kalau di konteks user menyebut alat, mainan, atau tempat tertentu, seluruh tantangan harus berputar di sekitar benda itu.`,
+      `- "difficulty" di sini berarti seberapa susah tantangannya, bukan seberapa berat secara emosional.`
+    );
   }
 
   if (input.includeSpecial) {

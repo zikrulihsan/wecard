@@ -1,6 +1,6 @@
-# WeCard
+# FlipCard
 
-Aplikasi web card game untuk pasangan — kartu pertanyaan (Talk) & tantangan (Action) yang dimainkan berdua di satu device.
+Aplikasi web card game — kartu pertanyaan (Talk) & tantangan (Action) buat ngobrol sama teman, keluarga, pasangan, atau anak. Dimainkan bareng di satu device.
 
 ## Tech Stack
 
@@ -140,7 +140,7 @@ Lapis privilege kolom perlu karena RLS tidak mengenal batasan per kolom: policy 
 | Kedalaman | ya | ringan · sedang · dalam — menentukan sebaran `difficulty` |
 | Jumlah section | ya | 2–5 |
 | Kartu per section | ya | 5–15 |
-| Sertakan kartu Action | — | default aktif; ±⅓ kartu jadi tipe `action` |
+| Isi kartu | ya | campuran (±⅓ action) · pertanyaan saja · **tantangan saja** |
 | Sertakan kartu Special | — | default nonaktif; 1 kartu Free Pass/Switch/Double per section |
 | Nama deck | — | kosong = dibuatkan AI |
 | Konteks tambahan | — | maks 500 karakter, situasi spesifik pemain |

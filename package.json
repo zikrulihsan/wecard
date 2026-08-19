@@ -1,5 +1,5 @@
 {
-  "name": "wecard",
+  "name": "flipcard",
   "private": true,
   "scripts": {
     "dev": "turbo dev",

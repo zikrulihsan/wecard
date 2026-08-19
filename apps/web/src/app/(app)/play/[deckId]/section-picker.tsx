@@ -8,7 +8,7 @@ import { shuffle } from "@/lib/game/shuffle";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import type { GameCard, CardType, CardDifficulty, SpecialCardKind } from "@wecard/types";
+import type { GameCard, CardType, CardDifficulty, SpecialCardKind } from "@flipcard/types";
 
 interface Section {
   id: string;

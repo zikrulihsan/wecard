@@ -28,6 +28,24 @@ export const DEPTHS = [
   { value: "dalam", label: "Dalam — pertanyaan berat & jujur" },
 ] as const;
 
+export const CARD_MIXES = [
+  {
+    value: "campuran",
+    label: "Campuran — pertanyaan & tantangan",
+    hint: "Sekitar sepertiga kartu berupa tantangan.",
+  },
+  {
+    value: "talk",
+    label: "Pertanyaan saja",
+    hint: "Semua kartu dijawab dengan cerita. Fokus ngobrol.",
+  },
+  {
+    value: "action",
+    label: "Tantangan saja",
+    hint: "Semua kartu berupa tantangan yang langsung dikerjakan — tidak ada yang perlu dijawab.",
+  },
+] as const;
+
 export const MIN_SECTIONS = 2;
 export const MAX_SECTIONS = 5;
 export const MIN_CARDS_PER_SECTION = 5;
@@ -45,7 +63,9 @@ export const generateDeckInputSchema = z.object({
     .int()
     .min(MIN_CARDS_PER_SECTION)
     .max(MAX_CARDS_PER_SECTION),
-  includeAction: z.boolean().default(true),
+  cardMix: z
+    .enum(CARD_MIXES.map((m) => m.value) as [string, ...string[]])
+    .default("campuran"),
   includeSpecial: z.boolean().default(false),
   context: z.string().trim().max(500).optional(),
   avoid: z.string().trim().max(300).optional(),

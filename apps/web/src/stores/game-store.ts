@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { GameCard, GameStore } from "@wecard/types";
+import type { GameCard, GameStore } from "@flipcard/types";
 
 const initialState = {
   deckId: "",
@@ -83,6 +83,8 @@ export const useGameStore = create<GameStore>()(
       },
     }),
     {
+      // Sengaja dipertahankan setelah rebrand ke FlipCard: mengganti kunci
+      // ini akan menghapus sesi yang sedang berjalan di perangkat pemain.
       name: "wecard-game-session",
       storage: createJSONStorage(() => {
         if (typeof window === "undefined") {

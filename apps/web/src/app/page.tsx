@@ -13,20 +13,20 @@ export default function LandingPage() {
         <div className="max-w-2xl text-center space-y-8">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur border border-pink-200 text-sm">
             <span className="text-pink-600">✨</span>
-            <span className="text-neutral-700">Ruang Kita untuk Berdua</span>
+            <span className="text-neutral-700">Balik kartunya, ngobrolnya jalan</span>
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-neutral-900">
-            Kartu untuk{" "}
+            Kartu buat{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500">
-              Ngobrol Lebih Dalam
+              Ngobrol Bareng
             </span>
           </h1>
 
           <p className="text-lg text-neutral-600 leading-relaxed">
-            50 kartu pertanyaan & tantangan seru untuk pasangan. Dari warm up
-            sampai deep talk — mainkan berdua dan rasakan hubungan yang makin
-            hangat.
+            Pertanyaan & tantangan buat ngobrol sama teman, keluarga,
+            pasangan, atau anak. Satu HP, satu kartu satu giliran — obrolan
+            yang biasanya nggak sempat kejadian, jadi kejadian.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -60,17 +60,17 @@ export default function LandingPage() {
             <FeatureCard
               icon="💬"
               title="Talk Cards"
-              description="Pertanyaan dari yang ringan sampai yang bikin kamu mikir dan terbuka"
+              description="Pertanyaan dari yang ringan sampai yang bikin mikir dan terbuka"
             />
             <FeatureCard
               icon="🎯"
               title="Action Cards"
-              description="Tantangan kecil yang bikin momen berdua jadi lebih hidup"
+              description="Tantangan kecil yang langsung dikerjakan — bisa dibikin tanpa pertanyaan sama sekali"
             />
             <FeatureCard
-              icon="🔥"
-              title="5 Level"
-              description="Warm Up, Appreciation, Deep Talk, Intimate, Future & Dreams"
+              icon="✨"
+              title="Bikin Sendiri"
+              description="Racik deck sesuai situasimu — siapa yang main, nuansanya, sampai seberapa dalam"
             />
           </div>
         </div>
@@ -80,11 +80,11 @@ export default function LandingPage() {
       <section className="px-6 py-20 bg-gradient-to-r from-pink-500 to-rose-500 text-white">
         <div className="max-w-2xl mx-auto text-center space-y-6">
           <h2 className="text-3xl md:text-4xl font-bold">
-            Siap untuk malam obrolan yang berbeda?
+            Siap buat obrolan yang beda?
           </h2>
           <p className="text-pink-50 text-lg">
-            Gratis untuk kategori Pasangan. Main dari HP berdua, satu kartu satu
-            waktu.
+            Deck Pasangan dan Anak & Orang Tua gratis. Main dari satu HP,
+            satu kartu satu waktu.
           </p>
           <Link
             href="/register"
@@ -100,7 +100,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="px-6 py-8 text-center text-sm text-neutral-500">
-        © {new Date().getFullYear()} WeCard. Made with love.
+        © {new Date().getFullYear()} FlipCard. Made with love.
       </footer>
     </main>
   );

@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AUDIENCES,
+  CARD_MIXES,
   DEPTHS,
   MAX_CARDS_PER_SECTION,
   MAX_SECTIONS,
@@ -31,7 +32,7 @@ export function CreateForm() {
   const [deckName, setDeckName] = useState("");
   const [sectionCount, setSectionCount] = useState(3);
   const [cardsPerSection, setCardsPerSection] = useState(10);
-  const [includeAction, setIncludeAction] = useState(true);
+  const [cardMix, setCardMix] = useState<string>("campuran");
   const [includeSpecial, setIncludeSpecial] = useState(false);
   const [context, setContext] = useState("");
   const [avoid, setAvoid] = useState("");
@@ -53,7 +54,7 @@ export function CreateForm() {
           deckName: deckName.trim() || undefined,
           sectionCount,
           cardsPerSection,
-          includeAction,
+          cardMix,
           includeSpecial,
           context: context.trim() || undefined,
           avoid: avoid.trim() || undefined,
@@ -160,18 +161,24 @@ export function CreateForm() {
         Total {totalCards} kartu.
       </p>
 
+      <Field
+        label="Isi kartu"
+        hint={CARD_MIXES.find((m) => m.value === cardMix)?.hint}
+      >
+        <Select
+          value={cardMix}
+          onChange={(e) => setCardMix(e.target.value)}
+          disabled={isGenerating}
+        >
+          {CARD_MIXES.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </Field>
+
       <div className="space-y-3">
-        <Label className="items-start gap-3">
-          <Checkbox
-            checked={includeAction}
-            onCheckedChange={(checked) => setIncludeAction(checked === true)}
-            disabled={isGenerating}
-          />
-          <span className="font-normal">
-            Sertakan kartu <strong>Action</strong> — tantangan yang dikerjakan
-            langsung, bukan cuma dijawab.
-          </span>
-        </Label>
         <Label className="items-start gap-3">
           <Checkbox
             checked={includeSpecial}
