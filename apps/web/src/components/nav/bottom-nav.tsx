@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition, type MouseEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   User,
@@ -42,18 +42,36 @@ function isCurrent(entry: NavEntry, pathname: string) {
 
 export function BottomNav({ canUseAi }: { canUseAi: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Tujuan yang sedang dituju, dicatat saat ketukan. useLinkStatus tidak
-  // dipakai di sini: hasil pengukuran menunjukkan `pending`-nya tidak menyala
-  // di jaringan lambat — justru kondisi di mana umpan balik paling dibutuhkan.
-  // Menyimpannya sendiri membuat tab langsung menyala di frame berikutnya,
-  // lepas dari prefetch maupun kecepatan jaringan.
-  const [tappedHref, setTappedHref] = useState<string | null>(null);
+  // Navigasi dijalankan di dalam transition supaya `isPending` jadi sumber
+  // kebenaran kapan penanda menyala. useLinkStatus tidak dipakai (pengukuran
+  // menunjukkan `pending`-nya tidak menyala di jaringan lambat), dan
+  // menurunkan penanda dari pathname juga tidak cukup: penanda seperti itu
+  // hidup lagi begitu pemain menekan tombol back ke halaman asalnya.
+  const [isPending, startTransition] = useTransition();
+  const [target, setTarget] = useState<string | null>(null);
 
-  // Diturunkan saat render, bukan lewat effect: begitu pathname sampai ke
-  // tujuan, penanda ini padam sendiri.
-  const navigatingTo =
-    tappedHref && !covers(tappedHref, pathname) ? tappedHref : null;
+  // Terikat ke transisi yang sedang berjalan, jadi padam sendiri saat navigasi
+  // selesai, gagal, maupun dibatalkan — tidak bisa tersangkut.
+  const navigatingTo = isPending ? target : null;
+
+  const handleTap = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+    // Biarkan buka-di-tab-baru dan klik non-kiri ditangani browser.
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    if (href === pathname) return;
+    setTarget(href);
+    startTransition(() => router.push(href));
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-neutral-200 safe-bottom z-40">
@@ -72,7 +90,7 @@ export function BottomNav({ canUseAi }: { canUseAi: boolean }) {
             <Link
               key={entry.href}
               href={entry.href}
-              onClick={() => setTappedHref(entry.href)}
+              onClick={handleTap(entry.href)}
               aria-label={locked ? `${entry.label} (terbatas)` : undefined}
               aria-current={isCurrent(entry, pathname) ? "page" : undefined}
               className="flex flex-col items-center gap-1 px-4 py-2"
