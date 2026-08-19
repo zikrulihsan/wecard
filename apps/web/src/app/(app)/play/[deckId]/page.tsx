@@ -1,16 +1,16 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Skeleton } from "@/components/ui/skeleton";
+import { BackLink } from "@/components/nav/back-link";
+import { CardLoader } from "@/components/ui/card-loader";
 import { SectionPicker } from "./section-picker";
 
 export const dynamic = "force-dynamic";
 
 // Tautan kembali langsung tampil. Nama deck dan daftar level baru diketahui
-// setelah query, jadi cuma dua bagian itu yang punya kerangka. `params` sengaja
-// diteruskan sebagai promise supaya halaman ini tidak ikut menunggu.
+// setelah query, jadi cuma bagian itu yang punya penanda memuat — bentuknya
+// sama persis dengan loading.tsx rute ini. `params` sengaja diteruskan sebagai
+// promise supaya halaman ini tidak ikut menunggu.
 export default function DeckDetailPage({
   params,
 }: {
@@ -18,15 +18,9 @@ export default function DeckDetailPage({
 }) {
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-6">
-      <Link
-        href="/home"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
-      >
-        <ChevronLeft className="size-4" />
-        Kembali
-      </Link>
+      <BackLink href="/home" />
 
-      <Suspense fallback={<DeckBodySkeleton />}>
+      <Suspense fallback={<CardLoader label="Membuka deck" />}>
         <DeckBody params={params} />
       </Suspense>
     </div>
@@ -92,26 +86,6 @@ async function DeckBody({
         deckName={category.name}
         sections={sectionData}
       />
-    </>
-  );
-}
-
-function DeckBodySkeleton() {
-  return (
-    <>
-      <header className="mb-6 space-y-2">
-        <Skeleton className="h-9 w-52" />
-        <Skeleton className="h-5 w-full max-w-sm" />
-      </header>
-      <Skeleton className="h-5 w-24 mb-3" />
-      <div className="space-y-2">
-        {[0, 1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-[4.5rem] rounded-xl" />
-        ))}
-      </div>
-      <div className="pt-8">
-        <Skeleton className="h-11 w-full rounded-full" />
-      </div>
     </>
   );
 }

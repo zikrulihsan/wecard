@@ -1,36 +1,26 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ChevronLeft, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { getAiAccess } from "@/lib/ai/access";
+import { BackLink } from "@/components/nav/back-link";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardLoader } from "@/components/ui/card-loader";
 import { CreateForm } from "./create-form";
+import { CreateHeader } from "./header";
 
 export const dynamic = "force-dynamic";
 
 // Tautan kembali dan judul tidak menunggu apa pun. Yang ditunggu cuma status
 // akses AI, karena itu yang menentukan formulir atau catatan terkunci yang
-// tampil — jadi hanya bagian itu yang punya kerangka.
+// tampil — jadi hanya bagian itu yang punya penanda memuat, dan bentuknya sama
+// persis dengan loading.tsx rute ini.
 export default function CreateDeckPage() {
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-6">
-      <Link
-        href="/home"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
-      >
-        <ChevronLeft className="size-4" />
-        Kembali
-      </Link>
+      <BackLink href="/home" />
+      <CreateHeader />
 
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold">Bikin Deck Sendiri</h1>
-        <p className="text-muted-foreground mt-1">
-          Isi konteksnya, AI yang nulis kartunya. Deck ini cuma kelihatan di
-          akunmu.
-        </p>
-      </header>
-
-      <Suspense fallback={<FormSkeleton />}>
+      <Suspense fallback={<CardLoader label="Menyiapkan formulir" />}>
         <AiGate />
       </Suspense>
     </div>
@@ -41,20 +31,6 @@ async function AiGate() {
   const canUseAi = await getAiAccess();
 
   return canUseAi ? <CreateForm /> : <LockedNotice />;
-}
-
-function FormSkeleton() {
-  return (
-    <div className="space-y-5">
-      {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="space-y-2">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-9 w-full rounded-md" />
-        </div>
-      ))}
-      <Skeleton className="h-11 w-full rounded-full" />
-    </div>
-  );
 }
 
 function LockedNotice() {
