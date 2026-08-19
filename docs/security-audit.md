@@ -7,8 +7,8 @@ lokal (Supabase di-stub). Setiap temuan di bawah ditandai apakah **terverifikasi
 **terverifikasi dari source dependency**, atau **temuan tingkat kode/kebijakan** yang belum
 dieksekusi karena butuh instance Supabase asli.
 
-Temuan tingkat **High** sudah diperbaiki di branch yang sama (lihat
-[Status perbaikan](#status-perbaikan)). Temuan Medium dan Low masih terbuka.
+Temuan **High**, serta **M-2** dan **M-3**, sudah diperbaiki di branch yang sama (lihat
+[Status perbaikan](#status-perbaikan)). M-1, M-4, dan seluruh temuan Low masih terbuka.
 
 ## Ringkasan
 
@@ -18,8 +18,8 @@ Temuan tingkat **High** sudah diperbaiki di branch yang sama (lihat
 | [H-2](#h-2) | High | Open redirect pasca-login di `/login` | terverifikasi dari source Next | **sudah diperbaiki** |
 | [H-3](#h-3) | High | Next.js 16.2.3 kena 17 advisory high, termasuk bypass middleware | `pnpm audit` | **sudah diperbaiki** |
 | [M-1](#m-1) | Medium | Prompt injection: `deckName` masuk zona instruksi, input tanpa delimiter | terverifikasi live | terbuka |
-| [M-2](#m-2) | Medium | Rate limit AI bisa direset sendiri oleh user | tingkat kebijakan RLS | terbuka |
-| [M-3](#m-3) | Medium | Nol security header, `X-Powered-By` bocor | terverifikasi live | terbuka |
+| [M-2](#m-2) | Medium | Rate limit AI bisa direset sendiri oleh user | **tereproduksi di Postgres lokal** | **sudah diperbaiki** |
+| [M-3](#m-3) | Medium | Nol security header, `X-Powered-By` bocor | terverifikasi live | **sudah diperbaiki** |
 | [M-4](#m-4) | Medium | Cookie sesi tanpa `Secure`, umur 400 hari | source `@supabase/ssr` | terbuka |
 | [L-1](#l-1) | Low | Gerbang middleware lolos dengan JWT palsu | terverifikasi live | terbuka |
 | [L-2](#l-2) | Low | `handle_new_user()` SECURITY DEFINER tanpa `search_path` | tingkat kode | terbuka |
@@ -79,14 +79,90 @@ Validasi: `pnpm lint` bersih (menyisakan satu warning `setLanguage` yang sudah a
 perubahan ini), `pnpm build` sukses, gerbang middleware diuji ulang dan masih bekerja
 (`/profile` tanpa sesi → 307 ke `/login`).
 
+### M-2 — kuota AI ditegakkan Postgres
+
+Temuan ini semula tingkat kebijakan. Sebelum menambal, saya bangun Postgres 16 lokal dengan
+tiruan lingkungan Supabase (role `anon`/`authenticated`/`service_role`, skema `auth`,
+`auth.uid()` yang membaca klaim JWT, dan `ALTER DEFAULT PRIVILEGES ... GRANT ALL` yang dipasang
+Supabase untuk skema public), lalu menjalankan migration 00001–00003 apa adanya.
+
+**Eksploitnya nyata**, bukan sekadar pembacaan policy — sebagai role `authenticated` dengan
+`sub` milik penyerang sendiri:
+
+```
+kuota terpakai sejam terakhir: 5
+DELETE FROM ai_generations WHERE user_id = auth.uid();   -->  DELETE 5
+kuota terpakai sejam terakhir: 0
+```
+
+Balapan juga terbukti. Meniru alur lama (baca hitungan, jeda, lalu sisipkan) dengan 12 request
+paralel dan batas 5: **12 baris tersimpan**, bukan 5.
+
+Perbaikannya di `00004_ai_quota.sql`:
+
+- Policy `FOR ALL` diganti policy SELECT saja, dan `INSERT, UPDATE, DELETE` di-`REVOKE` dari
+  `anon` dan `authenticated`. Policy saja tidak cukup — RLS menyaring baris, GRANT yang
+  menentukan perintah apa yang boleh dijalankan sama sekali.
+- Penulisan dipindah ke dua fungsi `SECURITY DEFINER` dengan `search_path` terkunci.
+  `claim_ai_generation()` mengambil `pg_advisory_xact_lock` per user, lalu menghitung dan
+  menyisipkan dalam satu transaksi. `finish_ai_generation()` melengkapi hasilnya, dan
+  syarat `status = pending` membuat satu baris hanya bisa difinalkan sekali.
+
+Hasil pengujian setelah perbaikan, semuanya sebagai role `authenticated`:
+
+| Percobaan | Hasil |
+| --- | --- |
+| `DELETE` jejak kuota sendiri | `permission denied for table ai_generations` |
+| `INSERT` baris langsung | `permission denied` |
+| `UPDATE` status baris sendiri | `permission denied` |
+| `SELECT` riwayat sendiri | tetap boleh |
+| Ambil slot ke-1…5 | berhasil |
+| Ambil slot ke-6 | `rate_limited` |
+| Baris tersisa setelah slot ke-6 ditolak | 5 — percobaan yang ditolak tidak menyisakan baris |
+| Finalkan baris yang sama dua kali | yang kedua tidak mengubah apa pun |
+| Finalkan baris milik user lain | tidak mengubah apa pun |
+| Ambil slot tanpa `ai_enabled` | `ai_not_enabled` |
+| **12 request paralel, batas 5** | **tepat 5 berhasil, 7 ditolak, 5 baris di DB** |
+
+Route handler menyesuaikan: provider di-resolve lebih dulu supaya nama & model tercatat saat
+slot diambil, lalu `claim` → panggil LLM → `finish`. Kuota tidak lagi dihitung di JavaScript.
+
+### M-3 — security header
+
+Ditambahkan di `next.config.ts`: CSP, `X-Frame-Options`, `X-Content-Type-Options`,
+`Referrer-Policy`, `Permissions-Policy`, dan HSTS (production saja — di localhost, HSTS
+memaksa https untuk semua proyek lain di host yang sama). `poweredByHeader` dimatikan.
+
+Host Supabase disuntikkan otomatis ke `connect-src` dari `NEXT_PUBLIC_SUPABASE_URL`, termasuk
+origin `wss://` untuk Realtime.
+
+`script-src` sengaja tetap memakai `unsafe-inline`. Alternatifnya nonce per request, dan itu
+menuntut setiap halaman dirender dinamis — padahal landing, `/login`, dan `/register` statis dan
+justru paling untung dari prerender. Nilai CSP di sini terletak pada `frame-ancestors`,
+`form-action`, `base-uri`, dan `connect-src`, dan keempatnya ketat.
+
+Diuji di Chromium sungguhan, bukan sekadar membaca header:
+
+| Halaman | Hidrasi React | Pelanggaran CSP | Error lain |
+| --- | --- | --- | --- |
+| `/` | OK | 0 | 0 |
+| `/login` | OK (input terkendali merespons) | 0 | 0 |
+| `/register` | OK (input terkendali merespons) | 0 | 0 |
+| `/profile` (grup `(app)` + BottomNav) | OK, 4 tautan nav | 0 | 0 |
+
+Clickjacking ikut diuji: memuat `/login` di dalam `<iframe>` ditolak browser —
+*"Refused to frame … because an ancestor violates the following Content Security Policy"*.
+
 ### Belum dikerjakan
 
-M-1 sampai L-7 masih terbuka. Urutan yang disarankan ada di
-[bagian akhir dokumen](#urutan-perbaikan-yang-disarankan).
+M-1 (prompt injection), M-4 (cookie `Secure`), dan L-1 sampai L-7 masih terbuka. Urutan yang
+disarankan ada di [bagian akhir dokumen](#urutan-perbaikan-yang-disarankan).
 
-Satu catatan proses: repo belum punya kerangka tes sama sekali, jadi `safePath()` diverifikasi
-lewat skrip sekali jalan, bukan tes regresi yang ikut ter-commit. Menambahkan runner tes (mis.
-vitest) sepadan kalau perbaikan keamanan berikutnya mau dikunci supaya tidak diam-diam balik lagi.
+Satu catatan proses: repo belum punya kerangka tes sama sekali, jadi seluruh verifikasi di atas
+— `safePath()`, migration 00004, dan CSP — dijalankan lewat skrip sekali jalan, bukan tes regresi
+yang ikut ter-commit. Menambahkan runner tes (mis. vitest untuk `safePath()`, plus harness
+Postgres lokal untuk migration) sepadan kalau perbaikan keamanan ini mau dikunci supaya tidak
+diam-diam balik lagi.
 
 ---
 
