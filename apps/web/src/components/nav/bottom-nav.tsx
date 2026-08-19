@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type MouseEvent } from "react";
+import { useEffect, useState, useTransition, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -39,12 +39,52 @@ function isCurrent(entry: NavEntry, pathname: string) {
   );
 }
 
-// `canUseAi` belum diketahui (undefined) saat nav dirender duluan, sebelum
-// status akses AI selesai dibaca. Selama itu gemboknya tidak digambar —
-// lebih baik menyusul daripada sempat salah tampil.
-export function BottomNav({ canUseAi }: { canUseAi?: boolean }) {
+/**
+ * Status akses AI, disimpan di tingkat modul supaya satu kali ambil cukup
+ * untuk seluruh umur halaman. Nav ini ikut ter-mount ulang tiap pindah rute;
+ * tanpa cache di sini, tiap pindah tab menembak /api/ai-access lagi.
+ */
+let cachedAiAccess: boolean | undefined;
+let aiAccessInFlight: Promise<boolean> | null = null;
+
+function fetchAiAccess(): Promise<boolean> {
+  aiAccessInFlight ??= fetch("/api/ai-access")
+    .then((res) => (res.ok ? res.json() : null))
+    .then((body) => {
+      cachedAiAccess = body?.canUseAi === true;
+      return cachedAiAccess;
+    })
+    .catch(() => {
+      // Jaringan putus bukan jawaban "tidak boleh". Dilepas supaya navigasi
+      // berikutnya mencoba lagi, bukan terkunci pada kegagalan sesaat.
+      aiAccessInFlight = null;
+      return false;
+    });
+
+  return aiAccessInFlight;
+}
+
+// Gembok di tab "Bikin" baru digambar setelah status aksesnya diketahui —
+// selama masih `undefined` sengaja dikosongkan, karena menyusul lebih baik
+// daripada sempat salah tampil. Status ini diambil dari klien, bukan
+// diturunkan dari layout; alasannya ada di catatan pada (app)/layout.tsx.
+export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [canUseAi, setCanUseAi] = useState<boolean | undefined>(cachedAiAccess);
+
+  useEffect(() => {
+    if (cachedAiAccess !== undefined) return;
+
+    let active = true;
+    fetchAiAccess().then((value) => {
+      if (active) setCanUseAi(value);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Navigasi dijalankan di dalam transition supaya `isPending` jadi sumber
   // kebenaran kapan penanda menyala. useLinkStatus tidak dipakai (pengukuran

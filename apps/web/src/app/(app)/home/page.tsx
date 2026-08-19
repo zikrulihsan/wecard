@@ -3,24 +3,25 @@ import Link from "next/link";
 import { Lock, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardLoader } from "@/components/ui/card-loader";
+import { HomeHeader } from "./header";
 
 export const dynamic = "force-dynamic";
 
 // Judul dan sub-judul tidak menunggu apa pun, jadi langsung dirender. Hanya
-// daftar deck yang datanya dari Supabase yang dibungkus Suspense — kerangka
-// abu-abu cuma muncul di bagian yang memang sedang diambil.
+// daftar deck yang datanya dari Supabase yang dibungkus Suspense — penanda
+// memuat cuma muncul di bagian yang memang sedang diambil.
+//
+// Fallback-nya sengaja sama persis dengan loading.tsx: kerangka rute yang
+// ter-prefetch tampil lebih dulu, lalu digantikan render server halaman ini.
+// Kalau bentuk keduanya berbeda, satu kali pindah halaman terlihat sebagai dua
+// kali pergantian tampilan.
 export default function HomePage() {
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">Pilih Kategori</h1>
-        <p className="text-muted-foreground mt-1">
-          Mau main kartu apa hari ini?
-        </p>
-      </header>
+      <HomeHeader />
 
-      <Suspense fallback={<DeckListSkeleton />}>
+      <Suspense fallback={<CardLoader label="Mengambil daftar deck" />}>
         <DeckList />
       </Suspense>
     </div>
@@ -74,16 +75,6 @@ async function DeckList() {
           <DeckGrid categories={aiDecks} unlockedIds={unlockedIds} />
         </section>
       )}
-    </div>
-  );
-}
-
-function DeckListSkeleton() {
-  return (
-    <div className="grid gap-4">
-      {[0, 1, 2].map((i) => (
-        <Skeleton key={i} className="h-36 rounded-2xl" />
-      ))}
     </div>
   );
 }
