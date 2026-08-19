@@ -7,30 +7,86 @@ lokal (Supabase di-stub). Setiap temuan di bawah ditandai apakah **terverifikasi
 **terverifikasi dari source dependency**, atau **temuan tingkat kode/kebijakan** yang belum
 dieksekusi karena butuh instance Supabase asli.
 
-Tidak ada kode aplikasi yang diubah oleh audit ini — dokumen ini murni temuan + patch usulan.
+Temuan tingkat **High** sudah diperbaiki di branch yang sama (lihat
+[Status perbaikan](#status-perbaikan)). Temuan Medium dan Low masih terbuka.
 
 ## Ringkasan
 
-| ID | Tingkat | Temuan | Status bukti |
-| --- | --- | --- | --- |
-| [H-1](#h-1) | High | Open redirect di `/callback` | terverifikasi live |
-| [H-2](#h-2) | High | Open redirect pasca-login di `/login` | terverifikasi dari source Next |
-| [H-3](#h-3) | High | Next.js 16.2.3 kena 17 advisory high, termasuk bypass middleware | `pnpm audit` |
-| [M-1](#m-1) | Medium | Prompt injection: `deckName` masuk zona instruksi, input tanpa delimiter | terverifikasi live |
-| [M-2](#m-2) | Medium | Rate limit AI bisa direset sendiri oleh user | tingkat kebijakan RLS |
-| [M-3](#m-3) | Medium | Nol security header, `X-Powered-By` bocor | terverifikasi live |
-| [M-4](#m-4) | Medium | Cookie sesi tanpa `Secure`, umur 400 hari | source `@supabase/ssr` |
-| [L-1](#l-1) | Low | Gerbang middleware lolos dengan JWT palsu | terverifikasi live |
-| [L-2](#l-2) | Low | `handle_new_user()` SECURITY DEFINER tanpa `search_path` | tingkat kode |
-| [L-3](#l-3) | Low | Grant kolom `ai_enabled` rapuh terhadap `GRANT ALL` susulan | tingkat kode |
-| [L-4](#l-4) | Low | Pemegang akses AI bisa menulis ke DB melewati API route | tingkat kebijakan RLS |
-| [L-5](#l-5) | Low | Detail error Postgres bocor di luar production | tingkat kode |
-| [L-6](#l-6) | Low | Kebijakan password lemah, tanpa rate limit auth di aplikasi | tingkat kode |
-| [L-7](#l-7) | Low | Input pribadi user tersimpan tanpa TTL di `ai_generations` | tingkat kode |
+| ID | Tingkat | Temuan | Status bukti | Perbaikan |
+| --- | --- | --- | --- | --- |
+| [H-1](#h-1) | High | Open redirect di `/callback` | terverifikasi live | **sudah diperbaiki** |
+| [H-2](#h-2) | High | Open redirect pasca-login di `/login` | terverifikasi dari source Next | **sudah diperbaiki** |
+| [H-3](#h-3) | High | Next.js 16.2.3 kena 17 advisory high, termasuk bypass middleware | `pnpm audit` | **sudah diperbaiki** |
+| [M-1](#m-1) | Medium | Prompt injection: `deckName` masuk zona instruksi, input tanpa delimiter | terverifikasi live | terbuka |
+| [M-2](#m-2) | Medium | Rate limit AI bisa direset sendiri oleh user | tingkat kebijakan RLS | terbuka |
+| [M-3](#m-3) | Medium | Nol security header, `X-Powered-By` bocor | terverifikasi live | terbuka |
+| [M-4](#m-4) | Medium | Cookie sesi tanpa `Secure`, umur 400 hari | source `@supabase/ssr` | terbuka |
+| [L-1](#l-1) | Low | Gerbang middleware lolos dengan JWT palsu | terverifikasi live | terbuka |
+| [L-2](#l-2) | Low | `handle_new_user()` SECURITY DEFINER tanpa `search_path` | tingkat kode | terbuka |
+| [L-3](#l-3) | Low | Grant kolom `ai_enabled` rapuh terhadap `GRANT ALL` susulan | tingkat kode | terbuka |
+| [L-4](#l-4) | Low | Pemegang akses AI bisa menulis ke DB melewati API route | tingkat kebijakan RLS | terbuka |
+| [L-5](#l-5) | Low | Detail error Postgres bocor di luar production | tingkat kode | terbuka |
+| [L-6](#l-6) | Low | Kebijakan password lemah, tanpa rate limit auth di aplikasi | tingkat kode | terbuka |
+| [L-7](#l-7) | Low | Input pribadi user tersimpan tanpa TTL di `ai_generations` | tingkat kode | terbuka |
 
 Tidak ditemukan: XSS (tidak ada satu pun sink berbahaya di repo), SQL injection (PostgREST
 memarameterkan semuanya), CSRF (SameSite=Lax + endpoint JSON-only), IDOR (semua akses data
 lewat RLS), rahasia yang ter-commit (32 commit discan, hanya placeholder).
+
+---
+
+## Status perbaikan {#status-perbaikan}
+
+Diterapkan setelah audit, di branch yang sama.
+
+### H-1 dan H-2 — helper `safePath()`
+
+Berkas baru `apps/web/src/lib/safe-path.ts`, dipakai di `callback/route.ts` dan
+`login/page.tsx`. Hanya path relatif satu garis miring yang diterima; selain itu jatuh ke
+`/home`. Karakter kontrol dibuang lebih dulu, karena browser membuang tab/newline dari URL
+sebelum menguraikannya — tanpa langkah itu `"/\n/evil.com"` berubah jadi `//evil.com` dan
+lolos pemeriksaan.
+
+Verifikasi ulang PoC H-1 terhadap **build production** (`next start`):
+
+| `?redirect=` | Sebelum | Sesudah |
+| --- | --- | --- |
+| `@evil.example` | `http://host@evil.example/` | `http://host/home` |
+| `@evil.example/phish` | `http://host@evil.example/phish` | `http://host/home` |
+| `//evil.example` | (tidak tembus) | `http://host/home` |
+| `https://evil.example` | (tidak tembus) | `http://host/home` |
+| `/home` | `http://host/home` | `http://host/home` |
+| `/play/abc-123` | `http://host/play/abc-123` | `http://host/play/abc-123` |
+
+Untuk H-2 (sisi klien), guard-nya dikonfirmasi ikut ter-bundle dan terpasang langsung pada
+`useSearchParams().get("redirect")` di chunk halaman login — bukan tereliminasi build.
+
+Payload yang diuji terhadap `safePath()` dan semuanya tertahan di origin sendiri:
+userinfo `@`, URL absolut, protocol-relative `//`, backslash `/\`, tab, newline, carriage
+return, UNC `\\`, skema `javascript:` dan `data:`, serta string kosong. Tujuh path sah
+(`/home`, `/profile`, `/play/<id>`, `/play/<id>/session`, `/create`, `/store`, dan path
+dengan query + fragment) lewat tanpa berubah.
+
+### H-3 — upgrade Next.js
+
+`next` dan `eslint-config-next` naik dari **16.2.3 ke 16.3.1** (di atas 16.2.11 yang
+menutup rangkaian bypass middleware terakhir). Sisa `ws@8.20.0` — transitif dari
+`@google/genai` dan `@supabase/realtime-js` — ditutup lewat `pnpm.overrides` ke `^8.21.0`.
+
+`pnpm audit --prod`: **32 advisory → 0**.
+
+Validasi: `pnpm lint` bersih (menyisakan satu warning `setLanguage` yang sudah ada sebelum
+perubahan ini), `pnpm build` sukses, gerbang middleware diuji ulang dan masih bekerja
+(`/profile` tanpa sesi → 307 ke `/login`).
+
+### Belum dikerjakan
+
+M-1 sampai L-7 masih terbuka. Urutan yang disarankan ada di
+[bagian akhir dokumen](#urutan-perbaikan-yang-disarankan).
+
+Satu catatan proses: repo belum punya kerangka tes sama sekali, jadi `safePath()` diverifikasi
+lewat skrip sekali jalan, bukan tes regresi yang ikut ter-commit. Menambahkan runner tes (mis.
+vitest) sepadan kalau perbaikan keamanan berikutnya mau dikunci supaya tidak diam-diam balik lagi.
 
 ---
 
@@ -495,7 +551,7 @@ membongkar kontrol keamanan.
   terlanjur dibuat, jadi tidak meninggalkan deck rusak.
 - **CSRF tertutup** lewat SameSite=Lax + endpoint JSON-only.
 
-## Urutan perbaikan yang disarankan
+## Urutan perbaikan yang disarankan {#urutan-perbaikan-yang-disarankan}
 
 1. **H-1 dan H-2** — satu helper `safePath()`, dua pemanggilan. Perubahan paling kecil dengan
    dampak paling besar.
