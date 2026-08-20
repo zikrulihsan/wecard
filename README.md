@@ -32,7 +32,38 @@ pnpm install
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+
+# Origin publik aplikasi — dipakai untuk menyusun tautan konfirmasi email.
+# Lokal: http://localhost:3000 · Produksi: https://domain-kamu.com
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+
+### 2a. Setup URL konfirmasi email
+
+Tautan di email konfirmasi dibentuk Supabase, bukan aplikasi ini. Kalau
+**Authentication → URL Configuration** di dashboard belum disetel per
+environment, tautannya akan menunjuk ke `http://localhost:3000` walaupun
+pendaftarannya dari domain produksi.
+
+Isi di dashboard Supabase project produksi:
+
+| Field | Nilai |
+| --- | --- |
+| **Site URL** | `https://domain-kamu.com` |
+| **Redirect URLs** | `https://domain-kamu.com/callback`, plus `http://localhost:3000/callback` untuk dev |
+
+Catatan penting:
+
+- Supabase hanya menghormati `emailRedirectTo` kalau URL-nya cocok dengan salah
+  satu entri **Redirect URLs**. Kalau tidak cocok, entri itu dibuang diam-diam
+  dan pengguna dilempar ke **Site URL** — inilah kenapa tautannya bisa mendarat
+  di `http://localhost:3000/?code=...` alih-alih `/callback`.
+- `NEXT_PUBLIC_SITE_URL` di deploy produksi harus domain produksi. Variabel ini
+  dibaca saat build, jadi setelah diubah perlu redeploy.
+- Sebagai jaring pengaman, middleware aplikasi mengalihkan `/?code=...` ke
+  `/callback`, jadi tautan lama tetap bisa dipakai selama host-nya benar. Host
+  yang salah (`localhost` di email pengguna) tetap hanya bisa dibetulkan lewat
+  dua setelan di atas.
 
 ### 2b. Setup AI (fitur generate deck)
 
