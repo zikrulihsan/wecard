@@ -18,6 +18,7 @@ import {
   MIN_CARDS_PER_SECTION,
   MIN_SECTIONS,
   TONES,
+  getAudiencePlaceholders,
 } from "@/lib/ai/deck-schema";
 
 export function CreateForm() {
@@ -83,6 +84,7 @@ export function CreateForm() {
   }
 
   const totalCards = sectionCount * cardsPerSection;
+  const placeholders = getAudiencePlaceholders(audience);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -196,7 +198,7 @@ export function CreateForm() {
           value={deckName}
           onChange={(e) => setDeckName(e.target.value)}
           maxLength={60}
-          placeholder="Misal: Malam Jumat Berdua"
+          placeholder={placeholders.deckName}
           disabled={isGenerating}
         />
       </Field>
@@ -210,7 +212,7 @@ export function CreateForm() {
           onChange={(e) => setContext(e.target.value)}
           maxLength={500}
           rows={3}
-          placeholder="Misal: kami LDR sudah 2 tahun dan baru ketemu sebulan sekali"
+          placeholder={placeholders.context}
           disabled={isGenerating}
         />
       </Field>
@@ -221,7 +223,7 @@ export function CreateForm() {
           onChange={(e) => setAvoid(e.target.value)}
           maxLength={300}
           rows={2}
-          placeholder="Misal: mantan, kerjaan, politik"
+          placeholder={placeholders.avoid}
           disabled={isGenerating}
         />
       </Field>

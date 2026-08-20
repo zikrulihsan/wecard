@@ -5,15 +5,95 @@ import { DECK_THEMES } from "@flipcard/types";
 // INPUT — field yang diisi user di form generate
 // ============================================================
 
+// Placeholder contoh per audience — dipakai form generate supaya contohnya
+// nyambung sama pilihan "mau dimainkan sama siapa".
+export type AudiencePlaceholders = {
+  deckName: string;
+  context: string;
+  avoid: string;
+};
+
 export const AUDIENCES = [
-  { value: "pasangan", label: "Pasangan" },
-  { value: "sahabat", label: "Sahabat / teman dekat" },
-  { value: "keluarga", label: "Keluarga" },
-  { value: "anak-orang-tua", label: "Anak & orang tua" },
-  { value: "rekan-kerja", label: "Rekan kerja / tim" },
-  { value: "kenalan-baru", label: "Kenalan baru" },
-  { value: "lainnya", label: "Lainnya (jelaskan di konteks)" },
+  {
+    value: "pasangan",
+    label: "Pasangan",
+    placeholders: {
+      deckName: "Misal: Malam Jumat Berdua",
+      context: "Misal: kami LDR sudah 2 tahun dan baru ketemu sebulan sekali",
+      avoid: "Misal: mantan, kerjaan, politik",
+    },
+  },
+  {
+    value: "sahabat",
+    label: "Sahabat / teman dekat",
+    placeholders: {
+      deckName: "Misal: Nongkrong Sampai Pagi",
+      context:
+        "Misal: kami sahabat dari SMA, sekarang beda kota dan jarang ketemu",
+      avoid: "Misal: berat badan, gaji, drama grup",
+    },
+  },
+  {
+    value: "keluarga",
+    label: "Keluarga",
+    placeholders: {
+      deckName: "Misal: Kumpul Keluarga Besar",
+      context:
+        "Misal: dimainkan pas lebaran, ada om, tante, dan sepupu dari anak-anak sampai dewasa",
+      avoid: "Misal: politik, warisan, kapan nikah",
+    },
+  },
+  {
+    value: "anak-orang-tua",
+    label: "Anak & orang tua",
+    placeholders: {
+      deckName: "Misal: Ngobrol Sebelum Tidur",
+      context: "Misal: anak umur 9 tahun, biasanya main sebelum tidur",
+      avoid: "Misal: nilai sekolah, dibanding-bandingkan sama saudara",
+    },
+  },
+  {
+    value: "rekan-kerja",
+    label: "Rekan kerja / tim",
+    placeholders: {
+      deckName: "Misal: Icebreaker Senin Pagi",
+      context:
+        "Misal: tim 6 orang, setengahnya remote dan belum pernah ketemu langsung",
+      avoid: "Misal: gaji, promosi, gosip kantor",
+    },
+  },
+  {
+    value: "kenalan-baru",
+    label: "Kenalan baru",
+    placeholders: {
+      deckName: "Misal: Kenalan Tanpa Canggung",
+      context:
+        "Misal: acara komunitas, kebanyakan baru pertama kali ketemu hari itu",
+      avoid: "Misal: agama, politik, status hubungan",
+    },
+  },
+  {
+    value: "lainnya",
+    label: "Lainnya (jelaskan di konteks)",
+    placeholders: {
+      deckName: "Misal: Malam Seru Bareng",
+      context: "Misal: dimainkan sama tetangga kompleks pas arisan bulanan",
+      avoid: "Misal: politik, agama, uang",
+    },
+  },
 ] as const;
+
+export const DEFAULT_AUDIENCE_PLACEHOLDERS: AudiencePlaceholders =
+  AUDIENCES[0].placeholders;
+
+export function getAudiencePlaceholders(
+  audience: string
+): AudiencePlaceholders {
+  return (
+    AUDIENCES.find((option) => option.value === audience)?.placeholders ??
+    DEFAULT_AUDIENCE_PLACEHOLDERS
+  );
+}
 
 export const TONES = [
   { value: "santai", label: "Santai & ringan" },
