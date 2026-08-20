@@ -38,6 +38,17 @@ function routeFor(request: NextRequest, isSignedIn: boolean) {
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Supabase mengabaikan `emailRedirectTo` kalau URL itu belum terdaftar di
+  // Redirect URLs, lalu jatuh balik ke Site URL — kode konfirmasinya mendarat
+  // di "/" ("/?code=..."), landing page tidak menukarnya, dan pengguna merasa
+  // tautan konfirmasinya tidak berfungsi. Lempar ke /callback supaya
+  // penukaran sesi tetap jalan; seluruh query (termasuk `redirect`) ikut.
+  if (pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/callback";
+    return NextResponse.redirect(url);
+  }
+
   // Selain rute terproteksi & rute auth (landing, /callback, /api, aset)
   // tidak butuh cek sesi sama sekali.
   if (!isProtectedPath(pathname) && !isAuthPath(pathname)) {
