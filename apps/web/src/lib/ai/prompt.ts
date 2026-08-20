@@ -1,3 +1,5 @@
+import { DECK_THEMES } from "@flipcard/types";
+import { DECK_THEME_STYLES, themeForAudience } from "@/lib/deck-theme";
 import { AUDIENCES, DEPTHS, TONES, type GenerateDeckInput } from "./deck-schema";
 
 export const SYSTEM_PROMPT = `Kamu penulis konten untuk FlipCard, card game percakapan yang dimainkan dua orang atau lebih di satu perangkat. Satu kartu = satu giliran.
@@ -21,6 +23,8 @@ Aturan kartu special (hanya jika diminta): isinya mekanik permainan, bukan perta
 - switch: pertanyaan dibalik ke penanya.
 - double: pemain menjawab dua kartu berikutnya.
 Tulis instruksinya singkat dan jelas, maksimal satu kalimat.
+
+Pilih juga satu tema warna untuk deck ini lewat field "theme". Ambil yang paling cocok dengan audiens dan nuansanya — warna deck dipakai di sampul, layar main, dan layar selesai.
 
 Section adalah babak permainan. Urutkan dari yang paling ringan ke yang paling berat, dan pastikan setiap section punya sudut pandang yang jelas berbeda dari section lain.
 
@@ -85,6 +89,9 @@ export function buildUserPrompt(input: GenerateDeckInput): string {
     `- Jumlah kartu per section: tepat ${input.cardsPerSection}`,
     `- Tipe kartu yang boleh dipakai: ${cardTypes.join(", ")}`,
     `- Sebaran kesulitan: ${difficultyGuide}`,
+    `- Tema warna ("theme"), pilih satu: ${DECK_THEMES.map(
+      (name) => `${name} (${DECK_THEME_STYLES[name].mood})`
+    ).join("; ")}. Kalau ragu, pakai ${themeForAudience(input.audience)}.`,
   ];
 
   if (mix === "campuran") {

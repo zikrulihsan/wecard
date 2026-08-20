@@ -23,7 +23,7 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck: `packages/supabase/migrations/00002_ai_decks.sql`, lalu `packages/supabase/migrations/00003_ai_access.sql`
+3. Jalankan migration AI deck: `packages/supabase/migrations/00002_ai_decks.sql`, lalu `packages/supabase/migrations/00003_ai_access.sql`, lalu `packages/supabase/migrations/00004_deck_theme.sql` (warna deck)
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**

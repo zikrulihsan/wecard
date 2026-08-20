@@ -7,8 +7,8 @@
 -- ============================================================
 
 -- Category
-INSERT INTO categories (id, slug, name, description, is_free, sort_order) VALUES
-  ('22222222-2222-2222-2222-222222222222', 'anak-orang-tua', 'Anak & Orang Tua', 'Kartu untuk dimainkan orang tua bersama anak — pertanyaan hangat tentang hubungan kalian, plus role play dan studi kasus dari keseharian anak di sekolah.', true, 2);
+INSERT INTO categories (id, slug, name, description, is_free, sort_order, theme) VALUES
+  ('22222222-2222-2222-2222-222222222222', 'anak-orang-tua', 'Anak & Orang Tua', 'Kartu untuk dimainkan orang tua bersama anak — pertanyaan hangat tentang hubungan kalian, plus role play dan studi kasus dari keseharian anak di sekolah.', true, 2, 'sky');
 
 -- Sections
 INSERT INTO sections (id, category_id, slug, name, description, icon, sort_order) VALUES

@@ -3,8 +3,8 @@
 -- ============================================================
 
 -- Category
-INSERT INTO categories (id, slug, name, description, is_free, sort_order) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'pasangan', 'Pasangan', 'Kartu untuk pasangan — pertanyaan mendalam dan tantangan seru untuk mempererat hubungan kalian.', true, 1);
+INSERT INTO categories (id, slug, name, description, is_free, sort_order, theme) VALUES
+  ('11111111-1111-1111-1111-111111111111', 'pasangan', 'Pasangan', 'Kartu untuk pasangan — pertanyaan mendalam dan tantangan seru untuk mempererat hubungan kalian.', true, 1, 'pink');
 
 -- Sections
 INSERT INTO sections (id, category_id, slug, name, icon, sort_order) VALUES

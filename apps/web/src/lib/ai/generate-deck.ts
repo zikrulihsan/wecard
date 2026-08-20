@@ -1,3 +1,5 @@
+import type { DeckTheme } from "@flipcard/types";
+import { isDeckTheme, themeForAudience } from "@/lib/deck-theme";
 import type { GeneratedDeck, GenerateDeckInput } from "./deck-schema";
 import { createAnthropicProvider } from "./providers/anthropic";
 import { createGeminiProvider } from "./providers/gemini";
@@ -36,8 +38,13 @@ export function resolveProvider(): DeckProvider {
   );
 }
 
+/** Deck yang siap disimpan: tema sudah pasti terisi dan valid. */
+export type NormalizedDeck = Omit<GeneratedDeck, "theme"> & {
+  theme: DeckTheme;
+};
+
 export type GenerateResult = {
-  deck: GeneratedDeck;
+  deck: NormalizedDeck;
   provider: ProviderName;
   model: string;
   usage: { inputTokens: number; outputTokens: number };
@@ -58,13 +65,14 @@ export async function generateDeck(
 }
 
 /**
- * Model bisa meleset satu-dua kartu dari jumlah yang diminta, dan bisa
- * mengisi specialKind di kartu non-special. Rapikan sebelum masuk DB.
+ * Model bisa meleset satu-dua kartu dari jumlah yang diminta, bisa mengisi
+ * specialKind di kartu non-special, dan bisa melewatkan tema warna. Rapikan
+ * sebelum masuk DB.
  */
 function normalizeDeck(
   deck: GeneratedDeck,
   input: GenerateDeckInput
-): GeneratedDeck {
+): NormalizedDeck {
   const sections = deck.sections.slice(0, input.sectionCount).map((section) => ({
     ...section,
     cards: section.cards
@@ -85,5 +93,11 @@ function normalizeDeck(
     throw new GenerationFailed("Deck yang dihasilkan kosong. Coba lagi.");
   }
 
-  return { ...deck, sections: usable };
+  return {
+    ...deck,
+    theme: isDeckTheme(deck.theme)
+      ? deck.theme
+      : themeForAudience(input.audience),
+    sections: usable,
+  };
 }

@@ -5,10 +5,18 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useGameStore } from "@/stores/game-store";
 import { shuffle } from "@/lib/game/shuffle";
+import { DECK_THEME_STYLES } from "@/lib/deck-theme";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import type { GameCard, CardType, CardDifficulty, SpecialCardKind } from "@flipcard/types";
+import type {
+  GameCard,
+  CardType,
+  CardDifficulty,
+  DeckTheme,
+  SpecialCardKind,
+} from "@flipcard/types";
 
 interface Section {
   id: string;
@@ -21,10 +29,12 @@ interface Section {
 export function SectionPicker({
   deckId,
   deckName,
+  deckTheme,
   sections,
 }: {
   deckId: string;
   deckName: string;
+  deckTheme: DeckTheme;
   sections: Section[];
 }) {
   const router = useRouter();
@@ -103,7 +113,7 @@ export function SectionPicker({
 
     const shuffled = shuffle(gameCards);
 
-    startSession(deckId, deckName, selectedSlugs, shuffled);
+    startSession(deckId, deckName, deckTheme, selectedSlugs, shuffled);
     router.push(`/play/${deckId}/session`);
   }
 
@@ -152,7 +162,12 @@ export function SectionPicker({
           onClick={onStart}
           disabled={selected.size === 0 || loading || totalCards === 0}
           size="lg"
-          className="w-full rounded-full shadow-lg"
+          className={cn(
+            // Warna deck dibawa sampai ke tombol mulai supaya halaman ini
+            // tidak terasa lepas dari sampulnya di beranda.
+            "w-full rounded-full shadow-lg bg-gradient-to-r text-white hover:opacity-95",
+            DECK_THEME_STYLES[deckTheme].card
+          )}
         >
           {loading
             ? "Menyiapkan kartu..."

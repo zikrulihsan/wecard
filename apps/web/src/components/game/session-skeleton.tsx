@@ -1,14 +1,25 @@
+import type { DeckTheme } from "@flipcard/types";
+import { deckThemeStyle } from "@/lib/deck-theme";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 /**
  * Kerangka layar main. Dipakai dua kali: sebagai loading.tsx rute sesi, dan
  * sebagai tampilan sementara di dalam halaman selagi store zustand dipulihkan
  * dari localStorage. Bentuknya sengaja sama persis dengan layar aslinya
  * supaya kartu tidak "melompat" masuk saat sesi siap.
+ *
+ * `theme` belum diketahui saat dirender dari loading.tsx (temanya baru terbaca
+ * dari store di client), jadi warnanya jatuh ke tema bawaan sampai sesi siap.
  */
-export function SessionSkeleton() {
+export function SessionSkeleton({ theme }: { theme?: DeckTheme }) {
   return (
-    <div className="flex flex-col h-[calc(100dvh-var(--bottom-nav-h))] min-h-[26rem] overflow-hidden bg-gradient-to-br from-neutral-50 via-pink-50/40 to-rose-50/40">
+    <div
+      className={cn(
+        "flex flex-col h-[calc(100dvh-var(--bottom-nav-h))] min-h-[26rem] overflow-hidden bg-gradient-to-br",
+        deckThemeStyle(theme).play
+      )}
+    >
       <header className="shrink-0 flex items-center gap-1 px-4 pt-3 pb-2">
         <Skeleton className="size-8 rounded-full shrink-0" />
         <div className="flex-1 px-2 space-y-1.5">

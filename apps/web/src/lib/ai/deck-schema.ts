@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DECK_THEMES } from "@flipcard/types";
 
 // ============================================================
 // INPUT — field yang diisi user di form generate
@@ -108,6 +109,12 @@ export const generatedSectionSchema = z.object({
 
 export const generatedDeckSchema = z.object({
   name: z.string().describe("Nama deck, maksimal 5 kata"),
+  // Optional supaya model yang lupa mengisinya tidak menggagalkan generate —
+  // temanya diisi dari audiens saat normalisasi.
+  theme: z
+    .enum(DECK_THEMES)
+    .optional()
+    .describe("Nama tema warna deck, dipilih dari daftar yang tersedia"),
   description: z
     .string()
     .describe("1-2 kalimat yang menjelaskan deck ini untuk siapa dan isinya"),
