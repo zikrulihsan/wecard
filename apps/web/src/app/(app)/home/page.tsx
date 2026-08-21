@@ -6,6 +6,7 @@ import { deckThemeStyle } from "@/lib/deck-theme";
 import { Badge } from "@/components/ui/badge";
 import { CardLoader } from "@/components/ui/card-loader";
 import { cn } from "@/lib/utils";
+import { AiDeckCta, AiDeckCtaPlaceholder } from "./ai-deck-cta";
 import { HomeHeader } from "./header";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,12 @@ export default function HomePage() {
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-8">
       <HomeHeader />
+
+      {/* Punya Suspense sendiri: sisa jatah dibaca dari tabel lain, dan tidak
+          ada alasan daftar deck menunggu hasilnya. */}
+      <Suspense fallback={<AiDeckCtaPlaceholder />}>
+        <AiDeckCta />
+      </Suspense>
 
       <Suspense fallback={<CardLoader label="Mengambil daftar deck" />}>
         <DeckList />

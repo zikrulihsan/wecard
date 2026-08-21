@@ -1,12 +1,8 @@
 import { cache } from "react";
 import { createClient, getAuthSnapshot } from "@/lib/supabase/server";
+import { AI_GENERATION_LIMIT } from "./quota";
 
-/**
- * Jatah generate deck AI per akun — sekali seumur akun, bukan per jam.
- * Kembarannya di sisi database ada di fungsi `public.ai_generation_limit()`
- * (migration 00005); kalau angkanya diubah, ubah keduanya.
- */
-export const AI_GENERATION_LIMIT = 2;
+export { AI_GENERATION_LIMIT };
 
 export interface AiAccess {
   /** Sakelar pemutus per akun (`profiles.ai_enabled`). Bawaannya terbuka. */

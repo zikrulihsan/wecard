@@ -1,4 +1,5 @@
 import { CardLoader } from "@/components/ui/card-loader";
+import { AiDeckCtaPlaceholder } from "./ai-deck-cta";
 import { HomeHeader } from "./header";
 
 /**
@@ -12,6 +13,7 @@ export default function HomeLoading() {
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-8">
       <HomeHeader />
+      <AiDeckCtaPlaceholder />
       <CardLoader label="Mengambil daftar deck" />
     </div>
   );

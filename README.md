@@ -166,7 +166,9 @@ DELETE FROM ai_generations WHERE user_id = '<user-id>' AND status = 'success';
 
 Angka kuotanya ada di dua tempat dan harus diubah bersamaan:
 `public.ai_generation_limit()` (migration `00005`) dan `AI_GENERATION_LIMIT` di
-`apps/web/src/lib/ai/access.ts`.
+`apps/web/src/lib/ai/quota.ts`. Seluruh teks yang menyebut angka ini — landing
+page, kartu di halaman utama, halaman `/create` — membacanya dari konstanta itu,
+jadi tidak ada angka yang ditulis tangan di salinan teks.
 
 Gerbangnya berlapis, dan urutannya penting:
 
@@ -176,7 +178,16 @@ Gerbangnya berlapis, dan urutannya penting:
 | RLS | policy `Insert own AI categories` + `has_ai_access()` (akses **dan** kuota) | insert langsung ke Supabase pakai anon key, melewati API route |
 | Privilege tabel | `REVOKE UPDATE, DELETE ON ai_generations` | user mereset jatahnya sendiri dengan menghapus riwayat generate |
 | Privilege kolom | `REVOKE UPDATE ON profiles` + `GRANT UPDATE (display_name, …)` | user menyalakan kembali `ai_enabled` yang dicabut |
-| UI | nav "Bikin" bergembok saat jatah habis, `/create` menampilkan sisa jatah | menu yang menggoda tapi selalu gagal |
+| UI | sisa jatah tampil di `/home` dan `/create`, nav "Bikin" bergembok saat habis | menu yang menggoda tapi selalu gagal |
+
+**Di mana batasnya disebut ke pemain:**
+
+| Tempat | Yang ditampilkan |
+| --- | --- |
+| Landing page `/` | bagian "Bikin Deck dengan AI": cara kerjanya dalam tiga langkah, plus kotak "Batasnya: 2 deck per akun" — jatah sekali seumur akun, generate gagal tidak memotong jatah, deck-nya privat |
+| `/home` | kartu ajakan berisi sisa jatah (`2 deck gratis, sisamu 2`), berubah jadi catatan abu-abu begitu habis |
+| `/create` | sub-judul menyebut jatah per akun, sisa jatah tepat di atas tombol generate, dan catatan tersendiri kalau jatahnya habis |
+| Nav bawah | gembok di tab "Bikin" begitu tidak bisa generate lagi |
 
 Dua lapis privilege itu perlu karena RLS tidak mengenal batasan per kolom dan
 policy lama `Manage own generations` (`FOR ALL`) mengizinkan user menghapus
