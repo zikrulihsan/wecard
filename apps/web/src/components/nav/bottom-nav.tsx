@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { cachedAiAccess, fetchAiAccess } from "@/lib/ai/access-client";
 import { NavigatingView } from "./navigating-view";
 
 interface NavEntry {
@@ -40,42 +41,20 @@ function isCurrent(entry: NavEntry, pathname: string) {
   );
 }
 
-/**
- * Status akses AI, disimpan di tingkat modul supaya satu kali ambil cukup
- * untuk seluruh umur halaman. Nav ini ikut ter-mount ulang tiap pindah rute;
- * tanpa cache di sini, tiap pindah tab menembak /api/ai-access lagi.
- */
-let cachedAiAccess: boolean | undefined;
-let aiAccessInFlight: Promise<boolean> | null = null;
-
-function fetchAiAccess(): Promise<boolean> {
-  aiAccessInFlight ??= fetch("/api/ai-access")
-    .then((res) => (res.ok ? res.json() : null))
-    .then((body) => {
-      cachedAiAccess = body?.canUseAi === true;
-      return cachedAiAccess;
-    })
-    .catch(() => {
-      // Jaringan putus bukan jawaban "tidak boleh". Dilepas supaya navigasi
-      // berikutnya mencoba lagi, bukan terkunci pada kegagalan sesaat.
-      aiAccessInFlight = null;
-      return false;
-    });
-
-  return aiAccessInFlight;
-}
-
-// Gembok di tab "Bikin" baru digambar setelah status aksesnya diketahui —
+// Gembok di tab "Bikin" berarti "tidak bisa generate lagi" — jatah habis atau
+// aksesnya dimatikan. Baru digambar setelah statusnya diketahui —
 // selama masih `undefined` sengaja dikosongkan, karena menyusul lebih baik
 // daripada sempat salah tampil. Status ini diambil dari klien, bukan
 // diturunkan dari layout; alasannya ada di catatan pada (app)/layout.tsx.
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const [canUseAi, setCanUseAi] = useState<boolean | undefined>(cachedAiAccess);
+  const [canUseAi, setCanUseAi] = useState<boolean | undefined>(
+    cachedAiAccess(),
+  );
 
   useEffect(() => {
-    if (cachedAiAccess !== undefined) return;
+    if (cachedAiAccess() !== undefined) return;
 
     let active = true;
     fetchAiAccess().then((value) => {

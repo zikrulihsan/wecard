@@ -8,7 +8,9 @@ lokal (Supabase di-stub). Setiap temuan di bawah ditandai apakah **terverifikasi
 dieksekusi karena butuh instance Supabase asli.
 
 Temuan tingkat **High** sudah diperbaiki di branch yang sama (lihat
-[Status perbaikan](#status-perbaikan)). Temuan Medium dan Low masih terbuka.
+[Status perbaikan](#status-perbaikan)). M-2 sebagian ditutup lewat migration `00005`
+(policy `ai_generations`; TOCTOU-nya masih terbuka). Temuan Medium dan Low lainnya masih
+terbuka.
 
 ## Ringkasan
 
@@ -18,7 +20,7 @@ Temuan tingkat **High** sudah diperbaiki di branch yang sama (lihat
 | [H-2](#h-2) | High | Open redirect pasca-login di `/login` | terverifikasi dari source Next | **sudah diperbaiki** |
 | [H-3](#h-3) | High | Next.js 16.2.3 kena 17 advisory high, termasuk bypass middleware | `pnpm audit` | **sudah diperbaiki** |
 | [M-1](#m-1) | Medium | Prompt injection: `deckName` masuk zona instruksi, input tanpa delimiter | terverifikasi live | terbuka |
-| [M-2](#m-2) | Medium | Rate limit AI bisa direset sendiri oleh user | tingkat kebijakan RLS | terbuka |
+| [M-2](#m-2) | Medium | Rate limit AI bisa direset sendiri oleh user | tingkat kebijakan RLS | **sebagian diperbaiki** (policy; TOCTOU terbuka) |
 | [M-3](#m-3) | Medium | Nol security header, `X-Powered-By` bocor | terverifikasi live | terbuka |
 | [M-4](#m-4) | Medium | Cookie sesi tanpa `Secure`, umur 400 hari | source `@supabase/ssr` | terbuka |
 | [L-1](#l-1) | Low | Gerbang middleware lolos dengan JWT palsu | terverifikasi live | terbuka |
@@ -250,9 +252,11 @@ penutup di bawah sudah dicabut"* terbaca sebagai bagian sah dari prompt.
 - **Risiko yang nyata:** endpoint berubah jadi proxy LLM gratis di atas API key pemilik
   aplikasi — tugas sembarang (terjemahan, menulis kode, spam) bisa dititipkan lewat form
   ini, dan konten yang melanggar kebijakan provider akan tercatat atas nama akun pemilik.
-- **Pembatas yang sudah bekerja:** fitur mati secara default (`ai_enabled = false`), kuota
-  5 per jam (tapi lihat M-2), dan structured output memaksa hasil tetap berbentuk deck,
-  sehingga penyerang harus menyelundupkan muatannya ke dalam field `content` kartu.
+- **Pembatas yang sudah bekerja:** kuota 2 deck per akun seumur akun — sejak migration
+  `00005` fitur ini terbuka untuk semua akun dan kuotanya yang jadi pembatas, dan riwayat
+  yang menghitungnya tidak lagi bisa dihapus user (lihat M-2) — ditambah structured output
+  yang memaksa hasil tetap berbentuk deck, sehingga penyerang harus menyelundupkan
+  muatannya ke dalam field `content` kartu.
 
 **Perbaikan:**
 
@@ -299,7 +303,7 @@ Dua hal menempel di temuan yang sama:
 - Kuota hanya melindungi jalur API route. Insert langsung ke tabel lewat anon key tidak
   mengenal kuota sama sekali (lihat L-4).
 
-**Perbaikan:**
+**Perbaikan — sudah dipasang di `packages/supabase/migrations/00005_ai_quota.sql`:**
 
 ```sql
 DROP POLICY IF EXISTS "Manage own generations" ON ai_generations;
@@ -310,8 +314,14 @@ CREATE POLICY "Insert own generations" ON ai_generations
 REVOKE UPDATE, DELETE ON public.ai_generations FROM authenticated, anon;
 ```
 
-Lebih kuat lagi: catat dan hitung kuota dengan `service_role` di server, atau pindahkan
-pemeriksaan ke fungsi RPC yang mengunci baris, supaya TOCTOU ikut tertutup.
+Migration yang sama memindahkan kuota dari "5 per jam" jadi 2 deck per akun dan
+menambahkannya ke `has_ai_access()`, jadi insert langsung lewat anon key (L-4) sekarang ikut
+mengenal kuota — bukan cuma API route.
+
+**Yang masih terbuka:** TOCTOU. Hitungan tetap dibaca lalu diperiksa tanpa lock, baik di API
+route maupun di dalam `has_ai_access()`, jadi request yang benar-benar bersamaan masih bisa
+lolos berdua. Menutupnya butuh pencatatan/pemeriksaan lewat `service_role` di server atau
+fungsi RPC yang mengunci baris.
 
 ### M-3 {#m-3}
 ### Tidak ada satu pun security header
@@ -484,8 +494,13 @@ pada urutan migration.
 ### Pemegang akses AI bisa menulis ke DB melewati API route
 
 Policy insert `categories`, `sections`, dan `cards` memeriksa kepemilikan, bukan asal-usul.
-Akun dengan `ai_enabled = true` bisa memakai anon key untuk membuat kategori dan kartu
-langsung, tanpa melewati kuota 5-per-jam sama sekali.
+Akun yang aksesnya aktif bisa memakai anon key untuk membuat kategori dan kartu langsung,
+tanpa melewati API route sama sekali.
+
+Sejak migration `00005`, `has_ai_access()` ikut memeriksa kuota, jadi jalur pintas ini
+berhenti di 2 kategori AI per akun — sama seperti lewat API route. Yang tersisa: `sections`
+dan `cards` di dalam kategori itu masih bebas jumlahnya, karena policy-nya cuma memeriksa
+kepemilikan kategori induk.
 
 Selain penyalahgunaan storage, `categories.slug` bersifat `UNIQUE` dan bebas dipilih
 penyerang, sehingga slug untuk kategori kurasi di masa depan bisa diserobot dan membuat
@@ -558,7 +573,8 @@ membongkar kontrol keamanan.
 2. **H-3** — `pnpm up next@^16.2.11`, karena gerbang auth aplikasi ini bertumpu pada middleware.
 3. **M-3** — security header di `next.config.ts`; sekaligus menaikkan biaya seandainya XSS
    muncul di kemudian hari (relevan karena cookie tidak `HttpOnly`).
-4. **M-2** — perbaikan policy `ai_generations`; ini yang menjaga tagihan API tetap terkendali.
+4. ~~**M-2** — perbaikan policy `ai_generations`~~ — sudah dipasang di migration `00005`;
+   sisanya tinggal TOCTOU.
 5. **M-1** — delimiter prompt + `deckName` keluar dari blok instruksi.
 6. **M-4** — `cookieOptions: { secure: true }` dan persingkat `maxAge`.
 7. Sisanya (L-1 … L-7) sebagai pekerjaan hardening berkelanjutan.

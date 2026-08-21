@@ -1,4 +1,13 @@
 -- ============================================================
+-- CATATAN: sebagian isi file ini sudah digantikan migration 00005.
+-- Sejak 00005, akses AI terbuka untuk semua akun dan yang membatasi adalah
+-- kuota generate; has_ai_access() di bawah ditulis ulang di sana. File ini
+-- tetap ada supaya project yang belum di-migrate bisa mengejar berurutan —
+-- kalau file ini dijalankan ulang, jalankan 00005 lagi sesudahnya, kalau
+-- tidak gerbang RLS-nya balik ke versi tanpa kuota.
+-- ============================================================
+
+-- ============================================================
 -- AKSES FITUR AI TERBATAS
 -- Generate deck lewat AI hanya untuk user yang ditandai.
 -- Beri akses: centang profiles.ai_enabled di Table Editor Supabase,

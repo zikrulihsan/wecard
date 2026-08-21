@@ -23,7 +23,7 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck: `packages/supabase/migrations/00002_ai_decks.sql`, lalu `packages/supabase/migrations/00003_ai_access.sql`, lalu `packages/supabase/migrations/00004_deck_theme.sql` (warna deck)
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), lalu `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck)
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
@@ -141,26 +141,49 @@ packages/
 
 Halaman `/create` membuat deck baru lewat LLM dengan structured output. Provider bisa Gemini (default `gemini-3.5-flash`) atau Claude (default `claude-opus-5`) — lihat setup di atas. Prompt, validasi, dan penyimpanan sama persis untuk keduanya; yang berbeda hanya file di `apps/web/src/lib/ai/providers/`.
 
-### Akses terbatas
+### Akses & kuota
 
-Fitur ini **mati secara default** untuk semua akun (`profiles.ai_enabled` default `false`). Untuk membuka akses:
+Fitur ini **terbuka untuk semua akun**, dengan jatah **2 deck AI per akun** —
+sekali seumur akun, bukan per jam. Jatah dihitung dari baris `ai_generations`
+berstatus `success`, jadi generate yang gagal (LLM error, output ditolak
+validasi) tidak memakan jatah.
+
+`profiles.ai_enabled` masih ada, tapi fungsinya berubah: dari gerbang masuk
+jadi **sakelar pemutus** untuk mencabut akses satu akun yang menyalahgunakan
+fitur.
 
 ```sql
+-- cabut akses satu akun
+UPDATE profiles SET ai_enabled = false WHERE id = '<user-id>';
+
+-- kembalikan
 UPDATE profiles SET ai_enabled = true WHERE id = '<user-id>';
+
+-- beri jatah tambahan: hapus catatan generate akun tersebut (service_role /
+-- SQL Editor — user tidak bisa melakukannya sendiri)
+DELETE FROM ai_generations WHERE user_id = '<user-id>' AND status = 'success';
 ```
 
-Atau centang kolom `ai_enabled` lewat Table Editor Supabase. Mencabut akses tinggal set kembali ke `false` — deck AI yang sudah terlanjur dibuat tetap bisa dimainkan pemiliknya.
+Angka kuotanya ada di dua tempat dan harus diubah bersamaan:
+`public.ai_generation_limit()` (migration `00005`) dan `AI_GENERATION_LIMIT` di
+`apps/web/src/lib/ai/access.ts`.
 
 Gerbangnya berlapis, dan urutannya penting:
 
 | Lapis | Letak | Yang dicegah |
 | --- | --- | --- |
 | API route | `api/decks/generate`, sebelum `generateDeck()` | biaya token AI — panggilan LLM terjadi sebelum insert apa pun |
-| RLS | policy `Insert own AI categories` + `has_ai_access()` | insert langsung ke Supabase pakai anon key, melewati API route |
-| Privilege kolom | `REVOKE UPDATE ON profiles` + `GRANT UPDATE (display_name, …)` | user memberi akses ke dirinya sendiri lewat `update({ ai_enabled: true })` |
-| UI | nav "Bikin" bergembok, `/create` menampilkan status terkunci | menu yang menggoda tapi selalu gagal |
+| RLS | policy `Insert own AI categories` + `has_ai_access()` (akses **dan** kuota) | insert langsung ke Supabase pakai anon key, melewati API route |
+| Privilege tabel | `REVOKE UPDATE, DELETE ON ai_generations` | user mereset jatahnya sendiri dengan menghapus riwayat generate |
+| Privilege kolom | `REVOKE UPDATE ON profiles` + `GRANT UPDATE (display_name, …)` | user menyalakan kembali `ai_enabled` yang dicabut |
+| UI | nav "Bikin" bergembok saat jatah habis, `/create` menampilkan sisa jatah | menu yang menggoda tapi selalu gagal |
 
-Lapis privilege kolom perlu karena RLS tidak mengenal batasan per kolom: policy `Update own profile` mengizinkan user menulis ke baris profilnya sendiri, termasuk kolom `ai_enabled`, kalau tidak dibatasi lewat `GRANT`. Setelah migration `00003`, kolom itu hanya bisa diubah lewat `service_role` / SQL Editor.
+Dua lapis privilege itu perlu karena RLS tidak mengenal batasan per kolom dan
+policy lama `Manage own generations` (`FOR ALL`) mengizinkan user menghapus
+barisnya sendiri — artinya jatah 2 deck bisa direset lewat satu `delete()`
+dengan anon key. Setelah migration `00005`, `ai_generations` hanya bisa dibaca
+dan ditambah dari sisi user, dan `profiles.ai_enabled` hanya bisa diubah lewat
+`service_role` / SQL Editor.
 
 **Field input:**
 
@@ -181,23 +204,33 @@ Lapis privilege kolom perlu karena RLS tidak mengenal batasan per kolom: policy 
 
 **Batasan:**
 
-- Hanya untuk akun dengan `profiles.ai_enabled = true` (lihat "Akses terbatas" di atas).
-- 5 generate per user per jam (dicek lewat tabel `ai_generations`).
+- 2 deck AI per akun, dihitung dari generate yang berhasil (lihat "Akses & kuota" di atas). Generate yang gagal tidak memakan jatah.
+- Akun yang aksesnya dicabut (`profiles.ai_enabled = false`) ditolak lebih dulu, sebelum kuota dicek.
 - Output model divalidasi ulang dengan zod sebelum masuk DB; kartu `special` tanpa `special_kind` dan kartu kelebihan dibuang di server.
 - Deck AI hanya terlihat oleh pembuatnya; kategori kurasi (`created_by IS NULL`) tetap publik. Dijaga di level RLS, bukan di query.
 - Input user disisipkan ke prompt sebagai data, bukan instruksi, dan setiap generate dicatat di `ai_generations` (input, provider, model, token, status).
 
 > Konteks yang diisi user tersimpan apa adanya di `ai_generations.input`. Kalau fitur ini dipakai di produksi, pastikan ada dasar pemrosesan dan kebijakan retensi untuk kolom itu sebelum rilis.
 
-### Kalau fitur tetap terkunci padahal `ai_enabled` sudah `true`
+### Kalau formulir bikin deck tidak muncul
 
-Cek log server (Netlify/Vercel/Cloudflare). Helper `getAiAccess()` mencatat penyebabnya, bukan sekadar gagal diam-diam:
+Cek log server (Netlify/Vercel/Cloudflare). Helper `getAiAccess()` mencatat
+penyebabnya, bukan sekadar gagal diam-diam:
 
 | Baris log | Artinya |
 | --- | --- |
 | `[ai-access] gagal membaca profiles` dengan `code: 42703` | kolom `ai_enabled` tidak ada — migration `00003` belum jalan di project itu |
-| `[ai-access] baris profil tidak terlihat untuk sesi ini` | tidak ada baris `profiles` untuk `userId` tersebut, atau RLS menyembunyikannya |
-| tidak ada log sama sekali, tapi tetap terkunci | baris terbaca dan `ai_enabled` memang `false` |
+| `[ai-access] gagal menghitung ai_generations` | tabel `ai_generations` tidak ada (migration `00002`) atau RLS menyembunyikannya — sisa jatah tidak terbaca, jadi ditolak |
+| `[ai-access] baris profil tidak terlihat untuk sesi ini` | tidak ada baris `profiles` untuk `userId` tersebut. Ini **tidak** menutup akses (kuota tetap dijaga hitungan `ai_generations`), tapi tandanya trigger pendaftaran bermasalah |
+| tidak ada log sama sekali, tapi halamannya menolak | jatahnya memang habis, atau `ai_enabled` di-set `false` |
+
+Sisa jatah satu akun bisa dicek langsung:
+
+```sql
+select count(*) as terpakai
+from ai_generations
+where user_id = '<user-id>' and status = 'success';
+```
 
 Setiap baris log menyertakan `supabaseHost` dan `userId`. Dua hal itu yang paling sering jadi biang masalah:
 

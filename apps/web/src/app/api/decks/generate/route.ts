@@ -12,8 +12,6 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const RATE_LIMIT_PER_HOUR = 5;
-
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -26,10 +24,24 @@ export async function POST(request: Request) {
 
   // Dicek sedini mungkin: generateDeck() di bawah memanggil LLM dan itu
   // berbiaya, sementara RLS baru menolak jauh setelahnya di tahap insert.
-  if (!(await getAiAccess())) {
+  const access = await getAiAccess();
+
+  if (!access.enabled) {
     return NextResponse.json(
-      { error: "Fitur bikin deck AI belum terbuka untuk akunmu." },
+      { error: "Fitur bikin deck AI sedang tidak aktif untuk akunmu." },
       { status: 403 }
+    );
+  }
+
+  // Jatah dihitung dari generate yang berhasil saja — lihat getAiAccess().
+  // Dua permintaan yang benar-benar bersamaan bisa lolos berdua di sini;
+  // yang ketiga tetap ditolak, dan RLS (has_ai_access()) menutup sisanya.
+  if (access.remaining <= 0) {
+    return NextResponse.json(
+      {
+        error: `Jatah bikin deck AI kamu sudah habis (${access.limit} deck). Deck yang sudah jadi tetap bisa dimainkan.`,
+      },
+      { status: 429 }
     );
   }
 
@@ -44,22 +56,6 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
-
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count } = await supabase
-    .from("ai_generations")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", oneHourAgo);
-
-  if ((count ?? 0) >= RATE_LIMIT_PER_HOUR) {
-    return NextResponse.json(
-      {
-        error: `Batas generate tercapai (${RATE_LIMIT_PER_HOUR} deck per jam). Coba lagi nanti.`,
-      },
-      { status: 429 }
-    );
-  }
 
   let result;
   try {
@@ -208,7 +204,7 @@ function saveFailed(step: string, error: unknown) {
               detail?.code === "42703" || detail?.code === "PGRST205"
                 ? "Ada migration yang belum jalan. Jalankan packages/supabase/migrations/00002_ai_decks.sql dan 00004_deck_theme.sql di SQL Editor Supabase."
                 : detail?.code === "42501"
-                  ? "Insert ditolak RLS — pastikan policy di migration 00002 sudah terpasang."
+                  ? "Insert ditolak RLS — pastikan policy di migration 00002 sudah terpasang, dan cek sisa jatah: has_ai_access() ikut menolak kalau kuota generate habis."
                   : undefined,
           }),
     },
