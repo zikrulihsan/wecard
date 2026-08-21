@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { invalidateAiAccess } from "@/lib/ai/access-client";
 import {
   AUDIENCES,
   CARD_MIXES,
@@ -21,7 +22,13 @@ import {
   getAudiencePlaceholders,
 } from "@/lib/ai/deck-schema";
 
-export function CreateForm() {
+interface CreateFormProps {
+  /** Sisa jatah generate akun ini, sudah termasuk kesempatan yang sekarang. */
+  remaining: number;
+  limit: number;
+}
+
+export function CreateForm({ remaining, limit }: CreateFormProps) {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +81,8 @@ export function CreateForm() {
         return;
       }
 
+      // Jatah baru saja berkurang; status di nav ikut diperbarui.
+      invalidateAiAccess();
       router.push(`/play/${data.categoryId}`);
       router.refresh();
     } catch {
@@ -233,6 +242,13 @@ export function CreateForm() {
           {error}
         </p>
       )}
+
+      {/* Sisa jatah ditaruh tepat di atas tombol — di sinilah keputusan
+          "generate sekarang atau nanti" benar-benar diambil. */}
+      <p className="text-sm text-muted-foreground text-center">
+        Sisa jatah: <strong>{remaining}</strong> dari {limit} deck AI.
+        {remaining === 1 && " Ini kesempatan terakhirmu, pikirkan baik-baik."}
+      </p>
 
       <Button
         type="submit"

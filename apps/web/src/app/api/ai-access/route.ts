@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Status akses fitur AI untuk sesi yang sedang berjalan, dibaca dari klien.
+ * Sisa jatah generate AI untuk sesi yang sedang berjalan, dibaca dari klien.
  *
  * Sebelumnya nilai ini dibaca di `(app)/layout.tsx`. Masalahnya, membaca cookie
  * di layout menandai *seluruh* rute di bawahnya sebagai dinamis — termasuk
@@ -18,10 +18,12 @@ export const dynamic = "force-dynamic";
  * Postgres, ditambah pengecekan di POST /api/decks/generate.
  */
 export async function GET() {
-  const canUseAi = await getAiAccess();
+  const { canGenerate, enabled, used, limit, remaining } = await getAiAccess();
 
   return NextResponse.json(
-    { canUseAi },
+    // `canUseAi` dipertahankan namanya supaya klien lama tidak ikut berubah;
+    // artinya sekarang "masih boleh generate", termasuk soal kuota.
+    { canUseAi: canGenerate, enabled, used, limit, remaining },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
