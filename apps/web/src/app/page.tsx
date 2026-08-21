@@ -14,20 +14,26 @@ export default function LandingPage() {
         <div className="max-w-2xl text-center space-y-8">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur border border-pink-200 text-sm">
             <span className="text-pink-600">✨</span>
-            <span className="text-neutral-700">Balik kartunya, ngobrolnya jalan</span>
+            <span className="text-neutral-700">
+              Topik & challenge sendiri, dibikinin AI
+            </span>
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-neutral-900">
-            Kartu buat{" "}
+            Kartu Ngobrol Biar Ngumpul{" "}
+            {/* U+2011 (non-breaking hyphen) di "Krik‑Krik" — hyphen biasa
+                jadi titik putus yang sah buat perata baris, dan itu bikin
+                kata ini pernah kepotong "Krik-" / "Krik" di layar sempit. */}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500">
-              Ngobrol Bareng
+              Nggak Krik‑Krik
             </span>
           </h1>
 
           <p className="text-lg text-neutral-600 leading-relaxed">
             Pertanyaan & tantangan buat ngobrol sama teman, keluarga,
-            pasangan, atau anak. Satu HP, satu kartu satu giliran — obrolan
-            yang biasanya nggak sempat kejadian, jadi kejadian.
+            pasangan, atau anak. Nggak nemu topik yang pas? Bikin sendiri
+            pakai AI, sesuai siapa yang main dan situasinya. Satu HP, satu
+            kartu satu giliran.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
