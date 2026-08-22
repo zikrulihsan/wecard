@@ -17,8 +17,9 @@ import {
  * cuma menunda kekecewaan yang sama.
  *
  * Selama `AI_TOPUP_PACK.available` masih false, paketnya ditandai "segera
- * hadir" dan tombolnya mengarah ke pendaftaran gratis — halaman tidak boleh
- * menawarkan tombol beli yang tidak ada checkout-nya.
+ * hadir" dan area aksinya berubah menjadi penjelasan status — halaman tidak
+ * boleh menawarkan tombol beli yang belum punya checkout atau mengulang CTA
+ * paket Gratis.
  */
 export function Pricing() {
   return (
@@ -63,7 +64,7 @@ export function Pricing() {
                 href="/register"
                 className="inline-flex h-11 w-full items-center justify-center rounded-full border border-neutral-300 bg-white px-6 text-base font-semibold text-neutral-800 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 active:translate-y-0"
               >
-                Mulai gratis
+                Buat akun gratis
               </Link>
             </div>
           </div>
@@ -107,15 +108,18 @@ export function Pricing() {
                   Beli paket
                 </PrimaryCta>
               ) : (
-                <>
-                  <PrimaryCta href="/register" className="h-11 w-full">
-                    Pakai {AI_GENERATION_LIMIT} deck gratis dulu
-                  </PrimaryCta>
-                  <p className="mt-3 text-center text-xs text-neutral-500">
-                    Pembelian paket belum dibuka. Sampai saat itu, semua akun
-                    tetap dapat {AI_GENERATION_LIMIT} deck AI gratis.
+                <div
+                  role="status"
+                  className="rounded-xl border border-dashed border-pink-300 bg-white/80 px-4 py-3 text-center shadow-sm"
+                >
+                  <p className="text-sm font-semibold text-neutral-800">
+                    Pembelian belum dibuka
                   </p>
-                </>
+                  <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+                    Saat ini paket Gratis sudah mencakup {AI_GENERATION_LIMIT}{" "}
+                    deck AI untuk setiap akun.
+                  </p>
+                </div>
               )}
             </div>
           </div>
