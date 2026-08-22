@@ -8,14 +8,19 @@ type HoveredCard = "left" | "center" | "right" | null;
 
 /**
  * Preview kartu di hero memakai dua bahasa gerak yang berbeda:
- * - layar sentuh: parallax mengikuti arah scroll dan membuka kipas kartu;
- * - desktop: kartu tengah menyingkir ke arah berlawanan saat kartu samping
- *   di-hover, sehingga isi kartu yang dipilih tidak tertutup.
+ * - mobile: parallax mengikuti scroll; tap pertama membuka susunan kartu dan
+ *   tap kedua menuju simulasi;
+ * - desktop: hover membuka kartu yang dipilih, sedangkan klik langsung menuju
+ *   simulasi.
+ *
+ * Visual yang bergerak berada di dalam tombol dengan hit-area tetap. Karena
+ * itu hover kartu tengah tidak putus saat visualnya terangkat dari pointer.
  */
 export function HeroCardStack() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<HoveredCard>(null);
+  const [activeCard, setActiveCard] = useState<HoveredCard>(null);
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -32,7 +37,8 @@ export function HeroCardStack() {
     const media = window.matchMedia("(max-width: 767px)");
     const updateViewport = () => {
       setIsMobile(media.matches);
-      if (media.matches) setHoveredCard(null);
+      setHoveredCard(null);
+      setActiveCard(null);
     };
 
     updateViewport();
@@ -42,7 +48,38 @@ export function HeroCardStack() {
 
   const mobileMotion = isMobile && !reduceMotion;
   const desktopMotion = !isMobile && !reduceMotion;
+  const interactionCard = reduceMotion
+    ? null
+    : isMobile
+      ? activeCard
+      : hoveredCard;
   const sideTransition = { type: "spring" as const, stiffness: 280, damping: 22 };
+
+  function openSimulation() {
+    setActiveCard(null);
+    setHoveredCard(null);
+    document.getElementById("coba-kartu")?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "center",
+    });
+  }
+
+  function activateCard(card: Exclude<HoveredCard, null>) {
+    if (!isMobile || reduceMotion || activeCard !== null) {
+      openSimulation();
+      return;
+    }
+
+    setActiveCard(card);
+  }
+
+  function cardLabel(name: string) {
+    if (isMobile && !reduceMotion && activeCard === null) {
+      return `Animasikan kartu ${name}; ketuk lagi untuk membuka simulasi`;
+    }
+
+    return `Buka simulasi dari kartu ${name}`;
+  }
 
   return (
     <div
@@ -51,118 +88,154 @@ export function HeroCardStack() {
     >
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <m.div
-          className={`pointer-events-auto relative will-change-transform ${
-            hoveredCard === "left" ? "z-20" : "z-0"
+          className={`relative ${
+            interactionCard === "left" ? "z-20" : "z-0"
           }`}
           style={mobileMotion ? { x: leftX, y: leftY } : undefined}
-          animate={
-            desktopMotion
-              ? {
-                  y:
-                    hoveredCard === "left"
-                      ? -14
-                      : hoveredCard === "right" || hoveredCard === "center"
-                        ? 4
-                        : 0,
-                  scale:
-                    hoveredCard === "left"
-                      ? 1.04
-                      : hoveredCard === "right" || hoveredCard === "center"
-                        ? 0.98
-                        : 1,
-                }
-              : undefined
-          }
-          transition={sideTransition}
-          onHoverStart={() => desktopMotion && setHoveredCard("left")}
-          onHoverEnd={() => desktopMotion && setHoveredCard(null)}
         >
-          <DeckCard
-            theme="sky"
-            kind="Talk"
-            deck="Anak & Orang Tua"
-            className="h-56 w-44 -translate-x-[4.5rem] -rotate-12 text-base sm:h-64 sm:w-52 sm:-translate-x-24"
+          <button
+            type="button"
+            className="pointer-events-auto block h-56 w-44 cursor-pointer text-left sm:h-64 sm:w-52"
+            onMouseEnter={() => desktopMotion && setHoveredCard("left")}
+            onMouseLeave={() => desktopMotion && setHoveredCard(null)}
+            onClick={() => activateCard("left")}
+            aria-label={cardLabel("Talk Anak dan Orang Tua")}
+            aria-pressed={isMobile ? activeCard === "left" : undefined}
           >
-            Kapan terakhir kali kamu merasa bangga sama aku?
-          </DeckCard>
+            <m.div
+              className="h-full will-change-transform"
+              animate={{
+                x: interactionCard === "center" ? -38 : 0,
+                y:
+                  interactionCard === "left"
+                    ? -14
+                    : interactionCard
+                      ? 4
+                      : 0,
+                scale:
+                  interactionCard === "left"
+                    ? 1.04
+                    : interactionCard
+                      ? 0.98
+                      : 1,
+              }}
+              transition={sideTransition}
+            >
+              <DeckCard
+                theme="sky"
+                kind="Talk"
+                deck="Anak & Orang Tua"
+                className="h-full w-full -translate-x-[4.5rem] -rotate-12 text-base sm:-translate-x-24"
+              >
+                Kapan terakhir kali kamu merasa bangga sama aku?
+              </DeckCard>
+            </m.div>
+          </button>
         </m.div>
       </div>
 
       <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
         <m.div
-          className="pointer-events-auto will-change-transform"
+          className="relative"
           style={mobileMotion ? { y: centerY } : undefined}
-          animate={
-            desktopMotion
-              ? {
-                  x:
-                    hoveredCard === "left"
-                      ? 38
-                      : hoveredCard === "right"
-                        ? -38
-                        : 0,
-                  y: hoveredCard === "center" ? -16 : hoveredCard ? -24 : 0,
-                  rotate:
-                    hoveredCard === "left"
-                      ? 4
-                      : hoveredCard === "right"
-                        ? -4
-                        : 0,
-                  scale: hoveredCard === "center" ? 1.04 : hoveredCard ? 1.02 : 1,
-                }
-              : undefined
-          }
-          transition={sideTransition}
-          onHoverStart={() => desktopMotion && setHoveredCard("center")}
-          onHoverEnd={() => desktopMotion && setHoveredCard(null)}
         >
-          <DeckCard
-            theme="pink"
-            kind="Talk"
-            deck="Pasangan"
-            className="h-56 w-44 rotate-2 sm:h-64 sm:w-52"
+          <button
+            type="button"
+            className="pointer-events-auto block h-56 w-44 cursor-pointer text-left sm:h-64 sm:w-52"
+            onMouseEnter={() => desktopMotion && setHoveredCard("center")}
+            onMouseLeave={() => desktopMotion && setHoveredCard(null)}
+            onClick={() => activateCard("center")}
+            aria-label={cardLabel("Talk Pasangan")}
+            aria-pressed={isMobile ? activeCard === "center" : undefined}
           >
-            Apa kebiasaan kecil aku yang kamu suka?
-          </DeckCard>
+            <m.div
+              className="h-full will-change-transform"
+              animate={{
+                x:
+                  interactionCard === "left"
+                    ? 38
+                    : interactionCard === "right"
+                      ? -38
+                      : 0,
+                y:
+                  interactionCard === "center"
+                    ? -16
+                    : interactionCard
+                      ? -24
+                      : 0,
+                rotate:
+                  interactionCard === "left"
+                    ? 4
+                    : interactionCard === "right"
+                      ? -4
+                      : 0,
+                scale:
+                  interactionCard === "center"
+                    ? 1.04
+                    : interactionCard
+                      ? 1.02
+                      : 1,
+              }}
+              transition={sideTransition}
+            >
+              <DeckCard
+                theme="pink"
+                kind="Talk"
+                deck="Pasangan"
+                className="h-full w-full rotate-2"
+              >
+                Apa kebiasaan kecil aku yang kamu suka?
+              </DeckCard>
+            </m.div>
+          </button>
         </m.div>
       </div>
 
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <m.div
-          className={`pointer-events-auto relative will-change-transform ${
-            hoveredCard === "right" ? "z-20" : "z-0"
+          className={`relative ${
+            interactionCard === "right" ? "z-20" : "z-0"
           }`}
           style={mobileMotion ? { x: rightX, y: rightY } : undefined}
-          animate={
-            desktopMotion
-              ? {
-                  y:
-                    hoveredCard === "right"
-                      ? -14
-                      : hoveredCard === "left" || hoveredCard === "center"
-                        ? 4
-                        : 0,
-                  scale:
-                    hoveredCard === "right"
-                      ? 1.04
-                      : hoveredCard === "left" || hoveredCard === "center"
-                        ? 0.98
-                        : 1,
-                }
-              : undefined
-          }
-          transition={sideTransition}
-          onHoverStart={() => desktopMotion && setHoveredCard("right")}
-          onHoverEnd={() => desktopMotion && setHoveredCard(null)}
         >
-          <DeckCard
-            theme="amber"
-            kind="Action"
-            deck="Bikinan AI"
-            className="h-56 w-44 translate-x-[4.5rem] rotate-12 sm:h-64 sm:w-52 sm:translate-x-24"
+          <button
+            type="button"
+            className="pointer-events-auto block h-56 w-44 cursor-pointer text-left sm:h-64 sm:w-52"
+            onMouseEnter={() => desktopMotion && setHoveredCard("right")}
+            onMouseLeave={() => desktopMotion && setHoveredCard(null)}
+            onClick={() => activateCard("right")}
+            aria-label={cardLabel("Action Bikinan AI")}
+            aria-pressed={isMobile ? activeCard === "right" : undefined}
           >
-            Tunjukkan foto terakhir di galerimu, ceritakan kejadiannya.
-          </DeckCard>
+            <m.div
+              className="h-full will-change-transform"
+              animate={{
+                x: interactionCard === "center" ? 38 : 0,
+                y:
+                  interactionCard === "right"
+                    ? -14
+                    : interactionCard
+                      ? 4
+                      : 0,
+                scale:
+                  interactionCard === "right"
+                    ? 1.04
+                    : interactionCard
+                      ? 0.98
+                      : 1,
+              }}
+              transition={sideTransition}
+            >
+              <DeckCard
+                theme="amber"
+                kind="Action"
+                deck="Bikinan AI"
+                className="h-full w-full translate-x-[4.5rem] rotate-12 sm:translate-x-24"
+              >
+                Tunjukkan foto terakhir di galerimu, ceritakan kejadiannya.
+              </DeckCard>
+            </m.div>
+          </button>
         </m.div>
       </div>
     </div>

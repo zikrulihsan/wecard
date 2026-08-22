@@ -22,7 +22,10 @@ export function SampleCards() {
           </p>
         </div>
 
-        <div className="mt-12 grid items-center gap-10 rounded-[2rem] border border-pink-100 bg-white px-6 py-10 shadow-sm md:grid-cols-[0.8fr_1fr] md:px-12 md:py-12">
+        <div
+          id="coba-kartu"
+          className="mt-12 grid scroll-mt-8 items-center gap-10 rounded-[2rem] border border-pink-100 bg-white px-6 py-10 shadow-sm md:scroll-mt-16 md:grid-cols-[0.8fr_1fr] md:px-12 md:py-12"
+        >
           <div className="space-y-4 text-center md:text-left">
             <p className="text-sm font-semibold uppercase tracking-widest text-pink-600">
               Coba langsung
