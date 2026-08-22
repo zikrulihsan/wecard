@@ -1,9 +1,11 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { reportError, supabaseError } from "@/lib/observability";
 import { deckThemeVars, resolveDeckTheme } from "@/lib/deck-theme";
 import { BackLink } from "@/components/nav/back-link";
 import { CardLoader } from "@/components/ui/card-loader";
+import { LoadError } from "@/components/ui/load-error";
 import { SectionPicker } from "./section-picker";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +39,7 @@ async function DeckBody({
   const supabase = await createClient();
 
   // sections difilter pakai deckId juga, jadi tidak perlu nunggu category.
-  const [{ data: category }, { data: sections }] = await Promise.all([
+  const [categoryResult, sectionResult] = await Promise.all([
     supabase
       .from("categories")
       .select("id, slug, name, description, is_free, theme")
@@ -60,12 +62,44 @@ async function DeckBody({
       .order("sort_order", { ascending: true }),
   ]);
 
+  // `.single()` menandai "tidak ada barisnya" dengan kode PGRST116. Kode lain
+  // — termasuk jaringan putus — berarti decknya mungkin ada tapi tidak
+  // terjangkau, dan menampilkan halaman 404 untuk itu adalah kebohongan yang
+  // membuat pemilik deck mengira decknya terhapus.
+  if (categoryResult.error && categoryResult.error.code !== "PGRST116") {
+    reportError("play.deck.gagal-diambil", {
+      deckId,
+      ...supabaseError(categoryResult.error),
+    });
+    return (
+      <LoadError
+        title="Deck belum bisa dibuka"
+        description="Sambungan ke server bermasalah. Deck-nya tidak ke mana-mana — coba lagi sebentar."
+      />
+    );
+  }
+
+  const category = categoryResult.data;
+
   if (!category) {
     notFound();
   }
 
+  if (sectionResult.error) {
+    reportError("play.sections.gagal-diambil", {
+      deckId,
+      ...supabaseError(sectionResult.error),
+    });
+    return (
+      <LoadError
+        title="Isi deck belum bisa dimuat"
+        description="Nama decknya terbaca, tapi daftar levelnya gagal diambil. Coba lagi sebentar."
+      />
+    );
+  }
+
   const sectionData =
-    sections?.map((s) => ({
+    sectionResult.data?.map((s) => ({
       id: s.id,
       slug: s.slug,
       name: s.name,

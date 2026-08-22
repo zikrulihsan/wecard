@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient, getAuthSnapshot } from "@/lib/supabase/server";
+import { reportError, supabaseError } from "@/lib/observability";
 import { LogoutButton } from "./logout-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,11 +35,21 @@ async function IdentityCard() {
   }
 
   const supabase = await createClient();
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("display_name, avatar_url")
     .eq("id", auth.userId)
     .single();
+
+  // Halaman ini tetap berguna tanpa baris profil — email dan tombol keluar
+  // datang dari cookie sesi. Yang tidak boleh: nama berubah jadi "Player"
+  // tanpa ada yang tahu kenapa.
+  if (error) {
+    reportError("profile.gagal-diambil", {
+      userId: auth.userId,
+      ...supabaseError(error),
+    });
+  }
 
   return (
     <Card className="mb-6">
