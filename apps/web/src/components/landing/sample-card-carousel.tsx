@@ -57,25 +57,6 @@ export function SampleCardCarousel() {
 
   return (
     <div className="mt-6">
-      <div className="mb-4 flex justify-end gap-2">
-        <button
-          type="button"
-          className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-pink-300 hover:text-pink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2"
-          onClick={() => moveCarousel(-1)}
-          aria-label="Geser contoh kartu ke kiri"
-        >
-          <span aria-hidden="true">←</span>
-        </button>
-        <button
-          type="button"
-          className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-pink-300 hover:text-pink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2"
-          onClick={() => moveCarousel(1)}
-          aria-label="Geser contoh kartu ke kanan"
-        >
-          <span aria-hidden="true">→</span>
-        </button>
-      </div>
-
       <div
         ref={carouselRef}
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -97,6 +78,25 @@ export function SampleCardCarousel() {
             </DeckCard>
           </div>
         ))}
+      </div>
+
+      <div className="mt-5 flex justify-center gap-2">
+        <button
+          type="button"
+          className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:text-pink-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 active:translate-y-0"
+          onClick={() => moveCarousel(-1)}
+          aria-label="Geser contoh kartu ke kiri"
+        >
+          <span aria-hidden="true">←</span>
+        </button>
+        <button
+          type="button"
+          className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:text-pink-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 active:translate-y-0"
+          onClick={() => moveCarousel(1)}
+          aria-label="Geser contoh kartu ke kanan"
+        >
+          <span aria-hidden="true">→</span>
+        </button>
       </div>
     </div>
   );
