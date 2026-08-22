@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { LandingCardDemo } from "@/components/cards/landing-card-demo";
 
 export default function LandingPage() {
   return (
@@ -10,43 +11,47 @@ export default function LandingPage() {
         <div className="absolute top-20 right-10 size-72 bg-pink-200 rounded-full blur-3xl opacity-40 -z-10" />
         <div className="absolute bottom-20 left-10 size-72 bg-rose-200 rounded-full blur-3xl opacity-40 -z-10" />
 
-        <div className="max-w-2xl text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur border border-pink-200 text-sm">
-            <span className="text-pink-600">✨</span>
-            <span className="text-neutral-700">Ruang Kita untuk Berdua</span>
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-[1fr_22rem] lg:gap-20">
+          <div className="space-y-8 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur border border-pink-200 text-sm">
+              <span className="text-pink-600">✨</span>
+              <span className="text-neutral-700">Ruang Kita untuk Berdua</span>
+            </div>
+
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-neutral-900">
+              Kartu untuk{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500">
+                Ngobrol Lebih Dalam
+              </span>
+            </h1>
+
+            <p className="text-lg text-neutral-600 leading-relaxed">
+              50 kartu pertanyaan & tantangan seru untuk pasangan. Dari warm up
+              sampai deep talk — mainkan berdua dan rasakan hubungan yang makin
+              hangat.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+              <Link
+                href="/register"
+                className={buttonVariants({ size: "lg", className: "rounded-full px-8" })}
+              >
+                Mulai Main Gratis
+              </Link>
+              <Link
+                href="/login"
+                className={buttonVariants({
+                  size: "lg",
+                  variant: "outline",
+                  className: "rounded-full px-8",
+                })}
+              >
+                Sudah Punya Akun
+              </Link>
+            </div>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-neutral-900">
-            Kartu untuk{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-500">
-              Ngobrol Lebih Dalam
-            </span>
-          </h1>
-
-          <p className="text-lg text-neutral-600 leading-relaxed">
-            50 kartu pertanyaan & tantangan seru untuk pasangan. Dari warm up
-            sampai deep talk — mainkan berdua dan rasakan hubungan yang makin
-            hangat.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/register"
-              className={buttonVariants({ size: "lg", className: "rounded-full px-8" })}
-            >
-              Mulai Main Gratis
-            </Link>
-            <Link
-              href="/login"
-              className={buttonVariants({
-                size: "lg",
-                variant: "outline",
-                className: "rounded-full px-8",
-              })}
-            >
-              Sudah Punya Akun
-            </Link>
-          </div>
+          <LandingCardDemo />
         </div>
       </section>
 
