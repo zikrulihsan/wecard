@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { m, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { DeckCard } from "./deck-card";
 
-type HoveredCard = "left" | "right" | null;
+type HoveredCard = "left" | "center" | "right" | null;
 
 /**
  * Preview kartu di hero memakai dua bahasa gerak yang berbeda:
@@ -22,11 +22,11 @@ export function HeroCardStack() {
     offset: ["start end", "end start"],
   });
 
-  const leftX = useTransform(scrollYProgress, [0, 0.5, 1], [18, 0, -10]);
-  const leftY = useTransform(scrollYProgress, [0, 0.5, 1], [28, 0, -26]);
-  const centerY = useTransform(scrollYProgress, [0, 0.5, 1], [12, -6, -34]);
-  const rightX = useTransform(scrollYProgress, [0, 0.5, 1], [-18, 0, 10]);
-  const rightY = useTransform(scrollYProgress, [0, 0.5, 1], [34, 4, -20]);
+  const leftX = useTransform(scrollYProgress, [0, 0.5, 1], [42, 0, -28]);
+  const leftY = useTransform(scrollYProgress, [0, 0.5, 1], [72, 0, -72]);
+  const centerY = useTransform(scrollYProgress, [0, 0.5, 1], [48, -10, -92]);
+  const rightX = useTransform(scrollYProgress, [0, 0.5, 1], [-42, 0, 28]);
+  const rightY = useTransform(scrollYProgress, [0, 0.5, 1], [84, 8, -60]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 767px)");
@@ -61,13 +61,13 @@ export function HeroCardStack() {
                   y:
                     hoveredCard === "left"
                       ? -14
-                      : hoveredCard === "right"
+                      : hoveredCard === "right" || hoveredCard === "center"
                         ? 4
                         : 0,
                   scale:
                     hoveredCard === "left"
                       ? 1.04
-                      : hoveredCard === "right"
+                      : hoveredCard === "right" || hoveredCard === "center"
                         ? 0.98
                         : 1,
                 }
@@ -101,18 +101,20 @@ export function HeroCardStack() {
                       : hoveredCard === "right"
                         ? -38
                         : 0,
-                  y: hoveredCard ? -24 : 0,
+                  y: hoveredCard === "center" ? -16 : hoveredCard ? -24 : 0,
                   rotate:
                     hoveredCard === "left"
                       ? 4
                       : hoveredCard === "right"
                         ? -4
                         : 0,
-                  scale: hoveredCard ? 1.02 : 1,
+                  scale: hoveredCard === "center" ? 1.04 : hoveredCard ? 1.02 : 1,
                 }
               : undefined
           }
           transition={sideTransition}
+          onHoverStart={() => desktopMotion && setHoveredCard("center")}
+          onHoverEnd={() => desktopMotion && setHoveredCard(null)}
         >
           <DeckCard
             theme="pink"
@@ -137,13 +139,13 @@ export function HeroCardStack() {
                   y:
                     hoveredCard === "right"
                       ? -14
-                      : hoveredCard === "left"
+                      : hoveredCard === "left" || hoveredCard === "center"
                         ? 4
                         : 0,
                   scale:
                     hoveredCard === "right"
                       ? 1.04
-                      : hoveredCard === "left"
+                      : hoveredCard === "left" || hoveredCard === "center"
                         ? 0.98
                         : 1,
                 }

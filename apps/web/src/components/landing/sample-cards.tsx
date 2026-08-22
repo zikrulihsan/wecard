@@ -1,5 +1,5 @@
 import { LandingCardDemo } from "@/components/cards/landing-card-demo";
-import { DeckCard } from "./deck-card";
+import { SampleCardCarousel } from "./sample-card-carousel";
 
 /**
  * Bukti isi. Halaman boleh menjanjikan apa saja soal "kartu yang pas", tapi
@@ -43,41 +43,7 @@ export function SampleCards() {
           Contoh kartu lainnya
         </h3>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <DeckCard theme="pink" kind="Talk" deck="Pasangan" className="h-44">
-            Hal apa dari aku yang bikin kamu merasa dicintai?
-          </DeckCard>
-          <DeckCard theme="pink" kind="Action" deck="Pasangan" className="h-44">
-            Ceritakan 1 hal lucu hari ini dengan gaya lebay 😄
-          </DeckCard>
-          <DeckCard theme="pink" kind="Talk" deck="Pasangan" className="h-44">
-            Apa kelebihan aku yang jarang aku sadari?
-          </DeckCard>
-          <DeckCard
-            theme="sky"
-            kind="Talk"
-            deck="Anak & Orang Tua"
-            className="h-44"
-          >
-            Apa kegiatan bareng yang paling kamu tunggu-tunggu?
-          </DeckCard>
-          <DeckCard
-            theme="sky"
-            kind="Talk"
-            deck="Anak & Orang Tua"
-            className="h-44"
-          >
-            Ada cerita yang ingin kamu bagi ke aku tapi belum sempat?
-          </DeckCard>
-          <DeckCard
-            theme="sky"
-            kind="Talk"
-            deck="Anak & Orang Tua"
-            className="h-44"
-          >
-            Kenangan bareng kita yang paling kamu ingat sampai sekarang apa?
-          </DeckCard>
-        </div>
+        <SampleCardCarousel />
 
         <p className="mt-8 text-center text-sm text-neutral-500">
           Deck buatan AI mengikuti bentuk yang sama — dengan isi yang mengikuti
