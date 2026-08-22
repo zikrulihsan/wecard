@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Check } from "lucide-react";
 import { PrimaryCta } from "./cta";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
@@ -58,9 +59,12 @@ export function Pricing() {
             </ul>
 
             <div className="mt-8 pt-2">
-              <PrimaryCta href="/register" className="h-11 w-full">
+              <Link
+                href="/register"
+                className="inline-flex h-11 w-full items-center justify-center rounded-full border border-neutral-300 bg-white px-6 text-base font-semibold text-neutral-800 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 active:translate-y-0"
+              >
                 Mulai gratis
-              </PrimaryCta>
+              </Link>
             </div>
           </div>
 
