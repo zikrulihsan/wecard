@@ -1,15 +1,49 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Lock, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { reportError, supabaseError } from "@/lib/observability";
+import { deckThemeStyle } from "@/lib/deck-theme";
 import { Badge } from "@/components/ui/badge";
+import { CardLoader } from "@/components/ui/card-loader";
+import { LoadError } from "@/components/ui/load-error";
+import { cn } from "@/lib/utils";
+import { AiDeckCta, AiDeckCtaPlaceholder } from "./ai-deck-cta";
+import { HomeHeader } from "./header";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+// Judul dan sub-judul tidak menunggu apa pun, jadi langsung dirender. Hanya
+// daftar deck yang datanya dari Supabase yang dibungkus Suspense — penanda
+// memuat cuma muncul di bagian yang memang sedang diambil.
+//
+// Fallback-nya sengaja sama persis dengan loading.tsx: kerangka rute yang
+// ter-prefetch tampil lebih dulu, lalu digantikan render server halaman ini.
+// Kalau bentuk keduanya berbeda, satu kali pindah halaman terlihat sebagai dua
+// kali pergantian tampilan.
+export default function HomePage() {
+  return (
+    <div className="max-w-screen-sm mx-auto px-4 py-8">
+      <HomeHeader />
+
+      {/* Punya Suspense sendiri: sisa jatah dibaca dari tabel lain, dan tidak
+          ada alasan daftar deck menunggu hasilnya. */}
+      <Suspense fallback={<AiDeckCtaPlaceholder />}>
+        <AiDeckCta />
+      </Suspense>
+
+      <Suspense fallback={<CardLoader label="Mengambil daftar deck" />}>
+        <DeckList />
+      </Suspense>
+    </div>
+  );
+}
+
+async function DeckList() {
   const supabase = await createClient();
 
   // Dua query ini tidak saling bergantung — jalankan barengan.
-  const [{ data: categories }, { data: purchases }] = await Promise.all([
+  const [categoryResult, purchaseResult] = await Promise.all([
     supabase
       .from("categories")
       .select(
@@ -20,7 +54,8 @@ export default async function HomePage() {
       description,
       is_free,
       price_idr,
-      is_ai_generated
+      is_ai_generated,
+      theme
     `
       )
       .eq("is_active", true)
@@ -29,40 +64,57 @@ export default async function HomePage() {
     supabase.from("purchases").select("category_id").eq("status", "completed"),
   ]);
 
-  const unlockedIds = new Set(purchases?.map((p) => p.category_id) ?? []);
+  // Gagal mengambil daftar deck bukan "tidak ada deck". Klien Supabase
+  // mengembalikan kegagalan jaringan sebagai `error`, bukan lemparan, jadi
+  // tanpa cabang ini server yang sedang bermasalah tampil sebagai aplikasi
+  // yang kosong — dan tidak ada satu pun jejaknya di log.
+  if (categoryResult.error) {
+    reportError("home.categories.gagal-diambil", {
+      ...supabaseError(categoryResult.error),
+    });
+    return (
+      <LoadError
+        title="Daftar deck belum bisa dimuat"
+        description="Sambungan ke server bermasalah, jadi deck-mu belum kelihatan. Deck-nya aman — coba lagi sebentar."
+      />
+    );
+  }
+
+  // Kegagalan daftar pembelian tidak menghalangi halaman: efeknya cuma deck
+  // berbayar tampak terkunci padahal sudah dibeli. Ditampilkan apa adanya,
+  // tapi tetap dicatat supaya tidak hilang tanpa jejak.
+  if (purchaseResult.error) {
+    reportError("home.purchases.gagal-diambil", {
+      ...supabaseError(purchaseResult.error),
+    });
+  }
+
+  const categories = categoryResult.data;
+
+  if (!categories || categories.length === 0) {
+    return <EmptyState />;
+  }
+
+  const unlockedIds = new Set(
+    purchaseResult.data?.map((p) => p.category_id) ?? []
+  );
 
   // Deck bawaan (seed) tetap tampil apa adanya; deck AI ditaruh di grup sendiri.
-  const curated = categories?.filter((c) => !c.is_ai_generated) ?? [];
-  const aiDecks = categories?.filter((c) => c.is_ai_generated) ?? [];
+  const curated = categories.filter((c) => !c.is_ai_generated);
+  const aiDecks = categories.filter((c) => c.is_ai_generated);
 
   return (
-    <div className="max-w-screen-sm mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">Pilih Kategori</h1>
-        <p className="text-muted-foreground mt-1">
-          Mau main kartu apa hari ini?
-        </p>
-      </header>
+    <div className="space-y-8">
+      <DeckGrid categories={curated} unlockedIds={unlockedIds} />
 
-      {!categories || categories.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="space-y-8">
-          <DeckGrid
-            categories={curated}
-            unlockedIds={unlockedIds}
-          />
-
-          {aiDecks.length > 0 && (
-            <section>
-              <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
-                <Sparkles className="size-4" />
-                Deck buatanmu
-              </h2>
-              <DeckGrid categories={aiDecks} unlockedIds={unlockedIds} />
-            </section>
-          )}
-        </div>
+      {aiDecks.length > 0 && (
+        <section>
+          <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-1.5">
+            <Sparkles className="size-4" />
+            Deck buatanmu
+          </h2>
+          <DeckGrid categories={aiDecks} unlockedIds={unlockedIds} />
+        </section>
       )}
     </div>
   );
@@ -76,6 +128,7 @@ type CategoryRow = {
   is_free: boolean;
   price_idr: number | null;
   is_ai_generated: boolean;
+  theme: string | null;
 };
 
 function DeckGrid({
@@ -97,6 +150,7 @@ function DeckGrid({
           isFree={category.is_free}
           isUnlocked={category.is_free || unlockedIds.has(category.id)}
           isAiGenerated={category.is_ai_generated}
+          theme={category.theme}
         />
       ))}
     </div>
@@ -111,6 +165,7 @@ function CategoryCard({
   isFree,
   isUnlocked,
   isAiGenerated,
+  theme,
 }: {
   id: string;
   name: string;
@@ -119,9 +174,15 @@ function CategoryCard({
   isFree: boolean;
   isUnlocked: boolean;
   isAiGenerated: boolean;
+  theme: string | null;
 }) {
   const content = (
-    <div className="relative p-6 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+    <div
+      className={cn(
+        "relative p-6 rounded-2xl bg-gradient-to-br text-white shadow-lg hover:shadow-xl transition-shadow overflow-hidden",
+        deckThemeStyle(theme).card
+      )}
+    >
       <div className="absolute top-4 right-4 flex gap-2">
         {isAiGenerated && (
           <Badge
@@ -150,7 +211,7 @@ function CategoryCard({
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">{name}</h2>
         {description && (
-          <p className="text-pink-50 text-sm leading-relaxed line-clamp-2">
+          <p className="text-white/85 text-sm leading-relaxed line-clamp-2">
             {description}
           </p>
         )}

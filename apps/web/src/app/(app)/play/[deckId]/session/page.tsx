@@ -14,8 +14,11 @@ import { X, ChevronLeft, SkipForward } from "lucide-react";
 import { useGameStore } from "@/stores/game-store";
 import { CardDisplay } from "@/components/cards/card-display";
 import { GameProgressBar } from "@/components/game/progress-bar";
+import { SessionSkeleton } from "@/components/game/session-skeleton";
 import { Button } from "@/components/ui/button";
-import type { GameCard } from "@wecard/types";
+import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
+import { cn } from "@/lib/utils";
+import type { DeckTheme, GameCard } from "@flipcard/types";
 
 // Gerbang hidrasi: false saat SSR/hidrasi, true setelahnya — store zustand
 // baru terisi dari localStorage di client, jadi render pertama harus netral.
@@ -74,6 +77,7 @@ export default function SessionPage() {
     isCardRevealed,
     isActive,
     deckId: storedDeckId,
+    deckTheme,
     revealCard,
     nextCard,
     previousCard,
@@ -90,19 +94,27 @@ export default function SessionPage() {
   }, [mounted, isActive, storedDeckId, deckId, cards.length, router]);
 
   if (!mounted || !isActive || cards.length === 0) {
-    return (
-      <div className="flex h-[calc(100dvh-var(--bottom-nav-h))] items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Memuat...</div>
-      </div>
-    );
+    // Kerangka yang sama dengan layar mainnya, bukan teks "Memuat..." —
+    // supaya pergantian ke kartu asli tidak terasa seperti layar berganti.
+    // Sebelum hidrasi selesai, tema dari store belum boleh dipakai: HTML
+    // server tidak mengenalnya dan hasilnya jadi mismatch.
+    return <SessionSkeleton theme={mounted ? deckTheme : undefined} />;
   }
 
   const isComplete = currentIndex >= cards.length;
   const currentCard = cards[currentIndex];
 
   if (isComplete) {
-    return <CompletionScreen deckId={deckId} onEnd={endSession} />;
+    return (
+      <CompletionScreen
+        deckId={deckId}
+        deckTheme={deckTheme}
+        onEnd={endSession}
+      />
+    );
   }
+
+  const theme = deckThemeStyle(deckTheme);
 
   const goNext = () => {
     setDirection(1);
@@ -132,7 +144,13 @@ export default function SessionPage() {
     // Sebelumnya min-h-screen di dalam <main> yang sudah ber-padding-bawah
     // membuat halaman lebih tinggi dari layar sehingga ikut ter-scroll — itu
     // yang bikin jarak atas-bawah kartu terasa timpang.
-    <div className="flex flex-col h-[calc(100dvh-var(--bottom-nav-h))] min-h-[26rem] overflow-hidden bg-gradient-to-br from-neutral-50 via-pink-50/40 to-rose-50/40">
+    <div
+      style={deckThemeVars(deckTheme)}
+      className={cn(
+        "flex flex-col h-[calc(100dvh-var(--bottom-nav-h))] min-h-[26rem] overflow-hidden bg-gradient-to-br",
+        theme.play
+      )}
+    >
       {/* Header */}
       <header className="shrink-0 flex items-center gap-1 px-4 pt-3 pb-2">
         <Button
@@ -280,9 +298,11 @@ function SwipeableCard({
 
 function CompletionScreen({
   deckId,
+  deckTheme,
   onEnd,
 }: {
   deckId: string;
+  deckTheme: DeckTheme;
   onEnd: () => void;
 }) {
   const router = useRouter();
@@ -298,7 +318,13 @@ function CompletionScreen({
   };
 
   return (
-    <div className="flex min-h-[calc(100dvh-var(--bottom-nav-h))] items-center justify-center px-6 bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
+    <div
+      style={deckThemeVars(deckTheme)}
+      className={cn(
+        "flex min-h-[calc(100dvh-var(--bottom-nav-h))] items-center justify-center px-6 bg-gradient-to-br",
+        deckThemeStyle(deckTheme).finish
+      )}
+    >
       <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

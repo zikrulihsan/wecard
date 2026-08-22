@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { GameCard } from "@wecard/types";
+import type { GameCard } from "@flipcard/types";
 import { CardDisplay } from "@/components/cards/card-display";
 
 const demoCard: GameCard = {

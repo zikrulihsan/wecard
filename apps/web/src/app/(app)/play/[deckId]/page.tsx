@@ -1,12 +1,36 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { reportError, supabaseError } from "@/lib/observability";
+import { deckThemeVars, resolveDeckTheme } from "@/lib/deck-theme";
+import { BackLink } from "@/components/nav/back-link";
+import { CardLoader } from "@/components/ui/card-loader";
+import { LoadError } from "@/components/ui/load-error";
 import { SectionPicker } from "./section-picker";
 
 export const dynamic = "force-dynamic";
 
-export default async function DeckDetailPage({
+// Tautan kembali langsung tampil. Nama deck dan daftar level baru diketahui
+// setelah query, jadi cuma bagian itu yang punya penanda memuat — bentuknya
+// sama persis dengan loading.tsx rute ini. `params` sengaja diteruskan sebagai
+// promise supaya halaman ini tidak ikut menunggu.
+export default function DeckDetailPage({
+  params,
+}: {
+  params: Promise<{ deckId: string }>;
+}) {
+  return (
+    <div className="max-w-screen-sm mx-auto px-4 py-6">
+      <BackLink href="/home" />
+
+      <Suspense fallback={<CardLoader label="Membuka deck" />}>
+        <DeckBody params={params} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function DeckBody({
   params,
 }: {
   params: Promise<{ deckId: string }>;
@@ -15,10 +39,10 @@ export default async function DeckDetailPage({
   const supabase = await createClient();
 
   // sections difilter pakai deckId juga, jadi tidak perlu nunggu category.
-  const [{ data: category }, { data: sections }] = await Promise.all([
+  const [categoryResult, sectionResult] = await Promise.all([
     supabase
       .from("categories")
-      .select("id, slug, name, description, is_free")
+      .select("id, slug, name, description, is_free, theme")
       .eq("id", deckId)
       .eq("is_active", true)
       .single(),
@@ -38,12 +62,44 @@ export default async function DeckDetailPage({
       .order("sort_order", { ascending: true }),
   ]);
 
+  // `.single()` menandai "tidak ada barisnya" dengan kode PGRST116. Kode lain
+  // — termasuk jaringan putus — berarti decknya mungkin ada tapi tidak
+  // terjangkau, dan menampilkan halaman 404 untuk itu adalah kebohongan yang
+  // membuat pemilik deck mengira decknya terhapus.
+  if (categoryResult.error && categoryResult.error.code !== "PGRST116") {
+    reportError("play.deck.gagal-diambil", {
+      deckId,
+      ...supabaseError(categoryResult.error),
+    });
+    return (
+      <LoadError
+        title="Deck belum bisa dibuka"
+        description="Sambungan ke server bermasalah. Deck-nya tidak ke mana-mana — coba lagi sebentar."
+      />
+    );
+  }
+
+  const category = categoryResult.data;
+
   if (!category) {
     notFound();
   }
 
+  if (sectionResult.error) {
+    reportError("play.sections.gagal-diambil", {
+      deckId,
+      ...supabaseError(sectionResult.error),
+    });
+    return (
+      <LoadError
+        title="Isi deck belum bisa dimuat"
+        description="Nama decknya terbaca, tapi daftar levelnya gagal diambil. Coba lagi sebentar."
+      />
+    );
+  }
+
   const sectionData =
-    sections?.map((s) => ({
+    sectionResult.data?.map((s) => ({
       id: s.id,
       slug: s.slug,
       name: s.name,
@@ -51,16 +107,12 @@ export default async function DeckDetailPage({
       cardCount: s.cards?.length ?? 0,
     })) ?? [];
 
-  return (
-    <div className="max-w-screen-sm mx-auto px-4 py-6">
-      <Link
-        href="/home"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
-      >
-        <ChevronLeft className="size-4" />
-        Kembali
-      </Link>
+  const theme = resolveDeckTheme(category.theme);
 
+  return (
+    // Warna deck dipasang di pembungkus, jadi kontrol di dalamnya (checkbox,
+    // cincin fokus, tombol mulai) ikut warnanya tanpa di-override satu-satu.
+    <div style={deckThemeVars(theme)}>
       <header className="mb-6">
         <h1 className="text-3xl font-bold">{category.name}</h1>
         {category.description && (
@@ -71,6 +123,7 @@ export default async function DeckDetailPage({
       <SectionPicker
         deckId={category.id}
         deckName={category.name}
+        deckTheme={theme}
         sections={sectionData}
       />
     </div>

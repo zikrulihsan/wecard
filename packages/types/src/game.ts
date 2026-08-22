@@ -1,4 +1,9 @@
-import type { CardType, CardDifficulty, SpecialCardKind } from "./database";
+import type {
+  CardType,
+  CardDifficulty,
+  DeckTheme,
+  SpecialCardKind,
+} from "./database";
 
 export interface GameCard {
   id: string;
@@ -13,6 +18,8 @@ export interface GameCard {
 export interface GameSessionState {
   deckId: string;
   deckName: string;
+  /** Warna deck yang sedang dimainkan, dipakai layar main & layar selesai. */
+  deckTheme: DeckTheme;
   selectedSections: string[];
   cards: GameCard[];
   currentIndex: number;
@@ -29,6 +36,7 @@ export interface GameStore extends GameSessionState {
   startSession: (
     deckId: string,
     deckName: string,
+    deckTheme: DeckTheme,
     sections: string[],
     cards: GameCard[]
   ) => void;

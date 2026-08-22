@@ -5,10 +5,18 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useGameStore } from "@/stores/game-store";
 import { shuffle } from "@/lib/game/shuffle";
+import { DECK_THEME_STYLES } from "@/lib/deck-theme";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import type { GameCard, CardType, CardDifficulty, SpecialCardKind } from "@wecard/types";
+import type {
+  GameCard,
+  CardType,
+  CardDifficulty,
+  DeckTheme,
+  SpecialCardKind,
+} from "@flipcard/types";
 
 interface Section {
   id: string;
@@ -21,10 +29,12 @@ interface Section {
 export function SectionPicker({
   deckId,
   deckName,
+  deckTheme,
   sections,
 }: {
   deckId: string;
   deckName: string;
+  deckTheme: DeckTheme;
   sections: Section[];
 }) {
   const router = useRouter();
@@ -82,8 +92,19 @@ export function SectionPicker({
       .in("section_id", sectionIds)
       .order("sort_order", { ascending: true });
 
-    if (fetchError || !cards || cards.length === 0) {
-      setError(fetchError?.message ?? "Tidak ada kartu tersedia.");
+    if (fetchError) {
+      // Pesan mentah PostgREST pernah tampil apa adanya di layar pemain —
+      // termasuk "TypeError: Failed to fetch" saat jaringan putus, yang tidak
+      // berarti apa-apa bagi mereka. Aslinya tetap ada di konsol browser
+      // untuk ditelusuri.
+      console.error("[play] gagal mengambil kartu", fetchError);
+      setError("Kartunya gagal diambil. Cek sambunganmu, lalu coba lagi.");
+      setLoading(false);
+      return;
+    }
+
+    if (!cards || cards.length === 0) {
+      setError("Level ini belum ada kartunya. Coba pilih level lain.");
       setLoading(false);
       return;
     }
@@ -103,7 +124,7 @@ export function SectionPicker({
 
     const shuffled = shuffle(gameCards);
 
-    startSession(deckId, deckName, selectedSlugs, shuffled);
+    startSession(deckId, deckName, deckTheme, selectedSlugs, shuffled);
     router.push(`/play/${deckId}/session`);
   }
 
@@ -152,7 +173,12 @@ export function SectionPicker({
           onClick={onStart}
           disabled={selected.size === 0 || loading || totalCards === 0}
           size="lg"
-          className="w-full rounded-full shadow-lg"
+          className={cn(
+            // Warna deck dibawa sampai ke tombol mulai supaya halaman ini
+            // tidak terasa lepas dari sampulnya di beranda.
+            "w-full rounded-full shadow-lg bg-gradient-to-r text-white hover:opacity-95",
+            DECK_THEME_STYLES[deckTheme].card
+          )}
         >
           {loading
             ? "Menyiapkan kartu..."

@@ -9,17 +9,26 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { invalidateAiAccess } from "@/lib/ai/access-client";
 import {
   AUDIENCES,
+  CARD_MIXES,
   DEPTHS,
   MAX_CARDS_PER_SECTION,
   MAX_SECTIONS,
   MIN_CARDS_PER_SECTION,
   MIN_SECTIONS,
   TONES,
+  getAudiencePlaceholders,
 } from "@/lib/ai/deck-schema";
 
-export function CreateForm() {
+interface CreateFormProps {
+  /** Sisa jatah generate akun ini, sudah termasuk kesempatan yang sekarang. */
+  remaining: number;
+  limit: number;
+}
+
+export function CreateForm({ remaining, limit }: CreateFormProps) {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +40,7 @@ export function CreateForm() {
   const [deckName, setDeckName] = useState("");
   const [sectionCount, setSectionCount] = useState(3);
   const [cardsPerSection, setCardsPerSection] = useState(10);
-  const [includeAction, setIncludeAction] = useState(true);
+  const [cardMix, setCardMix] = useState<string>("campuran");
   const [includeSpecial, setIncludeSpecial] = useState(false);
   const [context, setContext] = useState("");
   const [avoid, setAvoid] = useState("");
@@ -53,7 +62,7 @@ export function CreateForm() {
           deckName: deckName.trim() || undefined,
           sectionCount,
           cardsPerSection,
-          includeAction,
+          cardMix,
           includeSpecial,
           context: context.trim() || undefined,
           avoid: avoid.trim() || undefined,
@@ -72,6 +81,8 @@ export function CreateForm() {
         return;
       }
 
+      // Jatah baru saja berkurang; status di nav ikut diperbarui.
+      invalidateAiAccess();
       router.push(`/play/${data.categoryId}`);
       router.refresh();
     } catch {
@@ -82,6 +93,7 @@ export function CreateForm() {
   }
 
   const totalCards = sectionCount * cardsPerSection;
+  const placeholders = getAudiencePlaceholders(audience);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -160,18 +172,24 @@ export function CreateForm() {
         Total {totalCards} kartu.
       </p>
 
+      <Field
+        label="Isi kartu"
+        hint={CARD_MIXES.find((m) => m.value === cardMix)?.hint}
+      >
+        <Select
+          value={cardMix}
+          onChange={(e) => setCardMix(e.target.value)}
+          disabled={isGenerating}
+        >
+          {CARD_MIXES.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </Field>
+
       <div className="space-y-3">
-        <Label className="items-start gap-3">
-          <Checkbox
-            checked={includeAction}
-            onCheckedChange={(checked) => setIncludeAction(checked === true)}
-            disabled={isGenerating}
-          />
-          <span className="font-normal">
-            Sertakan kartu <strong>Action</strong> — tantangan yang dikerjakan
-            langsung, bukan cuma dijawab.
-          </span>
-        </Label>
         <Label className="items-start gap-3">
           <Checkbox
             checked={includeSpecial}
@@ -189,7 +207,7 @@ export function CreateForm() {
           value={deckName}
           onChange={(e) => setDeckName(e.target.value)}
           maxLength={60}
-          placeholder="Misal: Malam Jumat Berdua"
+          placeholder={placeholders.deckName}
           disabled={isGenerating}
         />
       </Field>
@@ -203,7 +221,7 @@ export function CreateForm() {
           onChange={(e) => setContext(e.target.value)}
           maxLength={500}
           rows={3}
-          placeholder="Misal: kami LDR sudah 2 tahun dan baru ketemu sebulan sekali"
+          placeholder={placeholders.context}
           disabled={isGenerating}
         />
       </Field>
@@ -214,7 +232,7 @@ export function CreateForm() {
           onChange={(e) => setAvoid(e.target.value)}
           maxLength={300}
           rows={2}
-          placeholder="Misal: mantan, kerjaan, politik"
+          placeholder={placeholders.avoid}
           disabled={isGenerating}
         />
       </Field>
@@ -224,6 +242,13 @@ export function CreateForm() {
           {error}
         </p>
       )}
+
+      {/* Sisa jatah ditaruh tepat di atas tombol — di sinilah keputusan
+          "generate sekarang atau nanti" benar-benar diambil. */}
+      <p className="text-sm text-muted-foreground text-center">
+        Sisa jatah: <strong>{remaining}</strong> dari {limit} deck AI.
+        {remaining === 1 && " Ini kesempatan terakhirmu, pikirkan baik-baik."}
+      </p>
 
       <Button
         type="submit"

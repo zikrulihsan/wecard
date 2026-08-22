@@ -1,18 +1,99 @@
 import { z } from "zod";
+import { DECK_THEMES } from "@flipcard/types";
 
 // ============================================================
 // INPUT — field yang diisi user di form generate
 // ============================================================
 
+// Placeholder contoh per audience — dipakai form generate supaya contohnya
+// nyambung sama pilihan "mau dimainkan sama siapa".
+export type AudiencePlaceholders = {
+  deckName: string;
+  context: string;
+  avoid: string;
+};
+
 export const AUDIENCES = [
-  { value: "pasangan", label: "Pasangan" },
-  { value: "sahabat", label: "Sahabat / teman dekat" },
-  { value: "keluarga", label: "Keluarga" },
-  { value: "anak-orang-tua", label: "Anak & orang tua" },
-  { value: "rekan-kerja", label: "Rekan kerja / tim" },
-  { value: "kenalan-baru", label: "Kenalan baru" },
-  { value: "lainnya", label: "Lainnya (jelaskan di konteks)" },
+  {
+    value: "pasangan",
+    label: "Pasangan",
+    placeholders: {
+      deckName: "Misal: Malam Jumat Berdua",
+      context: "Misal: kami LDR sudah 2 tahun dan baru ketemu sebulan sekali",
+      avoid: "Misal: mantan, kerjaan, politik",
+    },
+  },
+  {
+    value: "sahabat",
+    label: "Sahabat / teman dekat",
+    placeholders: {
+      deckName: "Misal: Nongkrong Sampai Pagi",
+      context:
+        "Misal: kami sahabat dari SMA, sekarang beda kota dan jarang ketemu",
+      avoid: "Misal: berat badan, gaji, drama grup",
+    },
+  },
+  {
+    value: "keluarga",
+    label: "Keluarga",
+    placeholders: {
+      deckName: "Misal: Kumpul Keluarga Besar",
+      context:
+        "Misal: dimainkan pas lebaran, ada om, tante, dan sepupu dari anak-anak sampai dewasa",
+      avoid: "Misal: politik, warisan, kapan nikah",
+    },
+  },
+  {
+    value: "anak-orang-tua",
+    label: "Anak & orang tua",
+    placeholders: {
+      deckName: "Misal: Ngobrol Sebelum Tidur",
+      context: "Misal: anak umur 9 tahun, biasanya main sebelum tidur",
+      avoid: "Misal: nilai sekolah, dibanding-bandingkan sama saudara",
+    },
+  },
+  {
+    value: "rekan-kerja",
+    label: "Rekan kerja / tim",
+    placeholders: {
+      deckName: "Misal: Icebreaker Senin Pagi",
+      context:
+        "Misal: tim 6 orang, setengahnya remote dan belum pernah ketemu langsung",
+      avoid: "Misal: gaji, promosi, gosip kantor",
+    },
+  },
+  {
+    value: "kenalan-baru",
+    label: "Kenalan baru",
+    placeholders: {
+      deckName: "Misal: Kenalan Tanpa Canggung",
+      context:
+        "Misal: acara komunitas, kebanyakan baru pertama kali ketemu hari itu",
+      avoid: "Misal: agama, politik, status hubungan",
+    },
+  },
+  {
+    value: "lainnya",
+    label: "Lainnya (jelaskan di konteks)",
+    placeholders: {
+      deckName: "Misal: Malam Seru Bareng",
+      context: "Misal: dimainkan sama tetangga kompleks pas arisan bulanan",
+      avoid: "Misal: politik, agama, uang",
+    },
+  },
 ] as const;
+
+export const DEFAULT_AUDIENCE_PLACEHOLDERS: AudiencePlaceholders =
+  AUDIENCES[0].placeholders;
+
+export function getAudiencePlaceholders(
+  audience: string
+): AudiencePlaceholders {
+  return (
+    AUDIENCES.find((option) => option.value === audience)?.placeholders ??
+    DEFAULT_AUDIENCE_PLACEHOLDERS
+  );
+}
 
 export const TONES = [
   { value: "santai", label: "Santai & ringan" },
@@ -26,6 +107,24 @@ export const DEPTHS = [
   { value: "ringan", label: "Ringan — aman untuk siapa saja" },
   { value: "sedang", label: "Sedang — mulai personal" },
   { value: "dalam", label: "Dalam — pertanyaan berat & jujur" },
+] as const;
+
+export const CARD_MIXES = [
+  {
+    value: "campuran",
+    label: "Campuran — pertanyaan & tantangan",
+    hint: "Sekitar sepertiga kartu berupa tantangan.",
+  },
+  {
+    value: "talk",
+    label: "Pertanyaan saja",
+    hint: "Semua kartu dijawab dengan cerita. Fokus ngobrol.",
+  },
+  {
+    value: "action",
+    label: "Tantangan saja",
+    hint: "Semua kartu berupa tantangan yang langsung dikerjakan — tidak ada yang perlu dijawab.",
+  },
 ] as const;
 
 export const MIN_SECTIONS = 2;
@@ -45,7 +144,9 @@ export const generateDeckInputSchema = z.object({
     .int()
     .min(MIN_CARDS_PER_SECTION)
     .max(MAX_CARDS_PER_SECTION),
-  includeAction: z.boolean().default(true),
+  cardMix: z
+    .enum(CARD_MIXES.map((m) => m.value) as [string, ...string[]])
+    .default("campuran"),
   includeSpecial: z.boolean().default(false),
   context: z.string().trim().max(500).optional(),
   avoid: z.string().trim().max(300).optional(),
@@ -88,6 +189,12 @@ export const generatedSectionSchema = z.object({
 
 export const generatedDeckSchema = z.object({
   name: z.string().describe("Nama deck, maksimal 5 kata"),
+  // Optional supaya model yang lupa mengisinya tidak menggagalkan generate —
+  // temanya diisi dari audiens saat normalisasi.
+  theme: z
+    .enum(DECK_THEMES)
+    .optional()
+    .describe("Nama tema warna deck, dipilih dari daftar yang tersedia"),
   description: z
     .string()
     .describe("1-2 kalimat yang menjelaskan deck ini untuk siapa dan isinya"),

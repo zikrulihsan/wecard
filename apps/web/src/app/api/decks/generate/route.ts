@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { reportError, supabaseError } from "@/lib/observability";
 import { getAiAccess } from "@/lib/ai/access";
 import { generateDeckInputSchema } from "@/lib/ai/deck-schema";
 import {
@@ -11,8 +12,6 @@ import {
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-const RATE_LIMIT_PER_HOUR = 5;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -26,10 +25,24 @@ export async function POST(request: Request) {
 
   // Dicek sedini mungkin: generateDeck() di bawah memanggil LLM dan itu
   // berbiaya, sementara RLS baru menolak jauh setelahnya di tahap insert.
-  if (!(await getAiAccess())) {
+  const access = await getAiAccess();
+
+  if (!access.enabled) {
     return NextResponse.json(
-      { error: "Fitur bikin deck AI belum terbuka untuk akunmu." },
+      { error: "Fitur bikin deck AI sedang tidak aktif untuk akunmu." },
       { status: 403 }
+    );
+  }
+
+  // Jatah dihitung dari generate yang berhasil saja — lihat getAiAccess().
+  // Dua permintaan yang benar-benar bersamaan bisa lolos berdua di sini;
+  // yang ketiga tetap ditolak, dan RLS (has_ai_access()) menutup sisanya.
+  if (access.remaining <= 0) {
+    return NextResponse.json(
+      {
+        error: `Jatah bikin deck AI kamu sudah habis (${access.limit} deck). Deck yang sudah jadi tetap bisa dimainkan.`,
+      },
+      { status: 429 }
     );
   }
 
@@ -44,22 +57,6 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
-
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count } = await supabase
-    .from("ai_generations")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", oneHourAgo);
-
-  if ((count ?? 0) >= RATE_LIMIT_PER_HOUR) {
-    return NextResponse.json(
-      {
-        error: `Batas generate tercapai (${RATE_LIMIT_PER_HOUR} deck per jam). Coba lagi nanti.`,
-      },
-      { status: 429 }
-    );
-  }
 
   let result;
   try {
@@ -81,16 +78,33 @@ export async function POST(request: Request) {
       // biarkan "unknown"
     }
 
-    await supabase.from("ai_generations").insert({
-      user_id: user.id,
-      input,
+    const { error: logError } = await supabase
+      .from("ai_generations")
+      .insert({
+        user_id: user.id,
+        input,
+        provider,
+        model,
+        status: "error",
+        error_message: message,
+      });
+
+    if (logError) {
+      reportError("generate.log-gagal-tidak-tersimpan", {
+        userId: user.id,
+        provider,
+        model,
+        ...supabaseError(logError),
+      });
+    }
+
+    reportError("generate.gagal", {
+      userId: user.id,
       provider,
       model,
-      status: "error",
-      error_message: message,
+      message,
+      cause: error instanceof Error ? error.message : String(error),
     });
-
-    console.error("[generate-deck]", error);
     return NextResponse.json(
       { error: message },
       { status: error instanceof GenerationRefused ? 422 : 502 }
@@ -105,6 +119,7 @@ export async function POST(request: Request) {
       slug: buildSlug(deck.name),
       name: deck.name,
       description: deck.description,
+      theme: deck.theme,
       is_free: true,
       price_idr: null,
       sort_order: 100,
@@ -163,7 +178,14 @@ export async function POST(request: Request) {
     return saveFailed("cards", cardError);
   }
 
-  await supabase.from("ai_generations").insert({
+  // Baris inilah yang memotong jatah — `ai_generations` berstatus success
+  // adalah satu-satunya hitungan kuota (lihat getAiAccess dan has_ai_access()).
+  // Kalau insert-nya gagal, pengguna dapat deck tanpa jatahnya berkurang;
+  // begitu paket top-up dijual, itu kebocoran pendapatan yang tidak akan
+  // terlihat di mana pun. Deck-nya tidak dibatalkan — pengguna sudah menunggu
+  // dan hasilnya sudah benar — tapi kejadiannya harus terekam supaya bisa
+  // dicocokkan belakangan.
+  const { error: quotaError } = await supabase.from("ai_generations").insert({
     user_id: user.id,
     category_id: category.id,
     input,
@@ -174,9 +196,22 @@ export async function POST(request: Request) {
     status: "success",
   });
 
+  if (quotaError) {
+    reportError("generate.jatah-tidak-terpotong", {
+      userId: user.id,
+      categoryId: category.id,
+      provider,
+      model,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      ...supabaseError(quotaError),
+    });
+  }
+
   return NextResponse.json({
     categoryId: category.id,
     name: deck.name,
+    theme: deck.theme,
     sectionCount: deck.sections.length,
     cardCount: cardRows.length,
   });
@@ -188,9 +223,14 @@ export async function POST(request: Request) {
  * pesan generik.
  */
 function saveFailed(step: string, error: unknown) {
-  console.error(`[generate-deck] insert ${step}`, error);
-
   const detail = error as { code?: string; message?: string } | null;
+
+  reportError("generate.simpan-gagal", {
+    step,
+    code: detail?.code,
+    message: detail?.message,
+  });
+
   const isProduction = process.env.NODE_ENV === "production";
 
   return NextResponse.json(
@@ -204,9 +244,9 @@ function saveFailed(step: string, error: unknown) {
             code: detail?.code,
             hint:
               detail?.code === "42703" || detail?.code === "PGRST205"
-                ? "Jalankan packages/supabase/migrations/00002_ai_decks.sql di SQL Editor Supabase."
+                ? "Ada migration yang belum jalan. Jalankan packages/supabase/migrations/00002_ai_decks.sql dan 00004_deck_theme.sql di SQL Editor Supabase."
                 : detail?.code === "42501"
-                  ? "Insert ditolak RLS — pastikan policy di migration 00002 sudah terpasang."
+                  ? "Insert ditolak RLS — pastikan policy di migration 00002 sudah terpasang, dan cek sisa jatah: has_ai_access() ikut menolak kalau kuota generate habis."
                   : undefined,
           }),
     },
