@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
-import { LandingCardDemo } from "@/components/cards/landing-card-demo";
 import { buttonVariants } from "@/components/ui/button";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
 import { PrimaryCta } from "./cta";
+import { DeckCard } from "./deck-card";
 
 /**
  * Layar pertama. Tugasnya cuma tiga: menyebut apa ini, menunjukkan wujud
  * kartunya, dan menawarkan jalan masuk yang gratis.
  *
- * Demo kartunya bukan hiasan — pengunjung bisa langsung membaliknya untuk
- * merasakan interaksi utama sebelum membuat akun.
+ * Tumpukan kartunya bukan hiasan — tanpa itu halaman ini cuma teks, dan
+ * pengunjung tidak punya bayangan apa yang mereka dapat. Dua kartu dikutip
+ * apa adanya dari deck bawaan; yang berlabel "Bikinan AI" contoh keluaran
+ * fitur generate.
  */
 export function Hero() {
   return (
@@ -69,7 +71,34 @@ export function Hero() {
           </p>
         </div>
 
-        <LandingCardDemo />
+        {/* Setiap kartu terangkat sedikit saat di-hover supaya hero terasa
+            hidup tanpa mengambil fokus dari demo flip di bagian contoh. */}
+        <div className="relative mx-auto flex h-72 w-full max-w-sm items-center justify-center sm:h-96">
+          <DeckCard
+            theme="sky"
+            kind="Talk"
+            deck="Anak & Orang Tua"
+            className="absolute h-56 w-44 -translate-x-[4.5rem] -rotate-12 text-base transition-transform duration-300 ease-out hover:z-10 hover:-translate-y-3 hover:scale-[1.03] sm:h-64 sm:w-52 sm:-translate-x-24"
+          >
+            Kapan terakhir kali kamu merasa bangga sama aku?
+          </DeckCard>
+          <DeckCard
+            theme="amber"
+            kind="Action"
+            deck="Bikinan AI"
+            className="absolute h-56 w-44 translate-x-[4.5rem] rotate-12 transition-transform duration-300 ease-out hover:z-10 hover:-translate-y-3 hover:scale-[1.03] sm:h-64 sm:w-52 sm:translate-x-24"
+          >
+            Tunjukkan foto terakhir di galerimu, ceritakan kejadiannya.
+          </DeckCard>
+          <DeckCard
+            theme="pink"
+            kind="Talk"
+            deck="Pasangan"
+            className="absolute h-56 w-44 rotate-2 transition-transform duration-300 ease-out hover:z-10 hover:-translate-y-3 hover:scale-[1.03] sm:h-64 sm:w-52"
+          >
+            Apa kebiasaan kecil aku yang kamu suka?
+          </DeckCard>
+        </div>
       </div>
     </section>
   );

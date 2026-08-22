@@ -1,3 +1,4 @@
+import { LandingCardDemo } from "@/components/cards/landing-card-demo";
 import { DeckCard } from "./deck-card";
 
 /**
@@ -21,7 +22,28 @@ export function SampleCards() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid items-center gap-10 rounded-[2rem] border border-pink-100 bg-white px-6 py-10 shadow-sm md:grid-cols-[0.8fr_1fr] md:px-12 md:py-12">
+          <div className="space-y-4 text-center md:text-left">
+            <p className="text-sm font-semibold uppercase tracking-widest text-pink-600">
+              Coba langsung
+            </p>
+            <h3 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+              Ketuk kartunya, lalu mulai ngobrol
+            </h3>
+            <p className="leading-relaxed text-neutral-600">
+              Saat bermain, satu kartu tampil dalam satu waktu. Balik untuk
+              membuka pertanyaan, lalu jawab bergantian tanpa terburu-buru.
+            </p>
+          </div>
+
+          <LandingCardDemo />
+        </div>
+
+        <h3 className="mt-16 text-center text-xl font-semibold text-neutral-900">
+          Contoh kartu lainnya
+        </h3>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <DeckCard theme="pink" kind="Talk" deck="Pasangan" className="h-44">
             Hal apa dari aku yang bikin kamu merasa dicintai?
           </DeckCard>
