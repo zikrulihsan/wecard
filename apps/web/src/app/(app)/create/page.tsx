@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Lock, Sparkles } from "lucide-react";
 import { getAiAccess } from "@/lib/ai/access";
+import { AI_TOPUP_PACK, formatIdr } from "@/lib/pricing";
 import { BackLink } from "@/components/nav/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardLoader } from "@/components/ui/card-loader";
@@ -49,6 +50,20 @@ function QuotaSpentNotice({ used, limit }: { used: number; limit: number }) {
           Tiap akun dapat {limit} deck AI, dan punyamu sudah terpakai semua (
           {used} dari {limit}). Deck yang sudah jadi tetap ada di beranda dan
           bisa dimainkan kapan saja.
+        </p>
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+          {AI_TOPUP_PACK.available ? (
+            <>
+              Mau bikin lagi? Ada paket tambahan {AI_TOPUP_PACK.generations}{" "}
+              deck seharga Rp {formatIdr(AI_TOPUP_PACK.priceIdr)}.
+            </>
+          ) : (
+            <>
+              Paket tambahan {AI_TOPUP_PACK.generations} deck (Rp{" "}
+              {formatIdr(AI_TOPUP_PACK.priceIdr)}) lagi disiapkan — belum bisa
+              dibeli sekarang.
+            </>
+          )}
         </p>
         <div className="pt-2">
           <Link
