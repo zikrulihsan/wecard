@@ -92,8 +92,19 @@ export function SectionPicker({
       .in("section_id", sectionIds)
       .order("sort_order", { ascending: true });
 
-    if (fetchError || !cards || cards.length === 0) {
-      setError(fetchError?.message ?? "Tidak ada kartu tersedia.");
+    if (fetchError) {
+      // Pesan mentah PostgREST pernah tampil apa adanya di layar pemain —
+      // termasuk "TypeError: Failed to fetch" saat jaringan putus, yang tidak
+      // berarti apa-apa bagi mereka. Aslinya tetap ada di konsol browser
+      // untuk ditelusuri.
+      console.error("[play] gagal mengambil kartu", fetchError);
+      setError("Kartunya gagal diambil. Cek sambunganmu, lalu coba lagi.");
+      setLoading(false);
+      return;
+    }
+
+    if (!cards || cards.length === 0) {
+      setError("Level ini belum ada kartunya. Coba pilih level lain.");
       setLoading(false);
       return;
     }

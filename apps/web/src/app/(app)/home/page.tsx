@@ -2,9 +2,11 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Lock, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { reportError, supabaseError } from "@/lib/observability";
 import { deckThemeStyle } from "@/lib/deck-theme";
 import { Badge } from "@/components/ui/badge";
 import { CardLoader } from "@/components/ui/card-loader";
+import { LoadError } from "@/components/ui/load-error";
 import { cn } from "@/lib/utils";
 import { AiDeckCta, AiDeckCtaPlaceholder } from "./ai-deck-cta";
 import { HomeHeader } from "./header";
@@ -41,7 +43,7 @@ async function DeckList() {
   const supabase = await createClient();
 
   // Dua query ini tidak saling bergantung — jalankan barengan.
-  const [{ data: categories }, { data: purchases }] = await Promise.all([
+  const [categoryResult, purchaseResult] = await Promise.all([
     supabase
       .from("categories")
       .select(
@@ -62,11 +64,40 @@ async function DeckList() {
     supabase.from("purchases").select("category_id").eq("status", "completed"),
   ]);
 
+  // Gagal mengambil daftar deck bukan "tidak ada deck". Klien Supabase
+  // mengembalikan kegagalan jaringan sebagai `error`, bukan lemparan, jadi
+  // tanpa cabang ini server yang sedang bermasalah tampil sebagai aplikasi
+  // yang kosong — dan tidak ada satu pun jejaknya di log.
+  if (categoryResult.error) {
+    reportError("home.categories.gagal-diambil", {
+      ...supabaseError(categoryResult.error),
+    });
+    return (
+      <LoadError
+        title="Daftar deck belum bisa dimuat"
+        description="Sambungan ke server bermasalah, jadi deck-mu belum kelihatan. Deck-nya aman — coba lagi sebentar."
+      />
+    );
+  }
+
+  // Kegagalan daftar pembelian tidak menghalangi halaman: efeknya cuma deck
+  // berbayar tampak terkunci padahal sudah dibeli. Ditampilkan apa adanya,
+  // tapi tetap dicatat supaya tidak hilang tanpa jejak.
+  if (purchaseResult.error) {
+    reportError("home.purchases.gagal-diambil", {
+      ...supabaseError(purchaseResult.error),
+    });
+  }
+
+  const categories = categoryResult.data;
+
   if (!categories || categories.length === 0) {
     return <EmptyState />;
   }
 
-  const unlockedIds = new Set(purchases?.map((p) => p.category_id) ?? []);
+  const unlockedIds = new Set(
+    purchaseResult.data?.map((p) => p.category_id) ?? []
+  );
 
   // Deck bawaan (seed) tetap tampil apa adanya; deck AI ditaruh di grup sendiri.
   const curated = categories.filter((c) => !c.is_ai_generated);

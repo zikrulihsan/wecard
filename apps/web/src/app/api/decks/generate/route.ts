@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { reportError, supabaseError } from "@/lib/observability";
 import { getAiAccess } from "@/lib/ai/access";
 import { generateDeckInputSchema } from "@/lib/ai/deck-schema";
 import {
@@ -77,16 +78,33 @@ export async function POST(request: Request) {
       // biarkan "unknown"
     }
 
-    await supabase.from("ai_generations").insert({
-      user_id: user.id,
-      input,
+    const { error: logError } = await supabase
+      .from("ai_generations")
+      .insert({
+        user_id: user.id,
+        input,
+        provider,
+        model,
+        status: "error",
+        error_message: message,
+      });
+
+    if (logError) {
+      reportError("generate.log-gagal-tidak-tersimpan", {
+        userId: user.id,
+        provider,
+        model,
+        ...supabaseError(logError),
+      });
+    }
+
+    reportError("generate.gagal", {
+      userId: user.id,
       provider,
       model,
-      status: "error",
-      error_message: message,
+      message,
+      cause: error instanceof Error ? error.message : String(error),
     });
-
-    console.error("[generate-deck]", error);
     return NextResponse.json(
       { error: message },
       { status: error instanceof GenerationRefused ? 422 : 502 }
@@ -160,7 +178,14 @@ export async function POST(request: Request) {
     return saveFailed("cards", cardError);
   }
 
-  await supabase.from("ai_generations").insert({
+  // Baris inilah yang memotong jatah — `ai_generations` berstatus success
+  // adalah satu-satunya hitungan kuota (lihat getAiAccess dan has_ai_access()).
+  // Kalau insert-nya gagal, pengguna dapat deck tanpa jatahnya berkurang;
+  // begitu paket top-up dijual, itu kebocoran pendapatan yang tidak akan
+  // terlihat di mana pun. Deck-nya tidak dibatalkan — pengguna sudah menunggu
+  // dan hasilnya sudah benar — tapi kejadiannya harus terekam supaya bisa
+  // dicocokkan belakangan.
+  const { error: quotaError } = await supabase.from("ai_generations").insert({
     user_id: user.id,
     category_id: category.id,
     input,
@@ -170,6 +195,18 @@ export async function POST(request: Request) {
     output_tokens: usage.outputTokens,
     status: "success",
   });
+
+  if (quotaError) {
+    reportError("generate.jatah-tidak-terpotong", {
+      userId: user.id,
+      categoryId: category.id,
+      provider,
+      model,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      ...supabaseError(quotaError),
+    });
+  }
 
   return NextResponse.json({
     categoryId: category.id,
@@ -186,9 +223,14 @@ export async function POST(request: Request) {
  * pesan generik.
  */
 function saveFailed(step: string, error: unknown) {
-  console.error(`[generate-deck] insert ${step}`, error);
-
   const detail = error as { code?: string; message?: string } | null;
+
+  reportError("generate.simpan-gagal", {
+    step,
+    code: detail?.code,
+    message: detail?.message,
+  });
+
   const isProduction = process.env.NODE_ENV === "production";
 
   return NextResponse.json(
