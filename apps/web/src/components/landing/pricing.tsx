@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { Check } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
 import { PrimaryCta } from "./cta";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
 import {
@@ -60,16 +58,9 @@ export function Pricing() {
             </ul>
 
             <div className="mt-8 pt-2">
-              <Link
-                href="/register"
-                className={buttonVariants({
-                  variant: "outline",
-                  size: "lg",
-                  className: "h-11 w-full rounded-full text-base",
-                })}
-              >
+              <PrimaryCta href="/register" className="h-11 w-full">
                 Mulai gratis
-              </Link>
+              </PrimaryCta>
             </div>
           </div>
 
