@@ -1,5 +1,3 @@
-"use client";
-
 import { m } from "framer-motion";
 
 export function GameProgressBar({

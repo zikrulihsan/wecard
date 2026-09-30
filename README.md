@@ -5,7 +5,8 @@ Aplikasi web card game — kartu pertanyaan (Talk) & tantangan (Action) buat ngo
 ## Tech Stack
 
 - **Monorepo**: Turborepo + pnpm
-- **Frontend**: Next.js 16 (App Router) + TypeScript
+- **Frontend**: React + Vite + TypeScript + React Router
+- **Backend**: TypeScript Netlify Functions (`/api/ai-access`, `/api/decks/generate`)
 - **Database**: Supabase (PostgreSQL + Auth)
 - **Styling**: Tailwind CSS 4 + shadcn/ui (base-nova)
 - **Animasi**: Framer Motion
@@ -27,45 +28,56 @@ pnpm install
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
-5. Copy URL dan anon key ke `apps/web/.env.local`:
+5. Salin `.env.example` ke `apps/web/.env.local`, lalu isi URL dan anon key:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
-
-# Origin publik aplikasi — dipakai untuk menyusun tautan konfirmasi email.
-# Lokal: http://localhost:3000 · Produksi: https://domain-kamu.com
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=xxx
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_ANON_KEY=xxx
 ```
 
 ### 2a. Setup URL konfirmasi email
 
-Tautan di email konfirmasi dibentuk Supabase, bukan aplikasi ini. Kalau
-**Authentication → URL Configuration** di dashboard belum disetel per
-environment, tautannya akan menunjuk ke `http://localhost:3000` walaupun
-pendaftarannya dari domain produksi.
+Tautan di email konfirmasi dibentuk Supabase. Setel **Authentication → URL
+Configuration** pada project produksi agar kembali ke origin aplikasi.
 
 Isi di dashboard Supabase project produksi:
 
 | Field | Nilai |
 | --- | --- |
-| **Site URL** | `https://domain-kamu.com` |
-| **Redirect URLs** | `https://domain-kamu.com/callback`, plus `http://localhost:3000/callback` untuk dev |
+| **Site URL** | `https://flipcard.id` |
+| **Redirect URLs** | `https://flipcard.id/callback`, plus `http://localhost:5173/callback` untuk dev |
 
 Catatan penting:
 
-- Supabase hanya menghormati `emailRedirectTo` kalau URL-nya cocok dengan salah
-  satu entri **Redirect URLs**. Kalau tidak cocok, entri itu dibuang diam-diam
-  dan pengguna dilempar ke **Site URL** — inilah kenapa tautannya bisa mendarat
-  di `http://localhost:3000/?code=...` alih-alih `/callback`.
-- `NEXT_PUBLIC_SITE_URL` di deploy produksi harus domain produksi. Variabel ini
-  dibaca saat build, jadi setelah diubah perlu redeploy.
-- Sebagai jaring pengaman, middleware aplikasi mengalihkan `/?code=...` ke
-  `/callback`, jadi tautan lama tetap bisa dipakai selama host-nya benar. Host
-  yang salah (`localhost` di email pengguna) tetap hanya bisa dibetulkan lewat
-  dua setelan di atas.
+- `emailRedirectTo` dari aplikasi menunjuk `/callback` pada origin tempat
+  pengguna mendaftar. URL itu harus ada di daftar **Redirect URLs**.
+- Tautan lama berbentuk `/?code=...` masih diarahkan oleh React Router ke
+  `/callback`; host yang salah pada tautan email perlu diperbaiki di dashboard.
 
-### 2b. Setup AI (fitur generate deck)
+### 2b. Login dengan Google
+
+1. Buat OAuth client bertipe **Web application** di Google Cloud. Isi
+   **Authorized JavaScript origins** dengan `https://flipcard.id` dan
+   **Authorized redirect URIs** dengan
+   `https://<project-ref>.supabase.co/auth/v1/callback` dari dashboard Supabase.
+2. Di Supabase **Authentication → Providers → Google**, aktifkan provider dan
+   isi Client ID serta Client Secret dari Google Cloud.
+3. Pastikan `https://flipcard.id/callback` ada di **Redirect URLs** Supabase.
+   Untuk dev, tambahkan `http://localhost:5173/callback`.
+
+Callback Google memakai alur PKCE di browser. Client Secret hanya disimpan di
+dashboard Supabase, tidak di repo atau variabel `VITE_`.
+
+Variabel produksi `NEXT_PUBLIC_SUPABASE_URL` dan
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` yang lama masih dibaca sementara untuk
+membantu migrasi. Nama baru yang disarankan adalah `VITE_SUPABASE_URL` dan
+`VITE_SUPABASE_ANON_KEY`; kedua nilai ini masuk ke bundle browser. Untuk
+Functions, setel `SUPABASE_URL` dan `SUPABASE_ANON_KEY` di Netlify. Setelah
+mengubah env build, lakukan deploy ulang.
+
+### 2c. Setup AI (fitur generate deck)
 
 Fitur generate mendukung dua provider. Isi salah satu (atau dua-duanya) di `apps/web/.env.local`:
 
@@ -90,7 +102,7 @@ GEMINI_MODEL=gemini-3.5-flash
 ANTHROPIC_MODEL=claude-opus-5
 ```
 
-Key hanya dipakai di server (route handler `/api/decks/generate`) dan tidak pernah dikirim ke browser. Jangan pakai prefix `NEXT_PUBLIC_`.
+Key hanya dipakai di Netlify Function `/api/decks/generate` dan tidak dikirim ke browser. Jangan pakai prefix `VITE_`.
 
 ### 3. Run dev server
 
@@ -98,13 +110,22 @@ Key hanya dipakai di server (route handler `/api/decks/generate`) dan tidak pern
 pnpm dev
 ```
 
-Buka [http://localhost:3000](http://localhost:3000).
+Buka [http://localhost:5173](http://localhost:5173). Plugin Netlify Vite
+menjalankan Functions secara lokal pada origin yang sama.
+
+### Deploy di Netlify
+
+Gunakan base directory root repo. `netlify.toml` membangun `apps/web/dist` dan
+membundel `apps/web/netlify/functions`. Rewrite `/api/*` harus berada sebelum
+rewrite SPA `/* → /index.html` supaya endpoint tidak menjadi HTML. File
+`apps/web/netlify.toml` dipakai plugin Netlify saat `pnpm dev` dijalankan dari
+workspace web.
 
 ## Struktur
 
 ```
 apps/
-  web/                 # Next.js app
+  web/                 # Vite app dan Netlify Functions
 packages/
   types/               # Shared TypeScript types
   supabase/            # SQL migrations & seed
@@ -123,7 +144,7 @@ packages/
 
 ## Fitur MVP (Phase 1)
 
-- [x] Auth (email/password)
+- [x] Auth (email/password dan Google OAuth)
 - [x] Browse categories
 - [x] Section picker (pilih level yang mau dimainkan)
 - [x] Card game session:
@@ -180,7 +201,7 @@ Gerbangnya berlapis, dan urutannya penting:
 
 | Lapis | Letak | Yang dicegah |
 | --- | --- | --- |
-| API route | `api/decks/generate`, sebelum `generateDeck()` | biaya token AI — panggilan LLM terjadi sebelum insert apa pun |
+| Netlify Function | `api/decks/generate`, sebelum `generateDeck()` | biaya token AI — panggilan LLM terjadi sebelum insert apa pun |
 | RLS | policy `Insert own AI categories` + `has_ai_access()` (akses **dan** kuota) | insert langsung ke Supabase pakai anon key, melewati API route |
 | Privilege tabel | `REVOKE UPDATE, DELETE ON ai_generations` | user mereset jatahnya sendiri dengan menghapus riwayat generate |
 | Privilege kolom | `REVOKE UPDATE ON profiles` + `GRANT UPDATE (display_name, …)` | user menyalakan kembali `ai_enabled` yang dicabut |
@@ -231,7 +252,7 @@ dan ditambah dari sisi user, dan `profiles.ai_enabled` hanya bisa diubah lewat
 
 ### Kalau formulir bikin deck tidak muncul
 
-Cek log server (Netlify/Vercel/Cloudflare). Helper `getAiAccess()` mencatat
+Cek log Netlify Functions. Helper `getAiAccess()` mencatat
 penyebabnya, bukan sekadar gagal diam-diam:
 
 | Baris log | Artinya |
@@ -251,7 +272,7 @@ where user_id = '<user-id>' and status = 'success';
 
 Setiap baris log menyertakan `supabaseHost` dan `userId`. Dua hal itu yang paling sering jadi biang masalah:
 
-- **`supabaseHost` bukan project yang Anda kira.** `NEXT_PUBLIC_SUPABASE_URL` ditanam saat build, jadi mengubah env di hosting tanpa redeploy tidak berpengaruh. Gejalanya menipu: halaman home tetap normal karena deck bawaan bisa dibaca tanpa login.
+- **`supabaseHost` bukan project yang Anda kira.** `VITE_SUPABASE_URL` ditanam saat build, jadi mengubah env di hosting tanpa redeploy tidak berpengaruh. Gejalanya menipu: halaman home tetap normal karena deck bawaan bisa dibaca tanpa login.
 - **`userId` bukan baris yang Anda update.** Tabel `profiles` tidak punya kolom email, jadi cocokkan lewat `auth.users`:
 
 ```sql
@@ -262,6 +283,6 @@ where u.email = 'email@anda.com';
 
 ## Roadmap
 
-- **Phase 2**: PWA, SEO landing polish, Google OAuth, OG image
+- **Phase 2**: PWA, SEO landing polish, OG image
 - **Phase 3**: Midtrans payment, unlock flow, kategori berbayar
 - **Phase 4**: Analytics, share/invite, more categories, admin panel

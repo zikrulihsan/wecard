@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { Pause, RotateCcw, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";

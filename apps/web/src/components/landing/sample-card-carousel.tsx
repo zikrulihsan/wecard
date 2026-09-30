@@ -1,5 +1,3 @@
-"use client";
-
 import { useRef } from "react";
 import { DeckCard } from "./deck-card";
 

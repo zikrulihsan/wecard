@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { m, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { DeckCard } from "./deck-card";

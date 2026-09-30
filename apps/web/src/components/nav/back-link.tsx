@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 
 /**
@@ -16,7 +16,7 @@ export function BackLink({
 }) {
   return (
     <Link
-      href={href}
+      to={href}
       className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
     >
       <ChevronLeft className="size-4" />

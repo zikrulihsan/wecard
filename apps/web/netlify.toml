@@ -1,0 +1,22 @@
+[build]
+  command = "pnpm build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/ai-access"
+  to = "/.netlify/functions/ai-access"
+  status = 200
+
+[[redirects]]
+  from = "/api/decks/generate"
+  to = "/.netlify/functions/decks-generate"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
