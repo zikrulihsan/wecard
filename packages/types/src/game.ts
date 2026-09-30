@@ -15,6 +15,16 @@ export interface GameCard {
   sectionSlug: string;
 }
 
+/**
+ * Aturan timer per kartu, dipilih sebelum permainan dimulai. `seconds` 0
+ * berarti timer mati.
+ */
+export interface CardTimerSettings {
+  seconds: number;
+  /** Langsung pindah ke kartu berikutnya begitu waktunya habis. */
+  autoAdvance: boolean;
+}
+
 export interface GameSessionState {
   deckId: string;
   deckName: string;
@@ -27,6 +37,7 @@ export interface GameSessionState {
   skippedCardIds: string[];
   completedCardIds: string[];
   startedAt: string;
+  timer: CardTimerSettings;
 }
 
 export interface GameStore extends GameSessionState {
@@ -38,7 +49,8 @@ export interface GameStore extends GameSessionState {
     deckName: string,
     deckTheme: DeckTheme,
     sections: string[],
-    cards: GameCard[]
+    cards: GameCard[],
+    timer: CardTimerSettings
   ) => void;
   revealCard: () => void;
   nextCard: () => void;

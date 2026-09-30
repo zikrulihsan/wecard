@@ -13,6 +13,7 @@ import {
 import { X, ChevronLeft, SkipForward } from "lucide-react";
 import { useGameStore } from "@/stores/game-store";
 import { CardDisplay } from "@/components/cards/card-display";
+import { CardTimer } from "@/components/game/card-timer";
 import { GameProgressBar } from "@/components/game/progress-bar";
 import { SessionSkeleton } from "@/components/game/session-skeleton";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ const useMounted = () =>
     () => true,
     () => false
   );
+
+const noop = () => {};
 
 // direction: 1 = maju (kartu baru masuk dari kanan), -1 = mundur (dari kiri).
 // Jarak masuk sengaja pendek (56px) — kartu baru lebih banyak muncul lewat
@@ -78,6 +81,7 @@ export default function SessionPage() {
     isActive,
     deckId: storedDeckId,
     deckTheme,
+    timer,
     revealCard,
     nextCard,
     previousCard,
@@ -165,7 +169,16 @@ export default function SessionPage() {
         <div className="flex-1 px-2">
           <GameProgressBar current={currentIndex} total={cards.length} />
         </div>
-        <div className="size-8 shrink-0" />
+        {timer.seconds > 0 ? (
+          <CardTimer
+            key={currentCard.id}
+            seconds={timer.seconds}
+            running={isCardRevealed}
+            onExpire={timer.autoAdvance ? goNext : noop}
+          />
+        ) : (
+          <div className="size-8 shrink-0" />
+        )}
       </header>
 
       {/* Card area — kedua kartu absolut sejak awal, jadi kartu masuk dan
