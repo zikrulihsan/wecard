@@ -25,7 +25,9 @@ export default function HomePage() {
     Promise.all([
       supabase.from("categories")
         .select("id, slug, name, description, is_free, price_idr, is_ai_generated, theme")
-        .eq("is_active", true).order("sort_order", { ascending: true }),
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .order("sort_order", { ascending: true }),
       supabase.from("purchases").select("category_id").eq("status", "completed"),
     ]).then(([categoryResult, purchaseResult]) => {
       if (!active) return;

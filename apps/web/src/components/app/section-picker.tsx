@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
+import { Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@/lib/supabase/client";
 import { useGameStore } from "@/stores/game-store";
@@ -9,12 +10,67 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import type {
+  CardTimerSettings,
   GameCard,
   CardType,
   CardDifficulty,
   DeckTheme,
   SpecialCardKind,
 } from "@flipcard/types";
+
+// Pilihan durasi timer per kartu, dalam detik. 0 = tanpa timer.
+const TIMER_OPTIONS = [0, 30, 60, 90, 120, 180] as const;
+
+// Pilihan terakhir diingat di perangkat ini supaya tidak perlu diatur ulang
+// setiap main. Gagal baca/tulis (mode privat, storage diblokir) tidak apa-apa.
+const TIMER_STORAGE_KEY = "flipcard-timer-settings";
+
+const DEFAULT_TIMER: CardTimerSettings = { seconds: 0, autoAdvance: false };
+
+// Dibaca lewat useSyncExternalStore supaya render server (tanpa localStorage)
+// dan hidrasi tetap sama; nilai tersimpan baru dipakai setelahnya. Snapshot-nya
+// string mentah agar stabil antar-render.
+const noopSubscribe = () => () => {};
+
+function readStoredTimer(): string | null {
+  try {
+    return localStorage.getItem(TIMER_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function parseTimerSettings(raw: string | null): CardTimerSettings {
+  if (!raw) return DEFAULT_TIMER;
+  try {
+    const parsed = JSON.parse(raw) as Partial<CardTimerSettings>;
+    return {
+      seconds: TIMER_OPTIONS.includes(
+        parsed.seconds as (typeof TIMER_OPTIONS)[number]
+      )
+        ? (parsed.seconds as number)
+        : 0,
+      autoAdvance: parsed.autoAdvance === true,
+    };
+  } catch {
+    return DEFAULT_TIMER;
+  }
+}
+
+function saveTimerSettings(settings: CardTimerSettings) {
+  try {
+    localStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // abaikan
+  }
+}
+
+function timerLabel(seconds: number) {
+  if (seconds === 0) return "Mati";
+  if (seconds < 60) return `${seconds} dtk`;
+  const minutes = seconds / 60;
+  return Number.isInteger(minutes) ? `${minutes} mnt` : `${seconds} dtk`;
+}
 
 interface Section {
   id: string;
@@ -41,6 +97,18 @@ export function SectionPicker({
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(sections.map((s) => s.id))
   );
+  const storedTimer = useSyncExternalStore(
+    noopSubscribe,
+    readStoredTimer,
+    () => null
+  );
+  // null = belum diubah di halaman ini, pakai pilihan terakhir yang tersimpan.
+  const [timerOverride, setTimerOverride] = useState<CardTimerSettings | null>(
+    null
+  );
+  const timer = timerOverride ?? parseTimerSettings(storedTimer);
+  const setTimer = (update: (t: CardTimerSettings) => CardTimerSettings) =>
+    setTimerOverride(update(timer));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -122,7 +190,8 @@ export function SectionPicker({
 
     const shuffled = shuffle(gameCards);
 
-    startSession(deckId, deckName, deckTheme, selectedSlugs, shuffled);
+    saveTimerSettings(timer);
+    startSession(deckId, deckName, deckTheme, selectedSlugs, shuffled, timer);
     navigate(`/play/${deckId}/session`);
   }
 
@@ -160,13 +229,78 @@ export function SectionPicker({
         </div>
       </div>
 
+      <div>
+        <h2 className="font-semibold mb-3 flex items-center gap-1.5">
+          <Timer className="size-4" />
+          Timer per Kartu
+        </h2>
+        <Card className="p-4 space-y-4">
+          <div
+            role="radiogroup"
+            aria-label="Durasi timer per kartu"
+            className="grid grid-cols-3 gap-2"
+          >
+            {TIMER_OPTIONS.map((seconds) => {
+              const active = timer.seconds === seconds;
+              return (
+                <button
+                  key={seconds}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setTimer((t) => ({ ...t, seconds }))}
+                  className={cn(
+                    "h-9 rounded-full border text-sm font-medium transition-colors",
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input hover:border-primary/40"
+                  )}
+                >
+                  {timerLabel(seconds)}
+                </button>
+              );
+            })}
+          </div>
+
+          {timer.seconds > 0 && (
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={timer.autoAdvance}
+                onCheckedChange={(checked) =>
+                  setTimer((t) => ({ ...t, autoAdvance: checked === true }))
+                }
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                <span className="font-medium">Otomatis lanjut</span>
+                <span className="block text-xs text-muted-foreground">
+                  Pindah ke kartu berikutnya begitu waktunya habis.
+                </span>
+              </span>
+            </label>
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            {timer.seconds > 0
+              ? "Timer mulai berjalan saat kartu dibuka. Ketuk timernya untuk jeda."
+              : "Tanpa batas waktu — ngobrol sepuasnya."}
+          </p>
+        </Card>
+      </div>
+
       {error && (
         <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
           {error}
         </div>
       )}
 
-      <div className="sticky bottom-24 pt-4">
+      {/* Menempel tepat di atas bottom nav dengan latar solid + gradasi di
+          atasnya, supaya isi yang ter-scroll di belakangnya (daftar level,
+          pilihan timer) memudar alih-alih tampil tumpang tindih. */}
+      <div
+        className="sticky z-10 -mx-4 px-4 pt-6 pb-3 bg-gradient-to-t from-background from-70% to-transparent"
+        style={{ bottom: "var(--bottom-nav-h)" }}
+      >
         <Button
           onClick={onStart}
           disabled={selected.size === 0 || loading || totalCards === 0}
