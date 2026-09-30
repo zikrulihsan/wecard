@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pause, Timer } from "lucide-react";
+import { Pause, RotateCcw, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function formatTime(totalSeconds: number) {
@@ -30,6 +30,9 @@ export function CardTimer({
 }) {
   const [remainingMs, setRemainingMs] = useState(seconds * 1000);
   const [paused, setPaused] = useState(false);
+  // Naik setiap kali timer di-reset, supaya interval menghitung tenggat baru
+  // meskipun timer sedang berjalan (active tetap true).
+  const [runId, setRunId] = useState(0);
   const onExpireRef = useRef(onExpire);
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export function CardTimer({
     // remainingMs sengaja tidak jadi dependensi: tenggat hanya dihitung ulang
     // saat timer mulai/lanjut, bukan setiap tick.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  }, [active, runId]);
 
   // Jeda singkat sebelum onExpire supaya "Habis!" sempat terbaca sebelum
   // kartu berganti. Dibersihkan saat unmount, jadi kalau pemain sudah pindah
@@ -65,31 +68,53 @@ export function CardTimer({
 
   const remainingSeconds = Math.ceil(remainingMs / 1000);
   const warning = !expired && remainingSeconds <= 10 && running;
+  const canReset = running && remainingMs < seconds * 1000;
+
+  const reset = () => {
+    setRemainingMs(seconds * 1000);
+    setPaused(false);
+    setRunId((n) => n + 1);
+  };
 
   return (
-    <button
-      type="button"
-      onClick={() => running && !expired && setPaused((p) => !p)}
-      disabled={!running || expired}
-      aria-label={
-        expired
-          ? "Waktu habis"
-          : paused
-            ? `Timer dijeda, sisa ${remainingSeconds} detik. Ketuk untuk lanjut`
-            : `Sisa ${remainingSeconds} detik. Ketuk untuk jeda`
-      }
-      className={cn(
-        "shrink-0 h-8 min-w-[4.5rem] px-2.5 rounded-full flex items-center justify-center gap-1 text-xs font-semibold tabular-nums transition-colors",
-        expired
-          ? "bg-destructive text-white"
-          : warning
-            ? "bg-destructive/15 text-destructive animate-pulse"
-            : "bg-white/70 text-foreground",
-        !running && "opacity-60"
-      )}
-    >
-      {paused ? <Pause className="size-3.5" /> : <Timer className="size-3.5" />}
-      {expired ? "Habis!" : formatTime(remainingSeconds)}
-    </button>
+    <div className="shrink-0 flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => running && !expired && setPaused((p) => !p)}
+        disabled={!running || expired}
+        aria-label={
+          expired
+            ? "Waktu habis"
+            : paused
+              ? `Timer dijeda, sisa ${remainingSeconds} detik. Ketuk untuk lanjut`
+              : `Sisa ${remainingSeconds} detik. Ketuk untuk jeda`
+        }
+        className={cn(
+          "shrink-0 h-8 min-w-[4.5rem] px-2.5 rounded-full flex items-center justify-center gap-1 text-xs font-semibold tabular-nums transition-colors",
+          expired
+            ? "bg-destructive text-white"
+            : warning
+              ? "bg-destructive/15 text-destructive animate-pulse"
+              : "bg-white/70 text-foreground",
+          !running && "opacity-60"
+        )}
+      >
+        {paused ? (
+          <Pause className="size-3.5" />
+        ) : (
+          <Timer className="size-3.5" />
+        )}
+        {expired ? "Habis!" : formatTime(remainingSeconds)}
+      </button>
+      <button
+        type="button"
+        onClick={reset}
+        disabled={!canReset}
+        aria-label="Ulangi timer"
+        className="size-8 rounded-full flex items-center justify-center bg-white/70 text-foreground transition-opacity disabled:opacity-40"
+      >
+        <RotateCcw className="size-3.5" />
+      </button>
+    </div>
   );
 }

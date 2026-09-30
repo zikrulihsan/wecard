@@ -296,7 +296,13 @@ export function SectionPicker({
         </div>
       )}
 
-      <div className="sticky bottom-24 pt-4">
+      {/* Menempel tepat di atas bottom nav dengan latar solid + gradasi di
+          atasnya, supaya isi yang ter-scroll di belakangnya (daftar level,
+          pilihan timer) memudar alih-alih tampil tumpang tindih. */}
+      <div
+        className="sticky z-10 -mx-4 px-4 pt-6 pb-3 bg-gradient-to-t from-background from-70% to-transparent"
+        style={{ bottom: "var(--bottom-nav-h)" }}
+      >
         <Button
           onClick={onStart}
           disabled={selected.size === 0 || loading || totalCards === 0}
