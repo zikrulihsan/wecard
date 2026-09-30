@@ -23,7 +23,7 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), lalu `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck)
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Jalankan migration terakhir sebelum deploy aplikasi, karena API membaca kolom `profiles.ai_unlimited`.
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
@@ -170,6 +170,12 @@ Angka kuotanya ada di dua tempat dan harus diubah bersamaan:
 page, kartu di halaman utama, halaman `/create` — membacanya dari konstanta itu,
 jadi tidak ada angka yang ditulis tangan di salinan teks.
 
+Migration `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` memberi
+`profiles.ai_unlimited = true` hanya kepada akun
+`zikrulihsanmd@gmail.com`. Akun tersebut tetap memiliki riwayat generate,
+tetapi jumlahnya tidak membatasi pembuatan deck baru. Kolom ini tidak bisa
+diubah oleh pengguna; `ai_enabled = false` tetap mematikan aksesnya.
+
 Gerbangnya berlapis, dan urutannya penting:
 
 | Lapis | Letak | Yang dicegah |
@@ -186,7 +192,7 @@ Gerbangnya berlapis, dan urutannya penting:
 | --- | --- |
 | Landing page `/` | bagian "Bikin Deck dengan AI": cara kerjanya dalam tiga langkah, plus kotak "Batasnya: 2 deck per akun" — jatah sekali seumur akun, generate gagal tidak memotong jatah, deck-nya privat |
 | `/home` | kartu ajakan berisi sisa jatah (`2 deck gratis, sisamu 2`), berubah jadi catatan abu-abu begitu habis |
-| `/create` | sub-judul menyebut jatah per akun, sisa jatah tepat di atas tombol generate, dan catatan tersendiri kalau jatahnya habis |
+| `/create` | sisa jatah tepat di atas tombol generate (atau keterangan tanpa batas untuk akun khusus), dan catatan tersendiri kalau jatahnya habis |
 | Nav bawah | gembok di tab "Bikin" begitu tidak bisa generate lagi |
 
 Dua lapis privilege itu perlu karena RLS tidak mengenal batasan per kolom dan

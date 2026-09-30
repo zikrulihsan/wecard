@@ -32,7 +32,9 @@ async function AiGate() {
   const { enabled, used, limit, remaining } = await getAiAccess();
 
   if (!enabled) return <DisabledNotice />;
-  if (remaining <= 0) return <QuotaSpentNotice used={used} limit={limit} />;
+  if (remaining === 0 && limit !== null) {
+    return <QuotaSpentNotice used={used} limit={limit} />;
+  }
 
   return <CreateForm remaining={remaining} limit={limit} />;
 }

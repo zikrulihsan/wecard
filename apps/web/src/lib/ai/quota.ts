@@ -1,5 +1,5 @@
 /**
- * Jatah generate deck AI per akun — sekali seumur akun, bukan per jam.
+ * Jatah generate deck AI bawaan per akun — sekali seumur akun, bukan per jam.
  *
  * Ditaruh di berkas sendiri, terpisah dari `access.ts`, supaya halaman yang
  * cuma perlu menyebut angkanya (landing page, salinan pemasaran) tidak ikut

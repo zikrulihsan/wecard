@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   // Jatah dihitung dari generate yang berhasil saja — lihat getAiAccess().
   // Dua permintaan yang benar-benar bersamaan bisa lolos berdua di sini;
   // yang ketiga tetap ditolak, dan RLS (has_ai_access()) menutup sisanya.
-  if (access.remaining <= 0) {
+  if (access.remaining === 0) {
     return NextResponse.json(
       {
         error: `Jatah bikin deck AI kamu sudah habis (${access.limit} deck). Deck yang sudah jadi tetap bisa dimainkan.`,

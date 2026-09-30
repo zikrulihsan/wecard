@@ -22,7 +22,7 @@ export async function AiDeckCta() {
   // Akun yang aksesnya dicabut tidak perlu ditawari sama sekali.
   if (!enabled) return null;
 
-  if (remaining <= 0) {
+  if (remaining === 0) {
     return (
       <div className="mb-6 flex min-h-[74px] items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-500">
@@ -49,7 +49,9 @@ export async function AiDeckCta() {
       <div className="min-w-0 flex-1">
         <p className="font-medium text-sm">Bikin deck pakai AI</p>
         <p className="text-sm text-muted-foreground">
-          {limit} deck gratis, sisamu {remaining}.
+          {remaining === null
+            ? "Buat deck AI tanpa batas."
+            : `${limit} deck gratis, sisamu ${remaining}.`}
         </p>
       </div>
       <ChevronRight className="size-4 shrink-0 text-neutral-400" />
