@@ -1,5 +1,3 @@
-"use client";
-
 import { m } from "framer-motion";
 import type { GameCard } from "@flipcard/types";
 import { cn } from "@/lib/utils";

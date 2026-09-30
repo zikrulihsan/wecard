@@ -1,7 +1,7 @@
 [build]
-  command = "pnpm --filter @flipcard/web build"
-  publish = "apps/web/dist"
-  functions = "apps/web/netlify/functions"
+  command = "pnpm build"
+  publish = "dist"
+  functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"

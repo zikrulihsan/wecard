@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,7 @@ export function PrimaryCta({
 }) {
   return (
     <Link
-      href={href}
+      to={href}
       className={cn(
         buttonVariants({ size: "lg" }),
         // `whitespace-normal` menimpa bawaan tombol: label ajakan di sini

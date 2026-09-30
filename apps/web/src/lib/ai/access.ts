@@ -1,23 +1,19 @@
-import { cache } from "react";
-import { createClient, getAuthSnapshot } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { AI_GENERATION_LIMIT } from "./quota";
 
 export { AI_GENERATION_LIMIT };
 
 export interface AiAccess {
-  /** Sakelar pemutus per akun (`profiles.ai_enabled`). Bawaannya terbuka. */
   enabled: boolean;
-  /** Generate yang berhasil dan sudah memakan jatah. */
   used: number;
-  /** Null berarti akun ini tidak dibatasi kuota. */
+  /** Null means this account has no generation quota. */
   limit: number | null;
   remaining: number | null;
   unlimited: boolean;
-  /** Boleh menekan tombol generate sekarang. */
   canGenerate: boolean;
 }
 
-const NO_ACCESS: AiAccess = {
+export const NO_ACCESS: AiAccess = {
   enabled: false,
   used: AI_GENERATION_LIMIT,
   limit: AI_GENERATION_LIMIT,
@@ -26,108 +22,32 @@ const NO_ACCESS: AiAccess = {
   canGenerate: false,
 };
 
-/**
- * Host Supabase yang benar-benar dipakai build ini. NEXT_PUBLIC_SUPABASE_URL
- * ditanam saat build, jadi kalau env di hosting menunjuk project lain daripada
- * yang dikira, nilai ini yang membuktikannya. Aman dicatat: URL-nya publik.
- */
-function supabaseHost(): string {
-  try {
-    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).host;
-  } catch {
-    return "(NEXT_PUBLIC_SUPABASE_URL tidak valid)";
-  }
-}
-
-/**
- * Status jatah generate deck AI untuk user yang sedang login.
- *
- * Fitur ini terbuka untuk semua akun; batas bawaan adalah kuota
- * {@link AI_GENERATION_LIMIT} deck, dihitung dari baris `ai_generations`
- * berstatus `success` — generate yang gagal tidak memakan jatah karena user
- * tidak dapat deck apa pun darinya. `profiles.ai_unlimited` mengecualikan
- * akun tertentu dari kuota; `profiles.ai_enabled` tetap menjadi sakelar
- * pemutus kalau satu akun perlu dicabut aksesnya.
- *
- * Dibungkus `cache()` supaya kalau layout dan halaman sama-sama butuh nilai
- * ini dalam satu request, query-nya cuma jalan sekali.
- *
- * Ini bukan gerbang terakhir — RLS di Postgres (policy "Insert own AI
- * categories" + has_ai_access(), yang ikut menghitung kuota) yang menolak
- * insert kalau jatahnya habis. Fungsi ini dipakai untuk menampilkan sisa
- * jatah di UI dan untuk menolak lebih awal di API route, sebelum biaya token
- * AI keluar.
- *
- * Kegagalan sengaja dicatat ke log server dan diperlakukan sebagai "tidak
- * boleh": kalau sisa jatah tidak bisa dibaca, menolak lebih murah daripada
- * menebak dan membakar token.
- */
-export const getAiAccess = cache(async (): Promise<AiAccess> => {
-  // Dibaca lokal dari cookie — tanpa jaringan.
-  const auth = await getAuthSnapshot();
-  if (!auth) return NO_ACCESS;
-
-  const supabase = await createClient();
-
+/** The Supabase client carries the verified user's JWT so RLS applies. */
+export async function getAiAccess(supabase: SupabaseClient, userId: string): Promise<AiAccess> {
   const [profile, generations] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("ai_enabled, ai_unlimited")
-      .eq("id", auth.userId)
-      .maybeSingle(),
-    supabase
-      .from("ai_generations")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", auth.userId)
-      .eq("status", "success"),
+    supabase.from("profiles").select("ai_enabled, ai_unlimited").eq("id", userId).maybeSingle(),
+    supabase.from("ai_generations").select("id", { count: "exact", head: true })
+      .eq("user_id", userId).eq("status", "success"),
   ]);
 
-  // Deployment web bisa mendahului migration Supabase. Selama kolom baru
-  // belum ada, akun tetap memakai kuota lama dan tidak kehilangan akses.
+  // A web deploy can precede the database migration. Keep the existing quota
+  // while ai_unlimited is not yet available.
   const legacyProfile = profile.error?.code === "42703"
-    ? await supabase
-      .from("profiles")
-      .select("ai_enabled")
-      .eq("id", auth.userId)
-      .maybeSingle()
+    ? await supabase.from("profiles").select("ai_enabled").eq("id", userId).maybeSingle()
     : null;
   const profileError = legacyProfile ? legacyProfile.error : profile.error;
   const profileData = legacyProfile ? legacyProfile.data : profile.data;
 
-  if (profileError) {
-    console.error("[ai-access] gagal membaca profiles", {
-      supabaseHost: supabaseHost(),
-      userId: auth.userId,
-      code: profileError.code,
-      message: profileError.message,
-      details: profileError.details,
-      hint: profileError.hint,
+  if (profileError || generations.error) {
+    console.error("[ai-access] gagal membaca kuota", {
+      userId,
+      profileError: profileError?.message,
+      generationsError: generations.error?.message,
     });
     return NO_ACCESS;
   }
 
-  if (generations.error) {
-    console.error("[ai-access] gagal menghitung ai_generations", {
-      supabaseHost: supabaseHost(),
-      userId: auth.userId,
-      code: generations.error.code,
-      message: generations.error.message,
-      details: generations.error.details,
-      hint: generations.error.hint,
-    });
-    return NO_ACCESS;
-  }
-
-  // Baris profil yang belum terbentuk bukan lagi jawaban "tidak boleh":
-  // aksesnya sudah bawaan semua akun, dan kuotanya tetap terjaga lewat
-  // hitungan di atas. Tetap dicatat karena itu tanda trigger pendaftaran
-  // (atau RLS profiles) bermasalah.
-  if (!profileData) {
-    console.warn("[ai-access] baris profil tidak terlihat untuk sesi ini", {
-      supabaseHost: supabaseHost(),
-      userId: auth.userId,
-    });
-  }
+  if (!profileData) console.warn("[ai-access] profil tidak terlihat", { userId });
 
   const enabled = profileData ? profileData.ai_enabled === true : true;
   const unlimited = !legacyProfile && profile.data?.ai_unlimited === true;
@@ -144,4 +64,4 @@ export const getAiAccess = cache(async (): Promise<AiAccess> => {
     unlimited,
     canGenerate: enabled && (remaining === null || remaining > 0),
   };
-});
+}

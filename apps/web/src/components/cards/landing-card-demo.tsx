@@ -1,5 +1,3 @@
-"use client";
-
 import { useRef, useState } from "react";
 import { m } from "framer-motion";
 import type { GameCard } from "@flipcard/types";

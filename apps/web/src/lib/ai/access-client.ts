@@ -1,43 +1,29 @@
-"use client";
+import { createClient } from "@/lib/supabase/client";
+import type { AiAccess } from "./access";
 
-/**
- * Boleh-tidaknya akun ini generate deck AI lagi (akses aktif dan jatah belum
- * habis), dibaca dari /api/ai-access.
- *
- * Disimpan di tingkat modul, bukan di dalam komponen: BottomNav ter-mount ulang
- * tiap pindah rute, dan tanpa cache di sini tiap pindah tab menembak API-nya
- * lagi padahal jawabannya sama.
- */
-let cached: boolean | undefined;
-let inFlight: Promise<boolean> | null = null;
+let cached: { userId: string; value: AiAccess } | null = null;
+let inFlight: { userId: string; promise: Promise<AiAccess> } | null = null;
 
-export function cachedAiAccess(): boolean | undefined {
-  return cached;
+export async function fetchAiAccessDetails(): Promise<AiAccess> {
+  const { data: { session } } = await createClient().auth.getSession();
+  if (!session) throw new Error("Belum login");
+  const userId = session.user.id;
+  if (cached?.userId === userId) return cached.value;
+  if (inFlight?.userId === userId) return inFlight.promise;
+
+  const promise = fetch("/api/ai-access", {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  }).then(async (response) => {
+    if (!response.ok) throw new Error("Gagal membaca jatah AI");
+    const value = await response.json() as AiAccess;
+    cached = { userId, value };
+    return value;
+  }).finally(() => { if (inFlight?.userId === userId) inFlight = null; });
+  inFlight = { userId, promise };
+  return promise;
 }
 
-export function fetchAiAccess(): Promise<boolean> {
-  inFlight ??= fetch("/api/ai-access")
-    .then((res) => (res.ok ? res.json() : null))
-    .then((body) => {
-      cached = body?.canUseAi === true;
-      return cached;
-    })
-    .catch(() => {
-      // Jaringan putus bukan jawaban "tidak boleh". Dilepas supaya navigasi
-      // berikutnya mencoba lagi, bukan terkunci pada kegagalan sesaat.
-      inFlight = null;
-      return false;
-    });
-
-  return inFlight;
-}
-
-/**
- * Dipanggil setelah satu generate berhasil: jatahnya berkurang, jadi nilai
- * yang tersimpan sudah basi — kalau itu jatah terakhir, gembok di nav harus
- * muncul. Nilainya diambil ulang saat nav ter-mount di halaman berikutnya.
- */
 export function invalidateAiAccess() {
-  cached = undefined;
+  cached = null;
   inFlight = null;
 }

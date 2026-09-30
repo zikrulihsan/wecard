@@ -22,9 +22,9 @@ type Context = Record<string, unknown>;
  */
 function supabaseHost(): string {
   try {
-    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).host;
+    return new URL((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)!).host;
   } catch {
-    return "(NEXT_PUBLIC_SUPABASE_URL tidak valid)";
+    return "(SUPABASE_URL tidak valid)";
   }
 }
 

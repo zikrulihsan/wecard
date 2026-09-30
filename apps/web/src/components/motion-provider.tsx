@@ -1,5 +1,3 @@
-"use client";
-
 import { LazyMotion } from "framer-motion";
 
 // domMax dimuat async supaya kode animasi/gesture framer-motion keluar dari

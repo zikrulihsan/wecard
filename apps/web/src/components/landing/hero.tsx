@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
@@ -54,7 +54,7 @@ export function Hero() {
               Coba gratis — {AI_GENERATION_LIMIT} deck AI
             </PrimaryCta>
             <Link
-              href="/login"
+              to="/login"
               className={buttonVariants({
                 size: "lg",
                 variant: "outline",

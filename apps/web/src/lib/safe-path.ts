@@ -1,16 +1,13 @@
 /**
  * Pembersih parameter `redirect` yang datang dari URL.
  *
- * Nilai itu berakhir di dua tempat yang sama-sama bisa membawa pengguna keluar
- * domain: `NextResponse.redirect()` di route `/callback`, dan `router.push()`
- * di halaman login. Keduanya menerima URL absolut, jadi parameter mentah dari
+ * Nilai itu dipakai untuk navigasi setelah login. Browser menerima URL absolut,
+ * jadi parameter mentah dari
  * query berarti siapa pun bisa membuat tautan yang berangkat dari domain
  * FlipCard tapi mendarat di situs orang lain — persis bentuk yang dipakai
  * untuk phishing halaman login.
  *
- * Yang legal cuma path relatif di dalam aplikasi ini. Middleware sendiri hanya
- * pernah mengisi parameter itu dengan `pathname` (lihat lib/supabase/middleware),
- * jadi pembatasan ini tidak menghilangkan satu pun alur yang sah.
+ * Yang legal cuma path relatif di dalam aplikasi ini.
  */
 
 /** Tujuan default kalau parameter tidak ada atau tidak lolos pemeriksaan. */
