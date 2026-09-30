@@ -9,8 +9,10 @@ export interface AiAccess {
   enabled: boolean;
   /** Generate yang berhasil dan sudah memakan jatah. */
   used: number;
-  limit: number;
-  remaining: number;
+  /** Null berarti akun ini tidak dibatasi kuota. */
+  limit: number | null;
+  remaining: number | null;
+  unlimited: boolean;
   /** Boleh menekan tombol generate sekarang. */
   canGenerate: boolean;
 }
@@ -20,6 +22,7 @@ const NO_ACCESS: AiAccess = {
   used: AI_GENERATION_LIMIT,
   limit: AI_GENERATION_LIMIT,
   remaining: 0,
+  unlimited: false,
   canGenerate: false,
 };
 
@@ -39,11 +42,12 @@ function supabaseHost(): string {
 /**
  * Status jatah generate deck AI untuk user yang sedang login.
  *
- * Fitur ini terbuka untuk semua akun; yang membatasi adalah kuota
+ * Fitur ini terbuka untuk semua akun; batas bawaan adalah kuota
  * {@link AI_GENERATION_LIMIT} deck, dihitung dari baris `ai_generations`
  * berstatus `success` — generate yang gagal tidak memakan jatah karena user
- * tidak dapat deck apa pun darinya. `profiles.ai_enabled` tinggal jadi
- * sakelar pemutus kalau satu akun perlu dicabut aksesnya.
+ * tidak dapat deck apa pun darinya. `profiles.ai_unlimited` mengecualikan
+ * akun tertentu dari kuota; `profiles.ai_enabled` tetap menjadi sakelar
+ * pemutus kalau satu akun perlu dicabut aksesnya.
  *
  * Dibungkus `cache()` supaya kalau layout dan halaman sama-sama butuh nilai
  * ini dalam satu request, query-nya cuma jalan sekali.
@@ -68,7 +72,7 @@ export const getAiAccess = cache(async (): Promise<AiAccess> => {
   const [profile, generations] = await Promise.all([
     supabase
       .from("profiles")
-      .select("ai_enabled")
+      .select("ai_enabled, ai_unlimited")
       .eq("id", auth.userId)
       .maybeSingle(),
     supabase
@@ -78,14 +82,26 @@ export const getAiAccess = cache(async (): Promise<AiAccess> => {
       .eq("status", "success"),
   ]);
 
-  if (profile.error) {
+  // Deployment web bisa mendahului migration Supabase. Selama kolom baru
+  // belum ada, akun tetap memakai kuota lama dan tidak kehilangan akses.
+  const legacyProfile = profile.error?.code === "42703"
+    ? await supabase
+      .from("profiles")
+      .select("ai_enabled")
+      .eq("id", auth.userId)
+      .maybeSingle()
+    : null;
+  const profileError = legacyProfile ? legacyProfile.error : profile.error;
+  const profileData = legacyProfile ? legacyProfile.data : profile.data;
+
+  if (profileError) {
     console.error("[ai-access] gagal membaca profiles", {
       supabaseHost: supabaseHost(),
       userId: auth.userId,
-      code: profile.error.code,
-      message: profile.error.message,
-      details: profile.error.details,
-      hint: profile.error.hint,
+      code: profileError.code,
+      message: profileError.message,
+      details: profileError.details,
+      hint: profileError.hint,
     });
     return NO_ACCESS;
   }
@@ -106,22 +122,26 @@ export const getAiAccess = cache(async (): Promise<AiAccess> => {
   // aksesnya sudah bawaan semua akun, dan kuotanya tetap terjaga lewat
   // hitungan di atas. Tetap dicatat karena itu tanda trigger pendaftaran
   // (atau RLS profiles) bermasalah.
-  if (!profile.data) {
+  if (!profileData) {
     console.warn("[ai-access] baris profil tidak terlihat untuk sesi ini", {
       supabaseHost: supabaseHost(),
       userId: auth.userId,
     });
   }
 
-  const enabled = profile.data ? profile.data.ai_enabled === true : true;
-  const used = Math.min(generations.count ?? 0, AI_GENERATION_LIMIT);
-  const remaining = Math.max(AI_GENERATION_LIMIT - used, 0);
+  const enabled = profileData ? profileData.ai_enabled === true : true;
+  const unlimited = !legacyProfile && profile.data?.ai_unlimited === true;
+  const used = unlimited
+    ? generations.count ?? 0
+    : Math.min(generations.count ?? 0, AI_GENERATION_LIMIT);
+  const remaining = unlimited ? null : Math.max(AI_GENERATION_LIMIT - used, 0);
 
   return {
     enabled,
     used,
-    limit: AI_GENERATION_LIMIT,
+    limit: unlimited ? null : AI_GENERATION_LIMIT,
     remaining,
-    canGenerate: enabled && remaining > 0,
+    unlimited,
+    canGenerate: enabled && (remaining === null || remaining > 0),
   };
 });

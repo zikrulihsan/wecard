@@ -23,9 +23,9 @@ import {
 } from "@/lib/ai/deck-schema";
 
 interface CreateFormProps {
-  /** Sisa jatah generate akun ini, sudah termasuk kesempatan yang sekarang. */
-  remaining: number;
-  limit: number;
+  /** Sisa jatah akun ini; null berarti tanpa batas. */
+  remaining: number | null;
+  limit: number | null;
 }
 
 export function CreateForm({ remaining, limit }: CreateFormProps) {
@@ -246,8 +246,14 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
       {/* Sisa jatah ditaruh tepat di atas tombol — di sinilah keputusan
           "generate sekarang atau nanti" benar-benar diambil. */}
       <p className="text-sm text-muted-foreground text-center">
-        Sisa jatah: <strong>{remaining}</strong> dari {limit} deck AI.
-        {remaining === 1 && " Ini kesempatan terakhirmu, pikirkan baik-baik."}
+        {remaining === null ? (
+          "Kamu bisa membuat deck AI tanpa batas."
+        ) : (
+          <>
+            Sisa jatah: <strong>{remaining}</strong> dari {limit} deck AI.
+            {remaining === 1 && " Ini kesempatan terakhirmu, pikirkan baik-baik."}
+          </>
+        )}
       </p>
 
       <Button

@@ -18,12 +18,12 @@ export const dynamic = "force-dynamic";
  * Postgres, ditambah pengecekan di POST /api/decks/generate.
  */
 export async function GET() {
-  const { canGenerate, enabled, used, limit, remaining } = await getAiAccess();
+  const { canGenerate, enabled, used, limit, remaining, unlimited } = await getAiAccess();
 
   return NextResponse.json(
     // `canUseAi` dipertahankan namanya supaya klien lama tidak ikut berubah;
     // artinya sekarang "masih boleh generate", termasuk soal kuota.
-    { canUseAi: canGenerate, enabled, used, limit, remaining },
+    { canUseAi: canGenerate, enabled, used, limit, remaining, unlimited },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
