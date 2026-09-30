@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { GameCard, GameStore } from "@flipcard/types";
+import type { CardTimerSettings, GameCard, GameStore } from "@flipcard/types";
 import { DEFAULT_DECK_THEME } from "@/lib/deck-theme";
 
 const initialState = {
@@ -16,6 +16,7 @@ const initialState = {
   skippedCardIds: [] as string[],
   completedCardIds: [] as string[],
   startedAt: "",
+  timer: { seconds: 0, autoAdvance: false } as CardTimerSettings,
   isActive: false,
 };
 
@@ -24,7 +25,7 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       ...initialState,
 
-      startSession: (deckId, deckName, deckTheme, sections, cards) => {
+      startSession: (deckId, deckName, deckTheme, sections, cards, timer) => {
         set({
           deckId,
           deckName,
@@ -36,6 +37,7 @@ export const useGameStore = create<GameStore>()(
           skippedCardIds: [],
           completedCardIds: [],
           startedAt: new Date().toISOString(),
+          timer,
           isActive: true,
         });
       },

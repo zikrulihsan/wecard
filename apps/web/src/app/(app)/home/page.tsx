@@ -59,6 +59,9 @@ async function DeckList() {
     `
       )
       .eq("is_active", true)
+      // Deck terbaru di paling atas; sort_order hanya jadi penentu kalau
+      // waktu dibuatnya sama persis (mis. deck seed yang di-insert sekaligus).
+      .order("created_at", { ascending: false })
       .order("sort_order", { ascending: true }),
     // Check unlocked categories for the current user
     supabase.from("purchases").select("category_id").eq("status", "completed"),
