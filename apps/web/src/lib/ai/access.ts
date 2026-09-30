@@ -82,14 +82,26 @@ export const getAiAccess = cache(async (): Promise<AiAccess> => {
       .eq("status", "success"),
   ]);
 
-  if (profile.error) {
+  // Deployment web bisa mendahului migration Supabase. Selama kolom baru
+  // belum ada, akun tetap memakai kuota lama dan tidak kehilangan akses.
+  const legacyProfile = profile.error?.code === "42703"
+    ? await supabase
+      .from("profiles")
+      .select("ai_enabled")
+      .eq("id", auth.userId)
+      .maybeSingle()
+    : null;
+  const profileError = legacyProfile ? legacyProfile.error : profile.error;
+  const profileData = legacyProfile ? legacyProfile.data : profile.data;
+
+  if (profileError) {
     console.error("[ai-access] gagal membaca profiles", {
       supabaseHost: supabaseHost(),
       userId: auth.userId,
-      code: profile.error.code,
-      message: profile.error.message,
-      details: profile.error.details,
-      hint: profile.error.hint,
+      code: profileError.code,
+      message: profileError.message,
+      details: profileError.details,
+      hint: profileError.hint,
     });
     return NO_ACCESS;
   }
@@ -110,15 +122,15 @@ export const getAiAccess = cache(async (): Promise<AiAccess> => {
   // aksesnya sudah bawaan semua akun, dan kuotanya tetap terjaga lewat
   // hitungan di atas. Tetap dicatat karena itu tanda trigger pendaftaran
   // (atau RLS profiles) bermasalah.
-  if (!profile.data) {
+  if (!profileData) {
     console.warn("[ai-access] baris profil tidak terlihat untuk sesi ini", {
       supabaseHost: supabaseHost(),
       userId: auth.userId,
     });
   }
 
-  const enabled = profile.data ? profile.data.ai_enabled === true : true;
-  const unlimited = profile.data?.ai_unlimited === true;
+  const enabled = profileData ? profileData.ai_enabled === true : true;
+  const unlimited = !legacyProfile && profile.data?.ai_unlimited === true;
   const used = unlimited
     ? generations.count ?? 0
     : Math.min(generations.count ?? 0, AI_GENERATION_LIMIT);
