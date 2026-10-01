@@ -43,8 +43,8 @@ export function SignupGate({
             Seru, kan? Lanjut pakai akun
           </h2>
           <p className="text-sm leading-relaxed text-neutral-600">
-            Kamu sudah mencoba {TRIAL_DECK_LIMIT} deck. Buat akun gratis untuk
-            membuka semua deck bawaan lengkap dan bikin {AI_GENERATION_LIMIT}{" "}
+            {TRIAL_DECK_LIMIT > 0 && `Kamu sudah mencoba ${TRIAL_DECK_LIMIT} deck. `}
+            Buat akun gratis untuk membuka semua deck bawaan lengkap dan bikin {AI_GENERATION_LIMIT}{" "}
             deck sendiri pakai AI.
           </p>
         </div>

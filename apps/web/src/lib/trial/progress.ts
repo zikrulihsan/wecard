@@ -1,11 +1,23 @@
 import { useCallback, useSyncExternalStore } from "react";
 
+const DEFAULT_TRIAL_DECK_LIMIT = 2;
+
 /**
  * Berapa deck berbeda yang boleh dimainkan sebelum diminta daftar/masuk.
  * Deck yang sudah pernah dibuka tetap bisa diulang — yang dibatasi hanya
  * membuka deck baru.
+ *
+ * Diatur lewat `VITE_TRIAL_DECK_LIMIT`. Nilainya ditanam saat build, jadi
+ * mengubahnya di hosting perlu redeploy. Kosong atau tidak valid → bawaan 2.
  */
-export const TRIAL_DECK_LIMIT = 2;
+export const TRIAL_DECK_LIMIT = parseLimit(import.meta.env.VITE_TRIAL_DECK_LIMIT);
+
+function parseLimit(value: unknown): number {
+  const parsed = Number(value);
+  return typeof value === "string" && value.trim() !== "" && Number.isInteger(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_TRIAL_DECK_LIMIT;
+}
 
 const STORAGE_KEY = "flipcard:trial-decks";
 const listeners = new Set<() => void>();

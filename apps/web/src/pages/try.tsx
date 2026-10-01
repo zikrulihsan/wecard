@@ -105,6 +105,7 @@ export default function TryPage() {
 }
 
 function TrialMeter({ used }: { used: number }) {
+  if (TRIAL_DECK_LIMIT === 0) return null;
   return (
     <div className="flex gap-1.5 pt-1" aria-label={`${Math.min(used, TRIAL_DECK_LIMIT)} dari ${TRIAL_DECK_LIMIT} deck coba terpakai`}>
       {Array.from({ length: TRIAL_DECK_LIMIT }, (_, index) => (
