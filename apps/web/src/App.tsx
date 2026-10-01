@@ -17,6 +17,8 @@ const ProfilePage = lazy(() => import("@/pages/profile"));
 const StorePage = lazy(() => import("@/pages/store"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const CallbackPage = lazy(() => import("@/pages/callback"));
+const TryPage = lazy(() => import("@/pages/try"));
+const TrySessionPage = lazy(() => import("@/pages/try-session"));
 
 function LandingOrCallback() {
   const { search } = useLocation();
@@ -87,6 +89,8 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
         </Route>
         <Route path="/callback" element={<CallbackPage />} />
+        <Route path="/coba" element={<TryPage />} />
+        <Route path="/coba/:deckSlug" element={<TrySessionPage />} />
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<HomePage />} />

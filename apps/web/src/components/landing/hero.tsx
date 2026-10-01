@@ -50,9 +50,7 @@ export function Hero() {
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center md:justify-start">
-            <PrimaryCta href="/register">
-              Coba gratis — {AI_GENERATION_LIMIT} deck AI
-            </PrimaryCta>
+            <PrimaryCta href="/coba">Coba gratis — tanpa daftar</PrimaryCta>
             <Link
               to="/login"
               className={buttonVariants({
@@ -66,8 +64,8 @@ export function Hero() {
           </div>
 
           <p className="text-sm text-neutral-500">
-            Tanpa kartu kredit · Deck Pasangan dan Anak &amp; Orang Tua gratis
-            selamanya
+            Langsung main tanpa akun · Daftar gratis untuk {AI_GENERATION_LIMIT}{" "}
+            deck AI
           </p>
         </div>
 

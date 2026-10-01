@@ -1,0 +1,199 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { AnimatePresence, m, type Variants } from "framer-motion";
+import { ChevronLeft, X } from "lucide-react";
+import { CardDisplay } from "@/components/cards/card-display";
+import { GameProgressBar } from "@/components/game/progress-bar";
+import { SignupGate } from "@/components/trial/signup-gate";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
+import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
+import { shuffle } from "@/lib/game/shuffle";
+import { findTrialDeck, type TrialDeck } from "@/lib/trial/decks";
+import { useTriedDecks } from "@/lib/trial/progress";
+import { cn } from "@/lib/utils";
+import NotFound from "@/pages/not-found";
+
+// direction: 1 = maju, -1 = mundur — sama seperti layar main yang asli.
+const cardVariants: Variants = {
+  enter: (direction: number) => ({ opacity: 0, scale: 0.96, x: direction * 56 }),
+  center: { opacity: 1, scale: 1, x: 0, transition: { duration: 0.22, ease: "easeOut" } },
+  exit: (direction: number) => ({
+    opacity: 0,
+    scale: 0.96,
+    x: direction * -300,
+    transition: { duration: 0.2, ease: "easeIn" },
+  }),
+};
+
+/**
+ * Layar main versi coba. Sengaja tidak memakai `useGameStore`: store itu
+ * dipersist dan dipakai sesi pemain yang sudah login, jadi sesi coba cukup
+ * hidup di state lokal dan hilang saat halaman ditutup.
+ */
+export default function TrySessionPage() {
+  const { deckSlug } = useParams();
+  const deck = findTrialDeck(deckSlug);
+  if (!deck) return <NotFound />;
+  return <TrialSession key={deck.slug} deck={deck} />;
+}
+
+function TrialSession({ deck }: { deck: TrialDeck }) {
+  const navigate = useNavigate();
+  const { canOpen, markTried, remaining } = useTriedDecks();
+  const allowed = canOpen(deck.slug);
+
+  const [cards, setCards] = useState(() => shuffle(deck.cards));
+  const [index, setIndex] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const [direction, setDirection] = useState(1);
+
+  useEffect(() => {
+    if (allowed) markTried(deck.slug);
+  }, [allowed, deck.slug, markTried]);
+
+  if (!allowed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
+        <SignupGate onClose={() => navigate("/coba", { replace: true })} />
+      </div>
+    );
+  }
+
+  const theme = deckThemeStyle(deck.theme);
+
+  if (index >= cards.length) {
+    return (
+      <div
+        style={deckThemeVars(deck.theme)}
+        className={cn("flex min-h-dvh items-center justify-center bg-gradient-to-br px-6", theme.finish)}
+      >
+        <m.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md space-y-6 text-center"
+        >
+          <div className="text-7xl">🎉</div>
+          <h1 className="text-3xl font-bold">Deck {deck.name} selesai!</h1>
+          <p className="leading-relaxed text-muted-foreground">
+            {remaining > 0
+              ? `Masih ada ${remaining} deck lagi yang bisa kamu coba tanpa akun.`
+              : `Mau lanjut? Buat akun gratis untuk membuka deck lengkap dan bikin ${AI_GENERATION_LIMIT} deck sendiri pakai AI.`}
+          </p>
+          <div className="space-y-2">
+            {remaining === 0 && (
+              <Link
+                to="/register"
+                className={buttonVariants({ size: "lg", className: "w-full rounded-full" })}
+              >
+                Buat akun gratis
+              </Link>
+            )}
+            <Button
+              size="lg"
+              variant={remaining === 0 ? "outline" : "default"}
+              className="w-full rounded-full"
+              onClick={() => navigate("/coba")}
+            >
+              {remaining > 0 ? "Coba deck lain" : "Lihat deck lain"}
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full rounded-full"
+              onClick={() => {
+                setCards(shuffle(deck.cards));
+                setIndex(0);
+                setRevealed(false);
+              }}
+            >
+              Main lagi
+            </Button>
+          </div>
+        </m.div>
+      </div>
+    );
+  }
+
+  const card = cards[index];
+  const goNext = () => {
+    setDirection(1);
+    setRevealed(false);
+    setIndex((value) => value + 1);
+  };
+  const goPrevious = () => {
+    if (index === 0) return;
+    setDirection(-1);
+    setRevealed(false);
+    setIndex((value) => value - 1);
+  };
+
+  return (
+    <div
+      style={deckThemeVars(deck.theme)}
+      className={cn("flex h-dvh min-h-[26rem] flex-col overflow-hidden bg-gradient-to-br", theme.play)}
+    >
+      <header className="flex shrink-0 items-center gap-1 px-4 pt-3 pb-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/coba")}
+          className="shrink-0 rounded-full"
+          aria-label="Keluar"
+        >
+          <X className="size-5" />
+        </Button>
+        <div className="flex-1 px-2">
+          <GameProgressBar current={index} total={cards.length} />
+        </div>
+        <span className="shrink-0 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-neutral-600">
+          Mode coba
+        </span>
+      </header>
+
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <AnimatePresence initial={false} custom={direction}>
+          <m.div
+            key={card.id}
+            custom={direction}
+            variants={cardVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="absolute inset-0 flex items-center justify-center px-6 py-2"
+          >
+            <CardDisplay
+              card={card}
+              isRevealed={revealed}
+              onFlip={() => setRevealed(true)}
+            />
+          </m.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="shrink-0 px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {!revealed ? (
+          <Button onClick={() => setRevealed(true)} size="lg" className="w-full rounded-full">
+            Buka Kartu
+          </Button>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={goPrevious}
+              disabled={index === 0}
+              variant="outline"
+              size="lg"
+              className="rounded-full"
+              aria-label="Kartu sebelumnya"
+            >
+              <ChevronLeft className="size-5" />
+            </Button>
+            <Button onClick={goNext} size="lg" className="flex-1 rounded-full">
+              Kartu Berikutnya
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

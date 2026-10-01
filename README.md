@@ -33,6 +33,7 @@ pnpm install
 ```bash
 VITE_SUPABASE_URL=https://xxx.supabase.co
 VITE_SUPABASE_ANON_KEY=xxx
+VITE_TRIAL_DECK_LIMIT=2   # opsional: jumlah deck yang boleh dicoba tanpa akun di /coba
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_ANON_KEY=xxx
 ```
