@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { DECK_THEMES } from "@flipcard/types";
+import { CARD_TYPES, DECK_THEMES } from "@flipcard/types";
 import { generatedDeckSchema, type GenerateDeckInput } from "../deck-schema";
 import { SYSTEM_PROMPT, buildUserPrompt } from "../prompt";
 import {
@@ -52,11 +52,12 @@ const RESPONSE_SCHEMA = {
               properties: {
                 content: {
                   type: "string",
-                  description: "Isi kartu yang dibaca pemain, satu kalimat",
+                  description:
+                    "Isi kartu: pertanyaan, pernyataan, atau teks yang dibacakan (listening)",
                 },
                 cardType: {
                   type: "string",
-                  enum: ["talk", "action", "special"],
+                  enum: [...CARD_TYPES],
                 },
                 difficulty: {
                   type: "string",
@@ -68,6 +69,43 @@ const RESPONSE_SCHEMA = {
                   description:
                     "Isi hanya jika cardType = special. Untuk tipe lain, hilangkan field ini.",
                 },
+                // Field kartu kuis — semuanya opsional; isi hanya yang dipakai
+                // format kartunya (lihat aturan di prompt sistem).
+                level: { type: "integer", description: "Kartu kuis/listening: 1-5" },
+                answer: { type: "string", description: "quiz & clue: jawaban" },
+                explanation: { type: "string", description: "Penjelasan singkat" },
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "multiple_choice: 3-4 pilihan",
+                },
+                correctIndex: {
+                  type: "integer",
+                  description: "multiple_choice: indeks pilihan benar, mulai 0",
+                },
+                isTrue: { type: "boolean", description: "true_false: fakta?" },
+                clues: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "clue: 3 clue dari samar ke jelas",
+                },
+                items: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "ordering: langkah dalam urutan benar",
+                },
+                questions: {
+                  type: "array",
+                  description: "listening: pertanyaan & jawabannya",
+                  items: {
+                    type: "object",
+                    properties: {
+                      question: { type: "string" },
+                      answer: { type: "string" },
+                    },
+                    required: ["question", "answer"],
+                  },
+                },
               },
               required: ["content", "cardType", "difficulty"],
               propertyOrdering: [
@@ -75,6 +113,15 @@ const RESPONSE_SCHEMA = {
                 "cardType",
                 "difficulty",
                 "specialKind",
+                "level",
+                "answer",
+                "explanation",
+                "options",
+                "correctIndex",
+                "isTrue",
+                "clues",
+                "items",
+                "questions",
               ],
             },
           },
@@ -150,7 +197,7 @@ export function createGeminiProvider(): DeckProvider {
         throw new GenerationFailed("Model mengembalikan JSON yang rusak.");
       }
 
-      const parsed = generatedDeckSchema.safeParse(withSpecialKindNulls(raw));
+      const parsed = generatedDeckSchema.safeParse(withOptionalNulls(raw));
       if (!parsed.success) {
         throw new GenerationFailed(
           "Bentuk deck dari model tidak sesuai skema yang diminta."
@@ -190,11 +237,25 @@ async function withRetry<T>(call: () => Promise<T>): Promise<T> {
   }
 }
 
+/** Field kartu yang opsional di skema Gemini tapi wajib ada (nullable) di zod. */
+const OPTIONAL_CARD_FIELDS = {
+  specialKind: null,
+  level: null,
+  answer: null,
+  explanation: null,
+  options: null,
+  correctIndex: null,
+  isTrue: null,
+  clues: null,
+  items: null,
+  questions: null,
+};
+
 /**
- * `specialKind` sengaja dibuat opsional di skema Gemini (nullable tidak
+ * Field-field di atas sengaja dibuat opsional di skema Gemini (nullable tidak
  * didukung penuh), sementara skema zod mewajibkan key-nya ada. Isi null dulu.
  */
-function withSpecialKindNulls(raw: unknown): unknown {
+function withOptionalNulls(raw: unknown): unknown {
   if (!raw || typeof raw !== "object") return raw;
   const deck = raw as { sections?: unknown };
   if (!Array.isArray(deck.sections)) return raw;
@@ -209,7 +270,7 @@ function withSpecialKindNulls(raw: unknown): unknown {
         ...section,
         cards: cards.map((card) =>
           card && typeof card === "object"
-            ? { specialKind: null, ...card }
+            ? { ...OPTIONAL_CARD_FIELDS, ...card }
             : card
         ),
       };

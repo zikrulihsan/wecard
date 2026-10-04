@@ -11,6 +11,8 @@ const initialState = {
   cards: [] as GameCard[],
   currentIndex: 0,
   isCardRevealed: false,
+  isAnswerRevealed: false,
+  results: {} as Record<string, boolean>,
   skippedCardIds: [] as string[],
   completedCardIds: [] as string[],
   startedAt: "",
@@ -32,6 +34,8 @@ export const useGameStore = create<GameStore>()(
           cards,
           currentIndex: 0,
           isCardRevealed: false,
+          isAnswerRevealed: false,
+          results: {},
           skippedCardIds: [],
           completedCardIds: [],
           startedAt: new Date().toISOString(),
@@ -42,6 +46,11 @@ export const useGameStore = create<GameStore>()(
 
       revealCard: () => set({ isCardRevealed: true }),
 
+      revealAnswer: () => set({ isCardRevealed: true, isAnswerRevealed: true }),
+
+      recordResult: (cardId, correct) =>
+        set({ results: { ...get().results, [cardId]: correct } }),
+
       nextCard: () => {
         const { currentIndex, cards, completedCardIds } = get();
         const current = cards[currentIndex];
@@ -50,6 +59,7 @@ export const useGameStore = create<GameStore>()(
         set({
           currentIndex: currentIndex + 1,
           isCardRevealed: false,
+          isAnswerRevealed: false,
           completedCardIds: completedCardIds.includes(current.id)
             ? completedCardIds
             : [...completedCardIds, current.id],
@@ -62,6 +72,7 @@ export const useGameStore = create<GameStore>()(
         set({
           currentIndex: currentIndex - 1,
           isCardRevealed: false,
+          isAnswerRevealed: false,
         });
       },
 
@@ -73,6 +84,7 @@ export const useGameStore = create<GameStore>()(
         set({
           currentIndex: currentIndex + 1,
           isCardRevealed: false,
+          isAnswerRevealed: false,
           skippedCardIds: [...skippedCardIds, current.id],
         });
       },

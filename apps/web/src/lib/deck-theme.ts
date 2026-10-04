@@ -93,6 +93,7 @@ const THEME_BY_AUDIENCE: Record<string, DeckTheme> = {
   "anak-orang-tua": "sky",
   "rekan-kerja": "indigo",
   "kenalan-baru": "violet",
+  "belajar-sendiri": "indigo",
   lainnya: "slate",
 };
 

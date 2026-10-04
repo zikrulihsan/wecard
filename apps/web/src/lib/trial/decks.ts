@@ -1,4 +1,13 @@
-import type { CardDifficulty, CardType, DeckTheme, GameCard } from "@flipcard/types";
+import type {
+  AnswerCardType,
+  CardDetails,
+  CardDifficulty,
+  CardLevel,
+  CardType,
+  DeckTheme,
+  GameCard,
+} from "@flipcard/types";
+import { difficultyForLevel } from "@/lib/cards/formats";
 
 /**
  * Deck umum untuk dicoba tanpa akun.
@@ -17,7 +26,33 @@ export type TrialDeck = {
   cards: GameCard[];
 };
 
-type RawCard = [CardType, CardDifficulty, string];
+type TalkCard = [CardType, CardDifficulty, string];
+
+/** Kartu kuis/mendengar: format, level bintang, isi, lalu isi khasnya. */
+type QuizCard = [AnswerCardType, CardLevel, string, CardDetails];
+
+type RawCard = TalkCard | QuizCard;
+
+function toGameCard(raw: RawCard, slug: string, name: string, index: number): GameCard {
+  const base = {
+    id: `trial-${slug}-${index + 1}`,
+    content: raw[2],
+    cardType: raw[0],
+    specialKind: null,
+    sectionName: name,
+    sectionSlug: slug,
+  };
+  if (typeof raw[1] === "number") {
+    const quiz = raw as QuizCard;
+    return {
+      ...base,
+      difficulty: difficultyForLevel(quiz[1]),
+      level: quiz[1],
+      details: quiz[3],
+    };
+  }
+  return { ...base, difficulty: raw[1] };
+}
 
 function deck(
   slug: string,
@@ -33,15 +68,7 @@ function deck(
     emoji,
     description,
     theme,
-    cards: raw.map(([cardType, difficulty, content], index) => ({
-      id: `trial-${slug}-${index + 1}`,
-      content,
-      cardType,
-      difficulty,
-      specialKind: null,
-      sectionName: name,
-      sectionSlug: slug,
-    })),
+    cards: raw.map((card, index) => toGameCard(card, slug, name, index)),
   };
 }
 
@@ -129,6 +156,93 @@ export const TRIAL_DECKS: TrialDeck[] = [
       ["action", "easy", "Sebutkan satu bantuan rekan di sini yang belum sempat kamu apresiasi"],
       ["talk", "medium", "Cara kerja seperti apa yang bikin kamu paling produktif?"],
       ["talk", "easy", "Kebiasaan kecil apa yang bikin harimu di kantor lebih enak?"],
+    ]
+  ),
+  deck(
+    "kuis-pengetahuan",
+    "Kuis Pengetahuan",
+    "🧠",
+    "Uji wawasan bareng — jawab dulu, lalu balik kartu untuk lihat jawabannya.",
+    "teal",
+    [
+      ["quiz", 1, "Planet apa yang paling dekat dengan Matahari?", {
+        answer: "Merkurius",
+        explanation: "Satu tahun di Merkurius hanya 88 hari Bumi.",
+      }],
+      ["true_false", 2, "Kelelawar itu buta.", {
+        isTrue: false,
+        explanation: "Kelelawar bisa melihat. Banyak jenisnya juga memakai ekolokasi — memantulkan suara — untuk berburu dalam gelap.",
+      }],
+      ["multiple_choice", 2, "Pulau terbesar di Indonesia adalah…", {
+        options: ["Sumatra", "Kalimantan", "Papua", "Sulawesi"],
+        correctIndex: 2,
+        explanation: "Pulau Papua (Nugini) adalah pulau terbesar kedua di dunia setelah Greenland. Kalimantan ada di urutan ketiga dunia.",
+      }],
+      ["clue", 3, "Aku ini apa?", {
+        clues: [
+          "Aku bisa ditemukan di dapur dan di laut.",
+          "Tanpa aku, masakan terasa hambar.",
+          "Petani di pesisir memanenku dari air laut yang dijemur.",
+        ],
+        answer: "Garam",
+      }],
+      ["ordering", 3, "Urutkan proses hujan dari awal sampai akhir.", {
+        items: [
+          "Matahari memanaskan air laut",
+          "Air menguap jadi uap air",
+          "Uap air mendingin dan membentuk awan",
+          "Titik air di awan makin berat lalu turun sebagai hujan",
+        ],
+      }],
+      ["quiz", 4, "Kenapa langit terlihat biru di siang hari?", {
+        answer: "Karena cahaya biru paling banyak dihamburkan udara.",
+        explanation: "Cahaya matahari berisi semua warna. Gelombang biru yang pendek lebih mudah dipantulkan ke segala arah oleh molekul udara, jadi itulah yang paling banyak sampai ke mata kita.",
+      }],
+    ]
+  ),
+  deck(
+    "latihan-mendengar",
+    "Latihan Mendengar",
+    "👂",
+    "Satu orang membacakan, yang lain menyimak lalu menjawab. Level naik dari ⭐ sampai ⭐⭐⭐⭐⭐.",
+    "sky",
+    [
+      ["listening", 1, "Budi makan apel merah.", {
+        questions: [
+          { question: "Siapa yang makan?", answer: "Budi" },
+          { question: "Apa yang dimakan?", answer: "Apel merah" },
+        ],
+      }],
+      ["listening", 2, "Pagi ini Sari menyiram bunga di halaman rumah.", {
+        questions: [
+          { question: "Kapan Sari menyiram bunga?", answer: "Pagi ini" },
+          { question: "Di mana Sari menyiram bunga?", answer: "Di halaman rumah" },
+          { question: "Apa yang dilakukan Sari?", answer: "Menyiram bunga" },
+        ],
+      }],
+      ["listening", 3, "Dodi memakai sepatu biru, mengambil tas, lalu berjalan ke sekolah bersama dua temannya.", {
+        questions: [
+          { question: "Apa warna sepatu Dodi?", answer: "Biru" },
+          { question: "Apa yang Dodi lakukan setelah memakai sepatu?", answer: "Mengambil tas" },
+          { question: "Dodi berjalan bersama berapa teman?", answer: "Dua teman" },
+        ],
+      }],
+      ["listening", 4, "Karena ban sepeda kempis, Rara memutuskan untuk naik bus, lalu pergi ke pusat kegiatan anak.", {
+        questions: [
+          { question: "Apa yang terjadi?", answer: "Ban sepeda Rara kempis" },
+          { question: "Siapa yang membuat keputusan?", answer: "Rara" },
+          { question: "Apa yang diputuskan Rara?", answer: "Naik bus" },
+          { question: "Mengapa Rara melakukan itu?", answer: "Karena ban sepedanya kempis" },
+        ],
+      }],
+      ["listening", 5, "Hujan turun deras sore itu. Nina menunggu di depan sekolah, tapi ayahnya belum datang. Bu Guru lalu meminjamkan payung dan menemani Nina sampai ayahnya tiba. Nina tersenyum dan berterima kasih.", {
+        questions: [
+          { question: "Kenapa Nina harus menunggu?", answer: "Ayahnya belum datang menjemput" },
+          { question: "Apa yang dilakukan Bu Guru?", answer: "Meminjamkan payung dan menemani Nina" },
+          { question: "Bagaimana perasaan Nina di akhir cerita? Dari mana kamu tahu?", answer: "Senang/lega — Nina tersenyum dan berterima kasih" },
+        ],
+        explanation: "Pertanyaan terakhir jawabannya tersirat: tidak disebut langsung, harus disimpulkan dari tindakan Nina.",
+      }],
     ]
   ),
 ];

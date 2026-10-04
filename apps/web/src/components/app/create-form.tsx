@@ -13,12 +13,14 @@ import {
   AUDIENCES,
   CARD_MIXES,
   DEPTHS,
+  KNOWLEDGE_DEPTH_LABELS,
   MAX_CARDS_PER_SECTION,
   MAX_SECTIONS,
   MIN_CARDS_PER_SECTION,
   MIN_SECTIONS,
   TONES,
   getAudiencePlaceholders,
+  isKnowledgeMix,
 } from "@/lib/ai/deck-schema";
 
 interface CreateFormProps {
@@ -41,6 +43,7 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
   const [cardsPerSection, setCardsPerSection] = useState(10);
   const [cardMix, setCardMix] = useState<string>("campuran");
   const [includeSpecial, setIncludeSpecial] = useState(false);
+  const [topic, setTopic] = useState("");
   const [context, setContext] = useState("");
   const [avoid, setAvoid] = useState("");
 
@@ -64,7 +67,9 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
           sectionCount,
           cardsPerSection,
           cardMix,
-          includeSpecial,
+          // Kartu special dan topik hanya berlaku di jenis deck masing-masing.
+          includeSpecial: knowledge ? false : includeSpecial,
+          topic: knowledge ? topic.trim() || undefined : undefined,
           context: context.trim() || undefined,
           avoid: avoid.trim() || undefined,
         }),
@@ -94,6 +99,8 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
 
   const totalCards = sectionCount * cardsPerSection;
   const placeholders = getAudiencePlaceholders(audience);
+  const knowledge = isKnowledgeMix(cardMix);
+  const listening = cardMix === "mendengar";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -114,13 +121,16 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         </Select>
       </Field>
 
-      <Field label="Nuansa kartu">
+      <Field
+        label="Isi kartu"
+        hint={CARD_MIXES.find((m) => m.value === cardMix)?.hint}
+      >
         <Select
-          value={tone}
-          onChange={(e) => setTone(e.target.value)}
+          value={cardMix}
+          onChange={(e) => setCardMix(e.target.value)}
           disabled={isGenerating}
         >
-          {TONES.map((option) => (
+          {CARD_MIXES.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -128,9 +138,52 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         </Select>
       </Field>
 
+      {knowledge && (
+        <Field
+          label={listening ? "Tema cerita (opsional)" : "Topik"}
+          hint={
+            listening
+              ? "Kosongkan untuk cerita sehari-hari di rumah dan sekolah."
+              : "Bidang yang mau diuji. Kosongkan untuk pengetahuan umum."
+          }
+        >
+          <Input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            maxLength={120}
+            placeholder={
+              listening
+                ? "Misal: hewan di kebun binatang"
+                : "Misal: AI Engineering, tata surya, sejarah Islam"
+            }
+            disabled={isGenerating}
+          />
+        </Field>
+      )}
+
+      {!knowledge && (
+        <Field label="Nuansa kartu">
+          <Select
+            value={tone}
+            onChange={(e) => setTone(e.target.value)}
+            disabled={isGenerating}
+          >
+            {TONES.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
+
       <Field
-        label="Kedalaman"
-        hint="Seberapa personal pertanyaannya boleh masuk."
+        label={knowledge ? "Tingkat kesulitan" : "Kedalaman"}
+        hint={
+          knowledge
+            ? "Level bintang kartunya. Section berikutnya makin sulit."
+            : "Seberapa personal pertanyaannya boleh masuk."
+        }
       >
         <Select
           value={depth}
@@ -139,7 +192,7 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         >
           {DEPTHS.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {knowledge ? KNOWLEDGE_DEPTH_LABELS[option.value] : option.label}
             </option>
           ))}
         </Select>
@@ -172,35 +225,21 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         Total {totalCards} kartu.
       </p>
 
-      <Field
-        label="Isi kartu"
-        hint={CARD_MIXES.find((m) => m.value === cardMix)?.hint}
-      >
-        <Select
-          value={cardMix}
-          onChange={(e) => setCardMix(e.target.value)}
-          disabled={isGenerating}
-        >
-          {CARD_MIXES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-      </Field>
-
-      <div className="space-y-3">
-        <Label className="items-start gap-3">
-          <Checkbox
-            checked={includeSpecial}
-            onCheckedChange={(checked) => setIncludeSpecial(checked === true)}
-            disabled={isGenerating}
-          />
-          <span className="font-normal">
-            Sertakan kartu <strong>Special</strong> — Free Pass, Switch, Double.
-          </span>
-        </Label>
-      </div>
+      {!knowledge && (
+        <div className="space-y-3">
+          <Label className="items-start gap-3">
+            <Checkbox
+              checked={includeSpecial}
+              onCheckedChange={(checked) => setIncludeSpecial(checked === true)}
+              disabled={isGenerating}
+            />
+            <span className="font-normal">
+              Sertakan kartu <strong>Special</strong> — Free Pass, Switch,
+              Double.
+            </span>
+          </Label>
+        </div>
+      )}
 
       <Field label="Nama deck" hint="Kosongkan kalau mau dibuatkan AI.">
         <Input

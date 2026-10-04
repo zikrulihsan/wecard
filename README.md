@@ -2,6 +2,22 @@
 
 Aplikasi web card game — kartu pertanyaan (Talk) & tantangan (Action) buat ngobrol sama teman, keluarga, pasangan, atau anak. Dimainkan bareng di satu device.
 
+## Format Kartu
+
+Selain kartu obrolan, deck bisa berisi kartu kuis & latihan yang punya sisi jawaban. Kartu dibuka (sampul → pertanyaan), lalu dibalik sekali lagi untuk melihat jawabannya.
+
+| Format | `card_type` | Isi `details` |
+| --- | --- | --- |
+| Talk / Action / Special | `talk` `action` `special` | — |
+| Tanya jawab | `quiz` | `answer` |
+| Pilihan ganda | `multiple_choice` | `options`, `correctIndex` |
+| Mitos atau fakta | `true_false` | `isTrue` |
+| Tebak clue | `clue` | `clues`, `answer` |
+| Urutkan | `ordering` | `items` (urutan benar; diacak saat main) |
+| Mendengar | `listening` | `questions[{question, answer}]` — teks yang dibacakan ada di `content_text` |
+
+Semua format kuis boleh punya `explanation`. Tingkat kesulitannya memakai kolom `level` (1–5 bintang). Pilihan ganda & mitos/fakta dinilai otomatis; format lain dinilai sendiri oleh pemain (Benar/Belum), dan skornya tampil di layar selesai. Bentuk `details` didefinisikan di `packages/types/src/database.ts` dan divalidasi di `apps/web/src/lib/cards/formats.ts`.
+
 ## Tech Stack
 
 - **Monorepo**: Turborepo + pnpm
@@ -24,10 +40,11 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan.
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri.
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
+   - `packages/supabase/seed_kuis_mendengar.sql` — deck **Latihan Mendengar** dan **Uji Diri: AI Engineering** (butuh migration `00006`)
 5. Salin `.env.example` ke `apps/web/.env.local`, lalu isi URL dan anon key:
 
 ```bash

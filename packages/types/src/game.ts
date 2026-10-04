@@ -1,4 +1,6 @@
 import type {
+  CardDetails,
+  CardLevel,
   CardType,
   CardDifficulty,
   DeckTheme,
@@ -11,6 +13,10 @@ export interface GameCard {
   cardType: CardType;
   difficulty: CardDifficulty;
   specialKind: SpecialCardKind | null;
+  /** Isi khas format kuis/mendengar; tidak ada di kartu obrolan. */
+  details?: CardDetails | null;
+  /** Bintang 1–5 untuk kartu kuis/mendengar; kartu lama memakai difficulty. */
+  level?: CardLevel | null;
   sectionName: string;
   sectionSlug: string;
 }
@@ -34,6 +40,14 @@ export interface GameSessionState {
   cards: GameCard[];
   currentIndex: number;
   isCardRevealed: boolean;
+  /** Sisi jawaban kartu kuis sedang terbuka. */
+  isAnswerRevealed: boolean;
+  /**
+   * Hasil kartu kuis per id kartu: true = benar, false = belum. Dinilai
+   * otomatis untuk pilihan ganda & mitos/fakta, dinilai sendiri untuk format
+   * lain.
+   */
+  results: Record<string, boolean>;
   skippedCardIds: string[];
   completedCardIds: string[];
   startedAt: string;
@@ -53,6 +67,8 @@ export interface GameStore extends GameSessionState {
     timer: CardTimerSettings
   ) => void;
   revealCard: () => void;
+  revealAnswer: () => void;
+  recordResult: (cardId: string, correct: boolean) => void;
   nextCard: () => void;
   previousCard: () => void;
   skipCard: () => void;

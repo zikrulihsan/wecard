@@ -13,8 +13,10 @@ import { useGameStore } from "@/stores/game-store";
 import { CardDisplay } from "@/components/cards/card-display";
 import { CardTimer } from "@/components/game/card-timer";
 import { GameProgressBar } from "@/components/game/progress-bar";
+import { QuizScore } from "@/components/game/quiz-score";
 import { SessionSkeleton } from "@/components/game/session-skeleton";
 import { Button } from "@/components/ui/button";
+import { hasAnswerSide } from "@/lib/cards/formats";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { cn } from "@/lib/utils";
 import type { DeckTheme, GameCard } from "@flipcard/types";
@@ -76,11 +78,15 @@ export default function SessionPage() {
     cards,
     currentIndex,
     isCardRevealed,
+    isAnswerRevealed,
+    results,
     isActive,
     deckId: storedDeckId,
     deckTheme,
     timer,
     revealCard,
+    revealAnswer,
+    recordResult,
     nextCard,
     previousCard,
     skipCard,
@@ -111,12 +117,15 @@ export default function SessionPage() {
       <CompletionScreen
         deckId={deckId}
         deckTheme={deckTheme}
+        results={results}
         onEnd={endSession}
       />
     );
   }
 
   const theme = deckThemeStyle(deckTheme);
+  const awaitingAnswer =
+    isCardRevealed && hasAnswerSide(currentCard.cardType) && !isAnswerRevealed;
 
   const goNext = () => {
     setDirection(1);
@@ -188,8 +197,12 @@ export default function SessionPage() {
             card={currentCard}
             direction={direction}
             isRevealed={isCardRevealed}
+            isAnswerRevealed={isAnswerRevealed}
+            result={results[currentCard.id]}
             canGoBack={currentIndex > 0}
             onFlip={revealCard}
+            onRevealAnswer={revealAnswer}
+            onResult={(correct) => recordResult(currentCard.id, correct)}
             onNext={goNext}
             onPrevious={goPrevious}
           />
@@ -218,13 +231,23 @@ export default function SessionPage() {
             >
               <ChevronLeft className="size-5" />
             </Button>
-            <Button
-              onClick={goNext}
-              size="lg"
-              className="flex-1 rounded-full"
-            >
-              Kartu Berikutnya
-            </Button>
+            {awaitingAnswer ? (
+              <Button
+                onClick={revealAnswer}
+                size="lg"
+                className="flex-1 rounded-full"
+              >
+                Lihat Jawaban
+              </Button>
+            ) : (
+              <Button
+                onClick={goNext}
+                size="lg"
+                className="flex-1 rounded-full"
+              >
+                Kartu Berikutnya
+              </Button>
+            )}
             <Button
               onClick={goSkip}
               variant="outline"
@@ -255,16 +278,24 @@ function SwipeableCard({
   card,
   direction,
   isRevealed,
+  isAnswerRevealed,
+  result,
   canGoBack,
   onFlip,
+  onRevealAnswer,
+  onResult,
   onNext,
   onPrevious,
 }: {
   card: GameCard;
   direction: number;
   isRevealed: boolean;
+  isAnswerRevealed: boolean;
+  result: boolean | undefined;
   canGoBack: boolean;
   onFlip: () => void;
+  onRevealAnswer: () => void;
+  onResult: (correct: boolean) => void;
   onNext: () => void;
   onPrevious: () => void;
 }) {
@@ -302,6 +333,10 @@ function SwipeableCard({
         card={card}
         isRevealed={isRevealed}
         onFlip={() => !isRevealed && onFlip()}
+        isAnswerRevealed={isAnswerRevealed}
+        onRevealAnswer={onRevealAnswer}
+        result={result}
+        onResult={onResult}
       />
     </m.div>
   );
@@ -310,12 +345,17 @@ function SwipeableCard({
 function CompletionScreen({
   deckId,
   deckTheme,
+  results,
   onEnd,
 }: {
   deckId: string;
   deckTheme: DeckTheme;
+  results: Record<string, boolean>;
   onEnd: () => void;
 }) {
+  const graded = Object.values(results);
+  const correct = graded.filter(Boolean).length;
+
   const navigate = useNavigate();
 
   const handleFinish = () => {
@@ -343,9 +383,13 @@ function CompletionScreen({
       >
         <div className="text-7xl">🎉</div>
         <h1 className="text-3xl font-bold">Selesai!</h1>
-        <p className="text-muted-foreground leading-relaxed">
-          Semoga obrolan kalian tadi bikin makin dekat. Mau main sekali lagi?
-        </p>
+        {graded.length > 0 ? (
+          <QuizScore correct={correct} total={graded.length} />
+        ) : (
+          <p className="text-muted-foreground leading-relaxed">
+            Semoga obrolan kalian tadi bikin makin dekat. Mau main sekali lagi?
+          </p>
+        )}
         <div className="space-y-2">
           <Button
             onClick={handleAgain}
