@@ -4,9 +4,11 @@ import { AnimatePresence, m, type Variants } from "framer-motion";
 import { ChevronLeft, X } from "lucide-react";
 import { CardDisplay } from "@/components/cards/card-display";
 import { GameProgressBar } from "@/components/game/progress-bar";
+import { QuizScore } from "@/components/game/quiz-score";
 import { SignupGate } from "@/components/trial/signup-gate";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
+import { hasAnswerSide } from "@/lib/cards/formats";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { shuffle } from "@/lib/game/shuffle";
 import { findTrialDeck, type TrialDeck } from "@/lib/trial/decks";
@@ -46,6 +48,8 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
   const [cards, setCards] = useState(() => shuffle(deck.cards));
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [answerRevealed, setAnswerRevealed] = useState(false);
+  const [results, setResults] = useState<Record<string, boolean>>({});
   const [direction, setDirection] = useState(1);
 
   useEffect(() => {
@@ -75,6 +79,12 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
         >
           <div className="text-7xl">🎉</div>
           <h1 className="text-3xl font-bold">Deck {deck.name} selesai!</h1>
+          {Object.keys(results).length > 0 && (
+            <QuizScore
+              correct={Object.values(results).filter(Boolean).length}
+              total={Object.keys(results).length}
+            />
+          )}
           <p className="leading-relaxed text-muted-foreground">
             {remaining > 0
               ? `Masih ada ${remaining} deck lagi yang bisa kamu coba tanpa akun.`
@@ -105,6 +115,8 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 setCards(shuffle(deck.cards));
                 setIndex(0);
                 setRevealed(false);
+                setAnswerRevealed(false);
+                setResults({});
               }}
             >
               Main lagi
@@ -116,15 +128,19 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
   }
 
   const card = cards[index];
+  const awaitingAnswer =
+    revealed && hasAnswerSide(card.cardType) && !answerRevealed;
   const goNext = () => {
     setDirection(1);
     setRevealed(false);
+    setAnswerRevealed(false);
     setIndex((value) => value + 1);
   };
   const goPrevious = () => {
     if (index === 0) return;
     setDirection(-1);
     setRevealed(false);
+    setAnswerRevealed(false);
     setIndex((value) => value - 1);
   };
 
@@ -166,6 +182,12 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
               card={card}
               isRevealed={revealed}
               onFlip={() => setRevealed(true)}
+              isAnswerRevealed={answerRevealed}
+              onRevealAnswer={() => setAnswerRevealed(true)}
+              result={results[card.id]}
+              onResult={(correct) =>
+                setResults((value) => ({ ...value, [card.id]: correct }))
+              }
             />
           </m.div>
         </AnimatePresence>
@@ -188,9 +210,19 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
             >
               <ChevronLeft className="size-5" />
             </Button>
-            <Button onClick={goNext} size="lg" className="flex-1 rounded-full">
-              Kartu Berikutnya
-            </Button>
+            {awaitingAnswer ? (
+              <Button
+                onClick={() => setAnswerRevealed(true)}
+                size="lg"
+                className="flex-1 rounded-full"
+              >
+                Lihat Jawaban
+              </Button>
+            ) : (
+              <Button onClick={goNext} size="lg" className="flex-1 rounded-full">
+                Kartu Berikutnya
+              </Button>
+            )}
           </div>
         )}
       </div>

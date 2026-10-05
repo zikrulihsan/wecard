@@ -6,13 +6,18 @@ import { useGameStore } from "@/stores/game-store";
 import { shuffle } from "@/lib/game/shuffle";
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
 import { cn } from "@/lib/utils";
+import {
+  hasAnswerSide,
+  isCardType,
+  parseCardDetails,
+  toCardLevel,
+} from "@/lib/cards/formats";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import type {
   CardTimerSettings,
   GameCard,
-  CardType,
   CardDifficulty,
   DeckTheme,
   SpecialCardKind,
@@ -151,6 +156,8 @@ export function SectionPicker({
         card_type,
         difficulty,
         special_kind,
+        details,
+        level,
         sort_order,
         section:sections(name, slug)
       `
@@ -175,18 +182,34 @@ export function SectionPicker({
       return;
     }
 
-    const gameCards: GameCard[] = cards.map((c) => {
+    const gameCards: GameCard[] = cards.flatMap((c) => {
       const section = Array.isArray(c.section) ? c.section[0] : c.section;
-      return {
-        id: c.id,
-        content: c.content_text,
-        cardType: c.card_type as CardType,
-        difficulty: c.difficulty as CardDifficulty,
-        specialKind: c.special_kind as SpecialCardKind | null,
-        sectionName: section?.name ?? "",
-        sectionSlug: section?.slug ?? "",
-      };
+      // Format yang belum dikenal versi aplikasi ini dilewati, begitu juga
+      // kartu kuis yang isinya tidak lengkap — keduanya tidak bisa dimainkan.
+      if (!isCardType(c.card_type)) return [];
+      const cardType = c.card_type;
+      const details = parseCardDetails(cardType, c.details);
+      if (hasAnswerSide(cardType) && !details) return [];
+      return [
+        {
+          id: c.id,
+          content: c.content_text,
+          cardType,
+          difficulty: c.difficulty as CardDifficulty,
+          specialKind: c.special_kind as SpecialCardKind | null,
+          details,
+          level: toCardLevel(c.level),
+          sectionName: section?.name ?? "",
+          sectionSlug: section?.slug ?? "",
+        },
+      ];
     });
+
+    if (gameCards.length === 0) {
+      setError("Kartu di level ini belum bisa dimainkan di versi aplikasi ini.");
+      setLoading(false);
+      return;
+    }
 
     const shuffled = shuffle(gameCards);
 

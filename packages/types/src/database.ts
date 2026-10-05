@@ -1,7 +1,68 @@
 // Auto-generated types will go here via `supabase gen types typescript`
 // For now, define manually based on our schema
 
-export type CardType = "talk" | "action" | "special";
+/**
+ * Format kartu. talk/action/special adalah kartu obrolan tanpa jawaban;
+ * sisanya kartu kuis & latihan yang punya sisi jawaban (lihat CardDetails).
+ */
+export const CARD_TYPES = [
+  "talk",
+  "action",
+  "special",
+  "quiz",
+  "multiple_choice",
+  "true_false",
+  "clue",
+  "ordering",
+  "listening",
+] as const;
+
+export type CardType = (typeof CARD_TYPES)[number];
+
+/** Format yang punya jawaban di balik kartu. */
+export const ANSWER_CARD_TYPES = [
+  "quiz",
+  "multiple_choice",
+  "true_false",
+  "clue",
+  "ordering",
+  "listening",
+] as const satisfies readonly CardType[];
+
+export type AnswerCardType = (typeof ANSWER_CARD_TYPES)[number];
+
+/** Tingkat kesulitan berbintang untuk kartu kuis & mendengar. */
+export type CardLevel = 1 | 2 | 3 | 4 | 5;
+
+export interface ListeningQuestion {
+  question: string;
+  answer: string;
+}
+
+/**
+ * Isi khas per format, disimpan di kolom `cards.details` (JSONB). Semua field
+ * opsional karena tiap format hanya memakai sebagian:
+ *
+ * - quiz:            answer
+ * - multiple_choice: options, correctIndex
+ * - true_false:      isTrue
+ * - clue:            clues, answer
+ * - ordering:        items (dalam urutan yang BENAR; diacak saat ditampilkan)
+ * - listening:       questions (content kartu = teks yang dibacakan)
+ *
+ * `explanation` boleh ada di format apa pun dan tampil di sisi jawaban.
+ * Data dari DB selalu dirapikan lewat parseCardDetails() sebelum dipakai.
+ */
+export interface CardDetails {
+  answer?: string;
+  explanation?: string;
+  options?: string[];
+  correctIndex?: number;
+  isTrue?: boolean;
+  clues?: string[];
+  items?: string[];
+  questions?: ListeningQuestion[];
+}
 export type CardDifficulty = "easy" | "medium" | "hard";
 export type SpecialCardKind = "free_pass" | "switch" | "double";
 export type PurchaseStatus = "pending" | "completed" | "refunded";
@@ -56,6 +117,8 @@ export interface Card {
   difficulty: CardDifficulty;
   content_text: string;
   special_kind: SpecialCardKind | null;
+  details: CardDetails | null;
+  level: CardLevel | null;
   is_free_preview: boolean;
   sort_order: number;
   created_at: string;

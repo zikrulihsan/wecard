@@ -1,6 +1,23 @@
-import type { DeckTheme } from "@flipcard/types";
+import type {
+  CardDetails,
+  CardDifficulty,
+  CardLevel,
+  CardType,
+  DeckTheme,
+  SpecialCardKind,
+} from "@flipcard/types";
+import {
+  difficultyForLevel,
+  hasAnswerSide,
+  parseCardDetails,
+  toCardLevel,
+} from "@/lib/cards/formats";
 import { isDeckTheme, themeForAudience } from "@/lib/deck-theme";
-import type { GeneratedDeck, GenerateDeckInput } from "./deck-schema";
+import {
+  isKnowledgeMix,
+  type GeneratedDeck,
+  type GenerateDeckInput,
+} from "./deck-schema";
 import { createAnthropicProvider } from "./providers/anthropic";
 import { createGeminiProvider } from "./providers/gemini";
 import {
@@ -38,9 +55,22 @@ export function resolveProvider(): DeckProvider {
   );
 }
 
+/** Kartu yang siap disimpan: field khas kuis sudah dirapikan ke `details`. */
+export type NormalizedCard = {
+  content: string;
+  cardType: CardType;
+  difficulty: CardDifficulty;
+  specialKind: SpecialCardKind | null;
+  level: CardLevel | null;
+  details: CardDetails | null;
+};
+
 /** Deck yang siap disimpan: tema sudah pasti terisi dan valid. */
-export type NormalizedDeck = Omit<GeneratedDeck, "theme"> & {
+export type NormalizedDeck = Omit<GeneratedDeck, "theme" | "sections"> & {
   theme: DeckTheme;
+  sections: (Omit<GeneratedDeck["sections"][number], "cards"> & {
+    cards: NormalizedCard[];
+  })[];
 };
 
 export type GenerateResult = {
@@ -69,20 +99,38 @@ export async function generateDeck(
  * specialKind di kartu non-special, dan bisa melewatkan tema warna. Rapikan
  * sebelum masuk DB.
  */
-function normalizeDeck(
+export function normalizeDeck(
   deck: GeneratedDeck,
   input: GenerateDeckInput
 ): NormalizedDeck {
+  const knowledge = isKnowledgeMix(input.cardMix);
+
   const sections = deck.sections.slice(0, input.sectionCount).map((section) => ({
     ...section,
     cards: section.cards
       .slice(0, input.cardsPerSection)
       .filter((card) => card.content.trim().length > 0)
-      .map((card) => ({
-        ...card,
-        content: card.content.trim(),
-        specialKind: card.cardType === "special" ? card.specialKind : null,
-      }))
+      // Deck kuis hanya berisi kartu berjawaban, deck obrolan sebaliknya —
+      // model kadang menyelipkan tipe yang tidak diminta.
+      .filter((card) => hasAnswerSide(card.cardType) === knowledge)
+      .flatMap((card): NormalizedCard[] => {
+        const answerCard = hasAnswerSide(card.cardType);
+        const details = parseCardDetails(card.cardType, card);
+        // Kartu kuis yang isinya tidak lengkap (pilihan ganda tanpa pilihan,
+        // dst.) tidak bisa dimainkan — buang.
+        if (answerCard && !details) return [];
+        const level = answerCard ? (toCardLevel(card.level) ?? 3) : null;
+        return [
+          {
+            content: card.content.trim(),
+            cardType: card.cardType,
+            difficulty: level ? difficultyForLevel(level) : card.difficulty,
+            specialKind: card.cardType === "special" ? card.specialKind : null,
+            level,
+            details,
+          },
+        ];
+      })
       // Kartu special tanpa specialKind tidak bisa dipakai mesin permainan.
       .filter((card) => card.cardType !== "special" || card.specialKind),
   }));
