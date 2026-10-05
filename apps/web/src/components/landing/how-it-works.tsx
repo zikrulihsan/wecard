@@ -17,26 +17,27 @@ export function HowItWorks() {
           </h2>
           <p className="text-lg leading-relaxed text-neutral-600">
             Ngumpul sama rekan kerja beda kebutuhannya dengan ngobrol sama
-            pasangan. Reuni sepuluh tahun beda lagi. Daripada memaksa deck yang
-            ada, sebutkan situasimu — AI yang menuliskan kartunya.
+            pasangan. Mau menguji pemahamanmu soal AI Engineering, atau melatih
+            konsentrasi anak? Beda lagi. Sebutkan situasi atau topiknya — AI
+            yang menuliskan kartunya, lengkap dengan jawabannya.
           </p>
         </div>
 
         <ol className="mt-12 grid gap-6 md:grid-cols-3">
           <Step
             step={1}
-            title="Sebut situasinya"
-            description="Mau dimainkan sama siapa, nuansanya santai atau mendalam, berapa banyak kartunya. Bisa tambah konteks — misalnya “baru kenal di kantor baru”."
+            title="Pilih jenis & topiknya"
+            description="Kartu obrolan, kuis pengetahuan, atau latihan mendengar. Sebut mau dimainkan sama siapa dan topiknya — misalnya “baru kenal di kantor baru” atau “tata surya untuk anak SD”."
           />
           <Step
             step={2}
             title="AI menulis kartunya"
-            description="Sekitar 20–40 detik. Kartunya dicek ulang di server, jadi bentuk dan jumlahnya selalu benar — bukan tempelan mentah dari model."
+            description="Sekitar 20–40 detik. Level kesulitannya naik bertahap per bagian, dan kartunya dicek ulang di server — kuis tanpa jawaban yang lengkap langsung dibuang."
           />
           <Step
             step={3}
             title="Langsung dimainkan"
-            description="Deck-nya masuk ke daftarmu dan bisa dipakai berkali-kali, kapan pun. Satu HP, satu kartu satu giliran."
+            description="Satu HP dioper bergantian, atau main sendiri untuk belajar. Kartu kuis dibalik untuk lihat jawaban, dan skormu tampil di akhir."
           />
         </ol>
 

@@ -30,11 +30,12 @@ export default function LandingPage() {
       <section className="bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-20 text-white">
         <div className="mx-auto max-w-2xl space-y-6 text-center">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Ngumpul berikutnya, jangan krik-krik lagi
+            Ngobrol, main kuis, atau latihan — mulai dari satu kartu
           </h2>
           <p className="text-lg text-pink-50">
-            Daftar, pilih deck bawaannya, atau langsung bikin sendiri —{" "}
-            {AI_GENERATION_LIMIT} deck AI pertamamu gratis.
+            Daftar, pilih deck bawaannya, atau langsung bikin sendiri dari
+            situasi atau topik apa pun — {AI_GENERATION_LIMIT} deck AI
+            pertamamu gratis.
           </p>
           <div className="pt-2">
             <Link

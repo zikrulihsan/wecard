@@ -18,6 +18,22 @@ export function Faq() {
         </h2>
 
         <div className="mt-10 divide-y divide-neutral-200 border-y border-neutral-200">
+          <Item question="Bisa dipakai untuk belajar, bukan cuma ngobrol?">
+            Bisa. Selain kartu obrolan, ada kartu kuis — tanya jawab, pilihan
+            ganda, mitos/fakta, tebak clue, dan urutkan — yang jawabannya ada
+            di balik kartu, plus latihan mendengar untuk anak. Pilihan ganda
+            dan mitos/fakta dinilai otomatis, sisanya kamu nilai sendiri, dan
+            skornya muncul di akhir. Topiknya bebas: dari tata surya sampai AI
+            Engineering.
+          </Item>
+
+          <Item question="Jawaban kuis buatan AI pasti benar?">
+            AI diminta hanya menulis fakta yang awet dan bisa dicek, dan kuis
+            yang jawabannya tidak lengkap otomatis dibuang. Tapi AI tetap bisa
+            keliru — untuk materi penting seperti bahan ujian, cek ulang
+            jawabannya, terutama di topik yang cepat berubah.
+          </Item>
+
           <Item question={`Jatah ${AI_GENERATION_LIMIT} deck itu untuk main atau untuk bikin?`}>
             Untuk bikin. Sekali deck-nya jadi, kartunya bisa dimainkan
             berkali-kali, kapan pun, tanpa batas — sendirian maupun ramai-ramai.
@@ -42,7 +58,8 @@ export function Faq() {
 
           <Item question="Harus install aplikasi?">
             Tidak. Buka di browser HP, langsung main. Satu HP dioper
-            bergantian, jadi yang lain tidak perlu ikut daftar.
+            bergantian, jadi yang lain tidak perlu ikut daftar. Kartu
+            mendengar bahkan bisa dibacakan oleh HP-nya sendiri.
           </Item>
 
           <Item question="Kalau jatah gratisnya habis?">

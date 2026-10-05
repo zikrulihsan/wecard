@@ -97,7 +97,7 @@ export function HeroCardStack() {
             onMouseEnter={() => desktopMotion && setHoveredCard("left")}
             onMouseLeave={() => desktopMotion && setHoveredCard(null)}
             onClick={() => activateCard("left")}
-            aria-label={cardLabel("Talk Anak dan Orang Tua")}
+            aria-label={cardLabel("Mendengar Latihan Mendengar")}
             aria-pressed={isMobile ? activeCard === "left" : undefined}
           >
             <m.div
@@ -121,11 +121,13 @@ export function HeroCardStack() {
             >
               <DeckCard
                 theme="sky"
-                kind="Talk"
-                deck="Anak & Orang Tua"
+                kind="Mendengar"
+                deck="Latihan Mendengar"
+                level={1}
+                answer
                 className="h-full w-full -translate-x-[4.5rem] -rotate-12 text-base sm:-translate-x-24"
               >
-                Kapan terakhir kali kamu merasa bangga sama aku?
+                Budi makan apel merah.
               </DeckCard>
             </m.div>
           </button>
@@ -202,7 +204,7 @@ export function HeroCardStack() {
             onMouseEnter={() => desktopMotion && setHoveredCard("right")}
             onMouseLeave={() => desktopMotion && setHoveredCard(null)}
             onClick={() => activateCard("right")}
-            aria-label={cardLabel("Action Bikinan AI")}
+            aria-label={cardLabel("Kuis Bikinan AI")}
             aria-pressed={isMobile ? activeCard === "right" : undefined}
           >
             <m.div
@@ -225,12 +227,14 @@ export function HeroCardStack() {
               transition={sideTransition}
             >
               <DeckCard
-                theme="amber"
-                kind="Action"
+                theme="indigo"
+                kind="Kuis"
                 deck="Bikinan AI"
+                level={2}
+                answer
                 className="h-full w-full translate-x-[4.5rem] rotate-12 sm:translate-x-24"
               >
-                Tunjukkan foto terakhir di galerimu, ceritakan kejadiannya.
+                Apa yang dimaksud dengan context window?
               </DeckCard>
             </m.div>
           </button>
