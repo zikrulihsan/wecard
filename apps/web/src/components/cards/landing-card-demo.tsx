@@ -2,7 +2,11 @@ import { useRef, useState } from "react";
 import { m } from "framer-motion";
 import type { GameCard } from "@flipcard/types";
 import { CardDisplay } from "@/components/cards/card-display";
+import { hasAnswerSide } from "@/lib/cards/formats";
 
+// Satu kartu per keluarga format, supaya pengunjung merasakan alur ngobrol
+// dan alur kuis (balik dua kali) dari satu demo. Isinya dikutip dari deck
+// bawaan dan deck coba.
 const demoCards: GameCard[] = [
   {
     id: "landing-demo-appreciation",
@@ -15,24 +19,56 @@ const demoCards: GameCard[] = [
     sectionSlug: "apresiasi",
   },
   {
-    id: "landing-demo-action",
-    content:
-      "Pilih satu orang di sini, lalu tirukan gaya foto favoritnya selama 10 detik.",
-    cardType: "action",
+    id: "landing-demo-myth",
+    content: "Kelelawar itu buta.",
+    cardType: "true_false",
     difficulty: "easy",
+    level: 2,
+    details: {
+      isTrue: false,
+      explanation:
+        "Kelelawar bisa melihat. Banyak jenisnya juga memakai ekolokasi untuk berburu dalam gelap.",
+    },
     specialKind: null,
-    sectionName: "Ice Breaker",
-    sectionSlug: "ice-breaker",
+    sectionName: "Kuis Pengetahuan",
+    sectionSlug: "kuis-pengetahuan",
   },
   {
-    id: "landing-demo-deep-talk",
-    content:
-      "Hal apa yang sudah lama ingin kamu ceritakan, tapi belum menemukan waktunya?",
-    cardType: "talk",
-    difficulty: "hard",
+    id: "landing-demo-choice",
+    content: "Pulau terbesar di Indonesia adalah…",
+    cardType: "multiple_choice",
+    difficulty: "easy",
+    level: 2,
+    details: {
+      options: ["Sumatra", "Kalimantan", "Papua", "Sulawesi"],
+      correctIndex: 2,
+      explanation:
+        "Papua adalah pulau terbesar kedua di dunia setelah Greenland.",
+    },
     specialKind: null,
-    sectionName: "Deep Talk",
-    sectionSlug: "deep-talk",
+    sectionName: "Kuis Pengetahuan",
+    sectionSlug: "kuis-pengetahuan",
+  },
+  {
+    id: "landing-demo-listening",
+    content:
+      "Karena ban sepeda kempis, Rara memutuskan untuk naik bus, lalu pergi ke pusat kegiatan anak.",
+    cardType: "listening",
+    difficulty: "hard",
+    level: 4,
+    details: {
+      questions: [
+        { question: "Apa yang terjadi?", answer: "Ban sepeda Rara kempis" },
+        { question: "Apa yang diputuskan Rara?", answer: "Naik bus" },
+        {
+          question: "Mengapa Rara melakukan itu?",
+          answer: "Karena ban sepedanya kempis",
+        },
+      ],
+    },
+    specialKind: null,
+    sectionName: "Latihan Mendengar",
+    sectionSlug: "latihan-mendengar",
   },
 ];
 
@@ -41,6 +77,27 @@ const swipeThreshold = 60;
 export function LandingCardDemo() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
+  const currentCard = demoCards[currentIndex];
+  const withAnswer = hasAnswerSide(currentCard.cardType);
+
+  // Sampul → soal → (kartu kuis) jawaban → kembali ke sampul.
+  function flip() {
+    if (!isRevealed) {
+      setIsRevealed(true);
+    } else if (withAnswer && !isAnswerRevealed) {
+      setIsAnswerRevealed(true);
+    } else {
+      setIsRevealed(false);
+      setIsAnswerRevealed(false);
+    }
+  }
+
+  const flipLabel = !isRevealed
+    ? "Balik kartunya"
+    : withAnswer && !isAnswerRevealed
+      ? "Lihat jawaban"
+      : "Balik lagi";
   const [direction, setDirection] = useState(1);
   const isDragging = useRef(false);
 
@@ -50,6 +107,7 @@ export function LandingCardDemo() {
       (index) => (index + step + demoCards.length) % demoCards.length
     );
     setIsRevealed(false);
+    setIsAnswerRevealed(false);
   }
 
   function selectCard(index: number) {
@@ -58,6 +116,7 @@ export function LandingCardDemo() {
     setDirection(index > currentIndex ? 1 : -1);
     setCurrentIndex(index);
     setIsRevealed(false);
+    setIsAnswerRevealed(false);
   }
 
   return (
@@ -73,7 +132,7 @@ export function LandingCardDemo() {
 
       <div className="relative aspect-[3/4]">
         <m.div
-          key={demoCards[currentIndex].id}
+          key={currentCard.id}
           className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing"
           initial={{ x: direction * 70, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -105,12 +164,12 @@ export function LandingCardDemo() {
           }}
         >
           <CardDisplay
-            card={demoCards[currentIndex]}
+            card={currentCard}
             isRevealed={isRevealed}
+            isAnswerRevealed={isAnswerRevealed}
+            onRevealAnswer={() => setIsAnswerRevealed(true)}
             onFlip={() => {
-              if (!isDragging.current) {
-                setIsRevealed((revealed) => !revealed);
-              }
+              if (!isDragging.current) flip();
             }}
           />
         </m.div>
@@ -129,11 +188,11 @@ export function LandingCardDemo() {
         <button
           type="button"
           className="flex items-center gap-2 rounded-full border border-pink-200 bg-white/90 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-pink-300 hover:text-pink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2"
-          onClick={() => setIsRevealed((revealed) => !revealed)}
-          aria-label={isRevealed ? "Tutup kartu contoh" : "Buka kartu contoh"}
+          onClick={flip}
+          aria-label={flipLabel}
         >
           <span aria-hidden="true">↻</span>
-          {isRevealed ? "Balik lagi" : "Balik kartunya"}
+          {flipLabel}
         </button>
 
         <button

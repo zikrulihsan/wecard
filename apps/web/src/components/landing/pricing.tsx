@@ -53,7 +53,8 @@ export function Pricing() {
                 buatanmu sendiri
               </Item>
               <Item>
-                Deck Pasangan dan Anak &amp; Orang Tua, semua kartunya
+                Deck Pasangan, Anak &amp; Orang Tua, Latihan Mendengar, dan Uji
+                Diri: AI Engineering — semua kartunya
               </Item>
               <Item>Main sepuasnya — jatah itu untuk bikin, bukan main</Item>
               <Item>Deck yang sudah jadi tetap milikmu</Item>

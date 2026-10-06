@@ -2,8 +2,47 @@ import { LandingCardDemo } from "@/components/cards/landing-card-demo";
 import { SampleCardCarousel } from "./sample-card-carousel";
 
 /**
+ * Tiga keluarga format kartu, masing-masing dipasangkan dengan pilar yang
+ * dijanjikan hero (seru-seruan, bermain, belajar). Urutannya sama dengan cara
+ * orang biasanya mengenal FlipCard: datang untuk ngobrol, lalu tahu bisa
+ * dipakai belajar.
+ */
+const FORMAT_GROUPS = [
+  {
+    emoji: "💬",
+    pillar: "Seru-seruan",
+    title: "Ngobrol",
+    description:
+      "Talk untuk pertanyaan, Action untuk tantangan kecil. Tanpa jawaban benar-salah — yang penting ceritanya.",
+    formats: ["Talk", "Action"],
+  },
+  {
+    emoji: "🧠",
+    pillar: "Bermain",
+    title: "Kuis",
+    description:
+      "Jawab dulu, lalu balik kartunya untuk lihat jawaban dan penjelasannya. Skor dihitung di akhir.",
+    formats: [
+      "Tanya jawab",
+      "Pilihan ganda",
+      "Mitos / fakta",
+      "Tebak clue",
+      "Urutkan",
+    ],
+  },
+  {
+    emoji: "👂",
+    pillar: "Belajar",
+    title: "Mendengar",
+    description:
+      "Satu orang membacakan — atau HP yang membacakan — lalu yang lain menjawab. Melatih konsentrasi anak.",
+    formats: ["⭐ sampai ⭐⭐⭐⭐⭐"],
+  },
+] as const;
+
+/**
  * Bukti isi. Halaman boleh menjanjikan apa saja soal "kartu yang pas", tapi
- * orang baru percaya setelah membaca kartunya sendiri — jadi enam kartu asli
+ * orang baru percaya setelah membaca kartunya sendiri — jadi kartu asli
  * ditampilkan di sini, bukan diringkas jadi klaim.
  */
 export function SampleCards() {
@@ -15,12 +54,42 @@ export function SampleCards() {
             Kartunya seperti apa?
           </h2>
           <p className="text-lg leading-relaxed text-neutral-600">
-            Dua jenis: <strong className="font-semibold">Talk</strong> untuk
-            pertanyaan, <strong className="font-semibold">Action</strong> untuk
-            tantangan kecil yang langsung dikerjakan. Ini beberapa yang ada di
-            deck gratisnya.
+            Satu kartu, satu giliran. Mau seru-seruan, adu pintar, atau belajar
+            fokus — tinggal pilih deck-nya, waktu luang langsung ada isinya.
           </p>
         </div>
+
+        <ul className="mt-10 grid gap-4 md:grid-cols-3">
+          {FORMAT_GROUPS.map((group) => (
+            <li
+              key={group.title}
+              className="rounded-2xl border border-neutral-200 bg-white p-5"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-2xl" aria-hidden>
+                  {group.emoji}
+                </span>
+                <h3 className="font-semibold">{group.title}</h3>
+                <span className="ml-auto rounded-full bg-pink-50 px-2.5 py-0.5 text-xs font-medium text-pink-700">
+                  {group.pillar}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-600">
+                {group.description}
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-1.5">
+                {group.formats.map((format) => (
+                  <li
+                    key={format}
+                    className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700"
+                  >
+                    {format}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
 
         <div
           id="coba-kartu"
@@ -31,11 +100,16 @@ export function SampleCards() {
               Coba langsung
             </p>
             <h3 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              Ketuk kartunya, lalu mulai ngobrol
+              Ketuk kartunya, lalu balik lagi
             </h3>
             <p className="leading-relaxed text-neutral-600">
-              Saat bermain, satu kartu tampil dalam satu waktu. Balik untuk
-              membuka pertanyaan, lalu jawab bergantian tanpa terburu-buru.
+              Ketuk sekali untuk membuka soalnya. Di kartu obrolan, langsung
+              jawab bergantian. Di kartu kuis, pilih jawabanmu — atau balik
+              sekali lagi untuk melihat jawaban dan penjelasannya.
+            </p>
+            <p className="text-sm text-neutral-500">
+              Geser untuk mencoba kartu obrolan, mitos/fakta, pilihan ganda,
+              dan latihan mendengar.
             </p>
           </div>
 
@@ -50,7 +124,7 @@ export function SampleCards() {
 
         <p className="mt-8 text-center text-sm text-neutral-500">
           Deck buatan AI mengikuti bentuk yang sama — dengan isi yang mengikuti
-          situasi yang kamu sebutkan.
+          situasi atau topik yang kamu sebutkan.
         </p>
       </div>
     </section>

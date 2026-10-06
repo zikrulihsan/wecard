@@ -31,7 +31,8 @@ export default function TryPage() {
         <header className="mb-6 space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Coba dulu, tanpa daftar</h1>
           <p className="text-neutral-600">
-            Pilih deck, ketuk kartunya, lalu mulai ngobrol.{" "}
+            Pilih deck, ketuk kartunya, lalu mulai main — ngobrol, kuis, atau
+            latihan mendengar.{" "}
             {remaining > 0 ? (
               <>
                 Kamu bisa mencoba{" "}

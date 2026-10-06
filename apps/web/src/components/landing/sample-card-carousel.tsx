@@ -1,7 +1,20 @@
 import { useRef } from "react";
+import type { DeckTheme } from "@flipcard/types";
 import { DeckCard } from "./deck-card";
 
-const sampleCards = [
+type SampleCard = {
+  theme: DeckTheme;
+  kind: string;
+  deck: string;
+  content: string;
+  level?: number;
+};
+
+// Dikutip apa adanya dari seed.sql, seed_anak_orang_tua.sql,
+// seed_kuis_mendengar.sql, dan deck coba — kecuali kartu tebak clue, yang
+// menampilkan clue pertamanya digabung dengan pertanyaannya. Selang-seling
+// obrolan dan kuis supaya keduanya kelihatan tanpa harus menggeser jauh.
+const sampleCards: SampleCard[] = [
   {
     theme: "pink",
     kind: "Talk",
@@ -9,16 +22,11 @@ const sampleCards = [
     content: "Hal apa dari aku yang bikin kamu merasa dicintai?",
   },
   {
-    theme: "pink",
-    kind: "Action",
-    deck: "Pasangan",
-    content: "Ceritakan 1 hal lucu hari ini dengan gaya lebay 😄",
-  },
-  {
-    theme: "pink",
-    kind: "Talk",
-    deck: "Pasangan",
-    content: "Apa kelebihan aku yang jarang aku sadari?",
+    theme: "indigo",
+    kind: "Kuis",
+    deck: "Uji Diri: AI Engineering",
+    content: "Apa itu embedding?",
+    level: 2,
   },
   {
     theme: "sky",
@@ -27,18 +35,40 @@ const sampleCards = [
     content: "Apa kegiatan bareng yang paling kamu tunggu-tunggu?",
   },
   {
-    theme: "sky",
-    kind: "Talk",
-    deck: "Anak & Orang Tua",
-    content: "Ada cerita yang ingin kamu bagi ke aku tapi belum sempat?",
+    theme: "teal",
+    kind: "Mitos / fakta",
+    deck: "Kuis Pengetahuan",
+    content: "Kelelawar itu buta.",
+    level: 2,
+  },
+  {
+    theme: "pink",
+    kind: "Action",
+    deck: "Pasangan",
+    content: "Ceritakan 1 hal lucu hari ini dengan gaya lebay 😄",
   },
   {
     theme: "sky",
-    kind: "Talk",
-    deck: "Anak & Orang Tua",
-    content: "Kenangan bareng kita yang paling kamu ingat sampai sekarang apa?",
+    kind: "Mendengar",
+    deck: "Latihan Mendengar",
+    content: "Pagi ini Sari menyiram bunga di halaman rumah.",
+    level: 2,
   },
-] as const;
+  {
+    theme: "teal",
+    kind: "Tebak clue",
+    deck: "Kuis Pengetahuan",
+    content: "Aku bisa ditemukan di dapur dan di laut. Aku ini apa?",
+    level: 3,
+  },
+  {
+    theme: "indigo",
+    kind: "Mitos / fakta",
+    deck: "Uji Diri: AI Engineering",
+    content: "Menaikkan temperature membuat jawaban model lebih akurat.",
+    level: 2,
+  },
+];
 
 export function SampleCardCarousel() {
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -70,7 +100,9 @@ export function SampleCardCarousel() {
               theme={card.theme}
               kind={card.kind}
               deck={card.deck}
-              className="h-44 w-full"
+              level={card.level}
+              answer={card.level !== undefined}
+              className="h-48 w-full"
             >
               {card.content}
             </DeckCard>
