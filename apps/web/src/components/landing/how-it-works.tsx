@@ -16,10 +16,10 @@ export function HowItWorks() {
             Deck bawaan nggak selalu pas. Bikin punyamu sendiri.
           </h2>
           <p className="text-lg leading-relaxed text-neutral-600">
-            Ngumpul sama rekan kerja beda kebutuhannya dengan ngobrol sama
-            pasangan. Mau menguji pemahamanmu soal AI Engineering, atau melatih
-            konsentrasi anak? Beda lagi. Sebutkan situasi atau topiknya — AI
-            yang menuliskan kartunya, lengkap dengan jawabannya.
+            Ngumpul sama rekan kerja beda serunya dengan malam santai bareng
+            pasangan. Main kuis tata surya sama anak, atau menguji diri soal AI
+            Engineering, beda lagi. Sebutkan situasi atau topiknya — AI yang
+            menuliskan kartunya, lengkap dengan jawabannya.
           </p>
         </div>
 

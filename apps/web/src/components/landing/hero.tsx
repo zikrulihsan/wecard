@@ -9,6 +9,10 @@ import { HeroCardStack } from "./hero-card-stack";
  * Layar pertama. Tugasnya cuma tiga: menyebut apa ini, menunjukkan wujud
  * kartunya, dan menawarkan jalan masuk yang gratis.
  *
+ * Janjinya satu: waktu luang bareng orang lain jadi nggak krik-krik. Ngobrol,
+ * kuis, dan latihan mendengar cuma cara menepatinya — makanya pilar "bermain,
+ * belajar, seru-seruan bareng" yang dijual, bukan daftar fiturnya.
+ *
  * Tumpukan kartunya bukan hiasan — tanpa itu halaman ini cuma teks, dan
  * pengunjung tidak punya bayangan apa yang mereka dapat. Tiga kartunya
  * sengaja mewakili tiga cara main: ngobrol, latihan mendengar, dan kuis.
@@ -27,25 +31,28 @@ export function Hero() {
           <div className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/80 px-4 py-1.5 text-sm backdrop-blur">
             <Sparkles className="size-3.5 text-pink-600" />
             <span className="text-neutral-700">
-              Ngobrol · Kuis · Latihan mendengar
+              Bermain · Belajar · Seru-seruan bareng
             </span>
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl">
-            Balik Kartunya,{" "}
+            Waktu Luang Bareng,{" "}
+            {/* U+2011 (non-breaking hyphen) di "Krik‑Krik" — hyphen biasa
+                jadi titik putus yang sah buat perata baris, dan itu bikin
+                kata ini pernah kepotong "Krik-" / "Krik" di layar sempit. */}
             <span className="bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
-              Mulai Main
+              Nggak Krik‑Krik Lagi
             </span>
           </h1>
 
           <p className="text-base leading-relaxed text-neutral-600 sm:text-lg">
-            Pertanyaan obrolan buat pasangan dan keluarga, kuis yang
-            jawabannya ada di balik kartu, sampai latihan mendengar untuk anak.
-            Nggak nemu yang pas?{" "}
+            Lagi nunggu makanan, kumpul keluarga, atau perjalanan jauh? Ambil
+            satu kartu: ngobrol seru, adu kuis, atau latihan mendengar bareng
+            anak. Nggak nemu yang pas?{" "}
             <strong className="font-semibold text-neutral-800">
               Bikin sendiri pakai AI
-            </strong>{" "}
-            — dari situasi atau topik apa pun.
+            </strong>
+            .
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center md:justify-start">

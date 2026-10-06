@@ -2,12 +2,15 @@ import { LandingCardDemo } from "@/components/cards/landing-card-demo";
 import { SampleCardCarousel } from "./sample-card-carousel";
 
 /**
- * Tiga keluarga format kartu. Urutannya sama dengan cara orang biasanya
- * mengenal FlipCard: datang untuk ngobrol, lalu tahu bisa dipakai belajar.
+ * Tiga keluarga format kartu, masing-masing dipasangkan dengan pilar yang
+ * dijanjikan hero (seru-seruan, bermain, belajar). Urutannya sama dengan cara
+ * orang biasanya mengenal FlipCard: datang untuk ngobrol, lalu tahu bisa
+ * dipakai belajar.
  */
 const FORMAT_GROUPS = [
   {
     emoji: "💬",
+    pillar: "Seru-seruan",
     title: "Ngobrol",
     description:
       "Talk untuk pertanyaan, Action untuk tantangan kecil. Tanpa jawaban benar-salah — yang penting ceritanya.",
@@ -15,6 +18,7 @@ const FORMAT_GROUPS = [
   },
   {
     emoji: "🧠",
+    pillar: "Bermain",
     title: "Kuis",
     description:
       "Jawab dulu, lalu balik kartunya untuk lihat jawaban dan penjelasannya. Skor dihitung di akhir.",
@@ -28,6 +32,7 @@ const FORMAT_GROUPS = [
   },
   {
     emoji: "👂",
+    pillar: "Belajar",
     title: "Mendengar",
     description:
       "Satu orang membacakan — atau HP yang membacakan — lalu yang lain menjawab. Melatih konsentrasi anak.",
@@ -49,8 +54,8 @@ export function SampleCards() {
             Kartunya seperti apa?
           </h2>
           <p className="text-lg leading-relaxed text-neutral-600">
-            Satu kartu, satu giliran — tapi cara mainnya bisa beda-beda. Ada
-            yang buat ngobrol, ada yang jawabannya menunggu di balik kartu.
+            Satu kartu, satu giliran. Mau seru-seruan, adu pintar, atau belajar
+            fokus — tinggal pilih deck-nya, waktu luang langsung ada isinya.
           </p>
         </div>
 
@@ -65,6 +70,9 @@ export function SampleCards() {
                   {group.emoji}
                 </span>
                 <h3 className="font-semibold">{group.title}</h3>
+                <span className="ml-auto rounded-full bg-pink-50 px-2.5 py-0.5 text-xs font-medium text-pink-700">
+                  {group.pillar}
+                </span>
               </div>
               <p className="mt-2 text-sm leading-relaxed text-neutral-600">
                 {group.description}
