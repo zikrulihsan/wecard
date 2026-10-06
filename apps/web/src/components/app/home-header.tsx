@@ -1,13 +1,12 @@
 /**
- * Bagian halaman utama yang tidak menunggu data apa pun. Ditulis sekali di
- * sini lalu dipakai `page.tsx` dan `loading.tsx`, jadi judulnya tidak bergeser
- * saat kerangka rute diganti halaman aslinya.
+ * Kepala beranda — tidak menunggu data apa pun, jadi tampil langsung selagi
+ * daftar deck dimuat.
  */
 export function HomeHeader() {
   return (
-    <header className="mb-8">
-      <h1 className="text-3xl font-bold">Pilih Kategori</h1>
-      <p className="text-muted-foreground mt-1">Mau main kartu apa hari ini?</p>
+    <header className="mb-6">
+      <h1 className="text-3xl font-bold">Mau main apa hari ini?</h1>
+      <p className="text-muted-foreground mt-1">Lanjutkan yang tadi, cari deck, atau bikin sendiri.</p>
     </header>
   );
 }
