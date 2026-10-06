@@ -46,9 +46,8 @@ export function Hero() {
           </h1>
 
           <p className="text-base leading-relaxed text-neutral-600 sm:text-lg">
-            Lagi nunggu makanan, kumpul keluarga, atau perjalanan jauh? Ambil
-            satu kartu: ngobrol seru, adu kuis, atau latihan mendengar bareng
-            anak. Nggak nemu yang pas?{" "}
+            Ambil satu kartu: ngobrol, adu kuis, atau latihan mendengar. Nggak
+            nemu yang pas?{" "}
             <strong className="font-semibold text-neutral-800">
               Bikin sendiri pakai AI
             </strong>
@@ -70,8 +69,7 @@ export function Hero() {
           </div>
 
           <p className="text-sm text-neutral-500">
-            Langsung main tanpa akun · Daftar gratis untuk {AI_GENERATION_LIMIT}{" "}
-            deck AI
+            Daftar gratis dapat {AI_GENERATION_LIMIT} deck AI
           </p>
         </div>
 

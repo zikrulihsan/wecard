@@ -11,63 +11,46 @@ import { AI_TOPUP_PACK, formatIdr } from "@/lib/pricing";
  */
 export function Faq() {
   return (
-    <section className="bg-neutral-50 px-6 py-20">
-      <div className="mx-auto max-w-2xl">
-        <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
-          Yang biasanya ditanyakan
-        </h2>
+    <section className="bg-white px-6 py-20">
+      <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[1fr_1.6fr] md:gap-16">
+        <div className="space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-pink-600">
+            FAQ
+          </p>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Masih ragu?
+          </h2>
+        </div>
 
-        <div className="mt-10 divide-y divide-neutral-200 border-y border-neutral-200">
-          <Item question="Bisa dipakai untuk belajar, bukan cuma ngobrol?">
-            Bisa. Selain kartu obrolan, ada kartu kuis — tanya jawab, pilihan
-            ganda, mitos/fakta, tebak clue, dan urutkan — yang jawabannya ada
-            di balik kartu, plus latihan mendengar untuk anak. Pilihan ganda
-            dan mitos/fakta dinilai otomatis, sisanya kamu nilai sendiri, dan
-            skornya muncul di akhir. Topiknya bebas: dari tata surya sampai AI
-            Engineering.
+        <div className="divide-y divide-neutral-200 border-y border-neutral-200">
+          <Item question="Harus install aplikasi?">
+            Tidak. Buka di browser HP, lalu oper HP-nya bergantian. Yang lain
+            tidak perlu daftar.
+          </Item>
+
+          <Item question="Bisa untuk belajar, bukan cuma ngobrol?">
+            Bisa. Ada kartu kuis dengan topik bebas, dari tata surya sampai AI
+            Engineering, plus latihan mendengar untuk anak.
           </Item>
 
           <Item question="Jawaban kuis buatan AI pasti benar?">
-            AI diminta hanya menulis fakta yang awet dan bisa dicek, dan kuis
-            yang jawabannya tidak lengkap otomatis dibuang. Tapi AI tetap bisa
-            keliru — untuk materi penting seperti bahan ujian, cek ulang
-            jawabannya, terutama di topik yang cepat berubah.
+            Kuis tanpa jawaban lengkap otomatis dibuang, tapi AI tetap bisa
+            keliru. Untuk bahan ujian, cek ulang jawabannya.
           </Item>
 
-          <Item question={`Jatah ${AI_GENERATION_LIMIT} deck itu untuk main atau untuk bikin?`}>
-            Untuk bikin. Sekali deck-nya jadi, kartunya bisa dimainkan
-            berkali-kali, kapan pun, tanpa batas — sendirian maupun ramai-ramai.
-          </Item>
-
-          <Item question="Kalau hasil AI-nya kurang cocok, jatahnya hangus?">
-            Deck yang gagal dibuat — misalnya layanan AI-nya bermasalah — tidak
-            memotong jatah sama sekali. Tapi deck yang berhasil jadi tetap
-            terhitung meski isinya kurang kamu suka, jadi sebutkan konteksnya
-            sespesifik mungkin sebelum menekan generate.
+          <Item question={`Jatah ${AI_GENERATION_LIMIT} deck itu untuk main atau bikin?`}>
+            Untuk bikin. Deck yang sudah jadi bisa dimainkan tanpa batas. Deck
+            yang gagal dibuat tidak memotong jatah.
           </Item>
 
           <Item question="Deck buatanku bisa dilihat orang lain?">
-            Tidak. Deck AI cuma muncul di akunmu, tidak masuk toko, dan tidak
-            dibagikan ke pemain lain.
-          </Item>
-
-          <Item question="Berapa lama bikinnya?">
-            Sekitar 20–40 detik untuk satu deck utuh — biasanya 2–5 bagian,
-            masing-masing 5–15 kartu, sesuai yang kamu minta.
-          </Item>
-
-          <Item question="Harus install aplikasi?">
-            Tidak. Buka di browser HP, langsung main. Satu HP dioper
-            bergantian, jadi yang lain tidak perlu ikut daftar. Kartu
-            mendengar bahkan bisa dibacakan oleh HP-nya sendiri.
+            Tidak. Deck AI cuma ada di akunmu.
           </Item>
 
           <Item question="Kalau jatah gratisnya habis?">
-            Deck yang sudah jadi tetap bisa dimainkan selamanya, dan deck
-            bawaan tetap terbuka. Untuk bikin deck baru, nanti ada paket
-            tambahan {AI_TOPUP_PACK.generations} deck seharga Rp{" "}
-            {formatIdr(AI_TOPUP_PACK.priceIdr)} — sekali bayar, bukan
-            langganan.
+            Deck yang sudah jadi tetap bisa dimainkan. Nanti ada paket{" "}
+            {AI_TOPUP_PACK.generations} deck seharga Rp{" "}
+            {formatIdr(AI_TOPUP_PACK.priceIdr)}, sekali bayar.
           </Item>
         </div>
       </div>
