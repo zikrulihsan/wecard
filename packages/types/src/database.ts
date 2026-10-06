@@ -86,6 +86,20 @@ export const DECK_THEMES = [
 
 export type DeckTheme = (typeof DECK_THEMES)[number];
 
+/**
+ * Jenis deck — cara memainkannya, terpisah dari topiknya. Disimpan di kolom
+ * `categories.mode`. Label dan emoji tiap jenis ada di
+ * apps/web/src/lib/deck-mode.ts.
+ *
+ *   ngobrol    pertanyaan untuk dijawab dengan cerita (boleh diselipi tantangan)
+ *   tantangan  semua kartu tantangan yang langsung dikerjakan
+ *   kuis       kuis pengetahuan dengan jawaban di balik kartu
+ *   mendengar  teks dibacakan, lalu pendengar menjawab pertanyaannya
+ */
+export const DECK_MODES = ["ngobrol", "tantangan", "kuis", "mendengar"] as const;
+
+export type DeckMode = (typeof DECK_MODES)[number];
+
 export interface Category {
   id: string;
   slug: string;
@@ -93,6 +107,7 @@ export interface Category {
   description: string | null;
   cover_image: string | null;
   theme: DeckTheme;
+  mode: DeckMode;
   is_free: boolean;
   price_idr: number | null;
   sort_order: number;

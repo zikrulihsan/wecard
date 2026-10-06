@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CARD_TYPES, DECK_THEMES } from "@flipcard/types";
+import { CARD_TYPES, DECK_THEMES, type DeckMode } from "@flipcard/types";
 
 // ============================================================
 // INPUT — field yang diisi user di form generate
@@ -16,6 +16,7 @@ export type AudiencePlaceholders = {
 export const AUDIENCES = [
   {
     value: "pasangan",
+    modes: ["ngobrol", "tantangan"],
     label: "Pasangan",
     placeholders: {
       deckName: "Misal: Malam Jumat Berdua",
@@ -25,6 +26,8 @@ export const AUDIENCES = [
   },
   {
     value: "sahabat",
+    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
+    modeLabels: { kuis: "Bareng teman", mendengar: "Bareng teman" },
     label: "Sahabat / teman dekat",
     placeholders: {
       deckName: "Misal: Nongkrong Sampai Pagi",
@@ -35,6 +38,7 @@ export const AUDIENCES = [
   },
   {
     value: "keluarga",
+    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
     label: "Keluarga",
     placeholders: {
       deckName: "Misal: Kumpul Keluarga Besar",
@@ -45,6 +49,8 @@ export const AUDIENCES = [
   },
   {
     value: "anak-orang-tua",
+    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
+    modeLabels: { mendengar: "Anak — dibacakan orang tua" },
     label: "Anak & orang tua",
     placeholders: {
       deckName: "Misal: Ngobrol Sebelum Tidur",
@@ -54,6 +60,8 @@ export const AUDIENCES = [
   },
   {
     value: "rekan-kerja",
+    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
+    modeLabels: { kuis: "Tim / kelas", mendengar: "Tim / kelas" },
     label: "Rekan kerja / tim",
     placeholders: {
       deckName: "Misal: Icebreaker Senin Pagi",
@@ -64,6 +72,7 @@ export const AUDIENCES = [
   },
   {
     value: "kenalan-baru",
+    modes: ["ngobrol", "tantangan"],
     label: "Kenalan baru",
     placeholders: {
       deckName: "Misal: Kenalan Tanpa Canggung",
@@ -74,6 +83,8 @@ export const AUDIENCES = [
   },
   {
     value: "belajar-sendiri",
+    modes: ["kuis"],
+    modeLabels: { kuis: "Sendiri — belajar & uji kemampuan" },
     label: "Diri sendiri — belajar & uji kemampuan",
     placeholders: {
       deckName: "Misal: Uji Diri AI Engineering",
@@ -84,6 +95,7 @@ export const AUDIENCES = [
   },
   {
     value: "lainnya",
+    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
     label: "Lainnya (jelaskan di konteks)",
     placeholders: {
       deckName: "Misal: Malam Seru Bareng",
@@ -92,6 +104,29 @@ export const AUDIENCES = [
     },
   },
 ] as const;
+
+type AudienceOption = {
+  value: string;
+  label: string;
+  /** Jenis deck yang masuk akal untuk pemain ini. */
+  modes: readonly DeckMode[];
+  /** Label pengganti di jenis tertentu, misal "Tim / kelas" untuk kuis. */
+  modeLabels?: Partial<Record<DeckMode, string>>;
+  placeholders: AudiencePlaceholders;
+};
+
+/**
+ * Pilihan "dimainkan sama siapa" untuk satu jenis deck — kuis untuk pasangan
+ * atau latihan mendengar sendirian tidak ditawarkan.
+ */
+export function audiencesForMode(mode: DeckMode) {
+  return (AUDIENCES as readonly AudienceOption[])
+    .filter((option) => option.modes.includes(mode))
+    .map((option) => ({
+      value: option.value,
+      label: option.modeLabels?.[mode] ?? option.label,
+    }));
+}
 
 export const DEFAULT_AUDIENCE_PLACEHOLDERS: AudiencePlaceholders =
   AUDIENCES[0].placeholders;
@@ -147,6 +182,19 @@ export const CARD_MIXES = [
   },
 ] as const;
 
+/** Jenis deck yang tersimpan di `categories.mode` untuk tiap isi kartu. */
+export const CARD_MIX_MODE: Record<(typeof CARD_MIXES)[number]["value"], DeckMode> = {
+  campuran: "ngobrol",
+  talk: "ngobrol",
+  action: "tantangan",
+  kuis: "kuis",
+  mendengar: "mendengar",
+};
+
+export function modeForCardMix(mix: string): DeckMode {
+  return CARD_MIX_MODE[mix as keyof typeof CARD_MIX_MODE] ?? "ngobrol";
+}
+
 /** Mode deck yang isinya kuis/latihan dengan jawaban, bukan obrolan. */
 export const KNOWLEDGE_MIXES = ["kuis", "mendengar"] as const;
 
@@ -189,7 +237,13 @@ export const generateDeckInputSchema = z.object({
   topic: z.string().trim().max(120).optional(),
   context: z.string().trim().max(500).optional(),
   avoid: z.string().trim().max(300).optional(),
-});
+}).refine(
+  (input) =>
+    audiencesForMode(modeForCardMix(input.cardMix)).some(
+      (option) => option.value === input.audience
+    ),
+  { path: ["audience"], message: "Pilihan pemain tidak cocok dengan jenis deck ini." }
+);
 
 export type GenerateDeckInput = z.infer<typeof generateDeckInputSchema>;
 
