@@ -23,22 +23,24 @@ import {
  */
 export function Pricing() {
   return (
-    <section id="harga" className="bg-white px-6 py-20">
+    <section
+      id="harga"
+      className="bg-gradient-to-b from-rose-50 via-orange-50/60 to-white px-6 py-20"
+    >
       <div className="mx-auto max-w-4xl">
         <div className="mx-auto max-w-2xl space-y-4 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Coba dulu, bayar kalau memang kepakai
+            Mulai gratis
           </h2>
           <p className="text-lg leading-relaxed text-neutral-600">
             Deck bawaan gratis selamanya. Yang berbayar cuma jatah bikin deck
-            baru pakai AI — itu pun setelah {AI_GENERATION_LIMIT} deck
-            gratismu habis.
+            AI.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           {/* Gratis */}
-          <div className="flex min-w-0 flex-col rounded-2xl border border-neutral-200 p-6 sm:p-8">
+          <div className="flex min-w-0 flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-neutral-200 sm:p-8">
             <h3 className="font-semibold">Gratis</h3>
             <p className="mt-3 text-4xl font-bold tracking-tight">Rp 0</p>
             <p className="mt-1 text-sm text-neutral-500">
@@ -52,12 +54,8 @@ export function Pricing() {
                 </strong>{" "}
                 buatanmu sendiri
               </Item>
-              <Item>
-                Deck Pasangan, Anak &amp; Orang Tua, Latihan Mendengar, dan Uji
-                Diri: AI Engineering — semua kartunya
-              </Item>
-              <Item>Main sepuasnya — jatah itu untuk bikin, bukan main</Item>
-              <Item>Deck yang sudah jadi tetap milikmu</Item>
+              <Item>Semua deck bawaan</Item>
+              <Item>Main sepuasnya, tanpa batas</Item>
             </ul>
 
             <div className="mt-8 pt-2">
@@ -71,7 +69,7 @@ export function Pricing() {
           </div>
 
           {/* Top-up */}
-          <div className="relative flex min-w-0 flex-col rounded-2xl border-2 border-pink-300 bg-gradient-to-b from-pink-50/70 to-white p-6 sm:p-8">
+          <div className="relative flex min-w-0 flex-col rounded-3xl bg-white p-6 shadow-xl shadow-pink-500/10 ring-2 ring-pink-300 sm:p-8">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-semibold">
                 Tambah {AI_TOPUP_PACK.generations} deck AI
@@ -87,8 +85,7 @@ export function Pricing() {
               Rp {formatIdr(AI_TOPUP_PACK.priceIdr)}
             </p>
             <p className="mt-1 text-sm text-neutral-500">
-              Sekitar Rp {formatIdr(AI_TOPUP_PRICE_PER_DECK)} per deck · bayar
-              sekali, bukan langganan
+              ±Rp {formatIdr(AI_TOPUP_PRICE_PER_DECK)} per deck · sekali bayar
             </p>
 
             <ul className="mt-6 space-y-3 text-sm">
@@ -96,11 +93,10 @@ export function Pricing() {
                 <strong className="font-semibold">
                   {AI_TOPUP_PACK.generations} deck AI
                 </strong>{" "}
-                baru, dipakai kapan pun
+                tambahan
               </Item>
-              <Item>Jatahnya tidak hangus — tidak ada masa berlaku</Item>
-              <Item>Bisa top-up lagi kalau habis</Item>
-              <Item>Deck yang gagal dibuat tidak memotong jatah</Item>
+              <Item>Bukan langganan, tidak hangus</Item>
+              <Item>Gagal dibuat = tidak terpotong</Item>
             </ul>
 
             <div className="mt-8 pt-2">
@@ -115,10 +111,6 @@ export function Pricing() {
                 >
                   <p className="text-sm font-semibold text-neutral-800">
                     Pembelian belum dibuka
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-neutral-500">
-                    Saat ini paket Gratis sudah mencakup {AI_GENERATION_LIMIT}{" "}
-                    deck AI untuk setiap akun.
                   </p>
                 </div>
               )}

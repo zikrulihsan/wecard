@@ -1,44 +1,48 @@
 import { LandingCardDemo } from "@/components/cards/landing-card-demo";
 import { SampleCardCarousel } from "./sample-card-carousel";
+import { DECK_THEME_STYLES } from "@/lib/deck-theme";
+import { cn } from "@/lib/utils";
+import type { DeckTheme } from "@flipcard/types";
 
 /**
  * Tiga keluarga format kartu, masing-masing dipasangkan dengan pilar yang
- * dijanjikan hero (seru-seruan, bermain, belajar). Urutannya sama dengan cara
- * orang biasanya mengenal FlipCard: datang untuk ngobrol, lalu tahu bisa
- * dipakai belajar.
+ * dijanjikan hero (seru-seruan, bermain, belajar). Tiap ubin memakai gradien
+ * tema deck-nya sendiri supaya bagian ini terbaca sebagai kartu, bukan daftar
+ * fitur — dan supaya tidak sama rata dengan bagian lain yang berlatar putih.
  */
 const FORMAT_GROUPS = [
   {
     emoji: "💬",
     pillar: "Seru-seruan",
     title: "Ngobrol",
-    description:
-      "Talk untuk pertanyaan, Action untuk tantangan kecil. Tanpa jawaban benar-salah — yang penting ceritanya.",
+    description: "Pertanyaan dan tantangan kecil. Nggak ada benar-salah.",
     formats: ["Talk", "Action"],
+    theme: "pink",
   },
   {
     emoji: "🧠",
     pillar: "Bermain",
     title: "Kuis",
-    description:
-      "Jawab dulu, lalu balik kartunya untuk lihat jawaban dan penjelasannya. Skor dihitung di akhir.",
-    formats: [
-      "Tanya jawab",
-      "Pilihan ganda",
-      "Mitos / fakta",
-      "Tebak clue",
-      "Urutkan",
-    ],
+    description: "Jawab, balik kartunya, skor di akhir.",
+    formats: ["Tanya jawab", "Pilihan ganda", "Mitos / fakta", "Tebak clue", "Urutkan"],
+    theme: "indigo",
   },
   {
     emoji: "👂",
     pillar: "Belajar",
     title: "Mendengar",
-    description:
-      "Satu orang membacakan — atau HP yang membacakan — lalu yang lain menjawab. Melatih konsentrasi anak.",
-    formats: ["⭐ sampai ⭐⭐⭐⭐⭐"],
+    description: "HP membacakan, anak menjawab. Melatih fokus.",
+    formats: ["Level ⭐ – ⭐⭐⭐⭐⭐"],
+    theme: "sky",
   },
-] as const;
+] as const satisfies readonly {
+  emoji: string;
+  pillar: string;
+  title: string;
+  description: string;
+  formats: readonly string[];
+  theme: DeckTheme;
+}[];
 
 /**
  * Bukti isi. Halaman boleh menjanjikan apa saja soal "kartu yang pas", tapi
@@ -47,41 +51,43 @@ const FORMAT_GROUPS = [
  */
 export function SampleCards() {
   return (
-    <section className="bg-neutral-50 px-6 py-20">
+    <section className="bg-white px-6 py-20">
       <div className="mx-auto max-w-5xl">
-        <div className="mx-auto max-w-2xl space-y-4 text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Kartunya seperti apa?
-          </h2>
-          <p className="text-lg leading-relaxed text-neutral-600">
-            Satu kartu, satu giliran. Mau seru-seruan, adu pintar, atau belajar
-            fokus — tinggal pilih deck-nya, waktu luang langsung ada isinya.
+        <div className="max-w-xl space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-pink-600">
+            Tiga cara main
           </p>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Satu kartu, satu giliran.
+          </h2>
         </div>
 
         <ul className="mt-10 grid gap-4 md:grid-cols-3">
           {FORMAT_GROUPS.map((group) => (
             <li
               key={group.title}
-              className="rounded-2xl border border-neutral-200 bg-white p-5"
+              className={cn(
+                "flex flex-col rounded-3xl bg-gradient-to-br p-6 text-white shadow-lg",
+                DECK_THEME_STYLES[group.theme].card
+              )}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl" aria-hidden>
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-4xl leading-none" aria-hidden>
                   {group.emoji}
                 </span>
-                <h3 className="font-semibold">{group.title}</h3>
-                <span className="ml-auto rounded-full bg-pink-50 px-2.5 py-0.5 text-xs font-medium text-pink-700">
+                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium">
                   {group.pillar}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-600">
+              <h3 className="mt-6 text-2xl font-bold">{group.title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-white/85">
                 {group.description}
               </p>
-              <ul className="mt-3 flex flex-wrap gap-1.5">
+              <ul className="mt-auto flex flex-wrap gap-1.5 pt-5">
                 {group.formats.map((format) => (
                   <li
                     key={format}
-                    className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700"
+                    className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium ring-1 ring-white/25"
                   >
                     {format}
                   </li>
@@ -93,39 +99,29 @@ export function SampleCards() {
 
         <div
           id="coba-kartu"
-          className="mt-12 grid scroll-mt-8 items-center gap-10 rounded-[2rem] border border-pink-100 bg-white px-6 py-10 shadow-sm md:scroll-mt-16 md:grid-cols-[0.8fr_1fr] md:px-12 md:py-12"
+          className="mt-16 grid scroll-mt-8 items-center gap-10 rounded-[2rem] bg-gradient-to-br from-amber-50 via-orange-50 to-pink-50 px-6 py-10 md:scroll-mt-16 md:grid-cols-[0.8fr_1fr] md:px-12 md:py-12"
         >
-          <div className="space-y-4 text-center md:text-left">
-            <p className="text-sm font-semibold uppercase tracking-widest text-pink-600">
+          <div className="space-y-3 text-center md:text-left">
+            <p className="text-sm font-semibold uppercase tracking-widest text-orange-600">
               Coba langsung
             </p>
             <h3 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              Ketuk kartunya, lalu balik lagi
+              Ketuk kartunya.
             </h3>
             <p className="leading-relaxed text-neutral-600">
-              Ketuk sekali untuk membuka soalnya. Di kartu obrolan, langsung
-              jawab bergantian. Di kartu kuis, pilih jawabanmu — atau balik
-              sekali lagi untuk melihat jawaban dan penjelasannya.
-            </p>
-            <p className="text-sm text-neutral-500">
-              Geser untuk mencoba kartu obrolan, mitos/fakta, pilihan ganda,
-              dan latihan mendengar.
+              Ketuk untuk buka, balik lagi untuk lihat jawaban. Geser untuk
+              kartu lainnya.
             </p>
           </div>
 
           <LandingCardDemo />
         </div>
 
-        <h3 className="mt-16 text-center text-xl font-semibold text-neutral-900">
+        <h3 className="mt-16 text-sm font-semibold uppercase tracking-widest text-neutral-500">
           Contoh kartu lainnya
         </h3>
 
         <SampleCardCarousel />
-
-        <p className="mt-8 text-center text-sm text-neutral-500">
-          Deck buatan AI mengikuti bentuk yang sama — dengan isi yang mengikuti
-          situasi atau topik yang kamu sebutkan.
-        </p>
       </div>
     </section>
   );
