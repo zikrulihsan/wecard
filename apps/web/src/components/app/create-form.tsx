@@ -9,9 +9,10 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { invalidateAiAccess } from "@/lib/ai/access-client";
+import { DECK_MODES, type DeckMode } from "@flipcard/types";
+import { DECK_MODE_META } from "@/lib/deck-mode";
+import { cn } from "@/lib/utils";
 import {
-  AUDIENCES,
-  CARD_MIXES,
   DEPTHS,
   KNOWLEDGE_DEPTH_LABELS,
   MAX_CARDS_PER_SECTION,
@@ -19,9 +20,20 @@ import {
   MIN_CARDS_PER_SECTION,
   MIN_SECTIONS,
   TONES,
+  audiencesForMode,
   getAudiencePlaceholders,
   isKnowledgeMix,
 } from "@/lib/ai/deck-schema";
+
+/** Isi kartu (`cardMix` di API) untuk tiap jenis deck. */
+function cardMixFor(mode: DeckMode, withChallenges: boolean) {
+  switch (mode) {
+    case "ngobrol": return withChallenges ? "campuran" : "talk";
+    case "tantangan": return "action";
+    case "kuis": return "kuis";
+    case "mendengar": return "mendengar";
+  }
+}
 
 interface CreateFormProps {
   /** Sisa jatah akun ini; null berarti tanpa batas. */
@@ -41,7 +53,20 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
   const [deckName, setDeckName] = useState("");
   const [sectionCount, setSectionCount] = useState(3);
   const [cardsPerSection, setCardsPerSection] = useState(10);
-  const [cardMix, setCardMix] = useState<string>("campuran");
+  const [mode, setMode] = useState<DeckMode>("ngobrol");
+  const [withChallenges, setWithChallenges] = useState(true);
+  const cardMix = cardMixFor(mode, withChallenges);
+  const audiences = audiencesForMode(mode);
+
+  function chooseMode(next: DeckMode) {
+    setMode(next);
+    // Pemain yang tidak cocok dengan jenis baru (misal pasangan di kuis)
+    // diganti pilihan pertama jenis itu.
+    const options = audiencesForMode(next);
+    if (!options.some((option) => option.value === audience)) {
+      setAudience(options[0].value);
+    }
+  }
   const [includeSpecial, setIncludeSpecial] = useState(false);
   const [topic, setTopic] = useState("");
   const [context, setContext] = useState("");
@@ -104,39 +129,46 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Field
-        label="Mau dimainkan sama siapa?"
-        hint="Menentukan sudut pandang dan gaya pertanyaannya."
-      >
-        <Select
-          value={audience}
-          onChange={(e) => setAudience(e.target.value)}
-          disabled={isGenerating}
-        >
-          {AUDIENCES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-      </Field>
+      <fieldset className="space-y-1.5" disabled={isGenerating}>
+        <legend className="mb-1.5 text-sm font-medium">Mau main apa?</legend>
+        <div role="radiogroup" aria-label="Jenis deck" className="grid grid-cols-2 gap-2">
+          {DECK_MODES.map((value) => {
+            const meta = DECK_MODE_META[value];
+            const selected = mode === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => chooseMode(value)}
+                className={cn(
+                  "rounded-xl border p-3 text-left transition-colors disabled:opacity-50",
+                  selected
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-neutral-200 hover:bg-neutral-50",
+                )}
+              >
+                <span className="block text-sm font-medium">{meta.emoji} {meta.label}</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">{meta.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
 
-      <Field
-        label="Isi kartu"
-        hint={CARD_MIXES.find((m) => m.value === cardMix)?.hint}
-      >
-        <Select
-          value={cardMix}
-          onChange={(e) => setCardMix(e.target.value)}
-          disabled={isGenerating}
-        >
-          {CARD_MIXES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-      </Field>
+      {mode === "ngobrol" && (
+        <Label className="items-start gap-3 -mt-2">
+          <Checkbox
+            checked={withChallenges}
+            onCheckedChange={(checked) => setWithChallenges(checked === true)}
+            disabled={isGenerating}
+          />
+          <span className="font-normal">
+            Selipkan tantangan — sekitar sepertiga kartu.
+          </span>
+        </Label>
+      )}
 
       {knowledge && (
         <Field
@@ -160,6 +192,27 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
           />
         </Field>
       )}
+
+      <Field
+        label={knowledge ? "Siapa yang main?" : "Mau dimainkan sama siapa?"}
+        hint={
+          knowledge
+            ? "Menentukan kosakata dan tingkat soalnya."
+            : "Menentukan sudut pandang dan gaya pertanyaannya."
+        }
+      >
+        <Select
+          value={audience}
+          onChange={(e) => setAudience(e.target.value)}
+          disabled={isGenerating}
+        >
+          {audiences.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </Field>
 
       {!knowledge && (
         <Field label="Nuansa kartu">

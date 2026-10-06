@@ -2,7 +2,7 @@ import type { Config } from "@netlify/functions";
 import { authenticatedClient } from "../auth";
 import { reportError, supabaseError } from "../../src/lib/observability";
 import { getAiAccess } from "../../src/lib/ai/access";
-import { generateDeckInputSchema } from "../../src/lib/ai/deck-schema";
+import { generateDeckInputSchema, modeForCardMix } from "../../src/lib/ai/deck-schema";
 import {
   GenerationFailed,
   GenerationRefused,
@@ -117,6 +117,7 @@ export default async function handler(request: Request): Promise<Response> {
       name: deck.name,
       description: deck.description,
       theme: deck.theme,
+      mode: modeForCardMix(input.cardMix),
       is_free: true,
       price_idr: null,
       sort_order: 100,

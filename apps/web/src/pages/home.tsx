@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { History, Lock, Play, Search, Sparkles, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { deckThemeStyle } from "@/lib/deck-theme";
+import { DECK_MODE_META, resolveDeckMode } from "@/lib/deck-mode";
 import { useRecentDeckIds } from "@/lib/recent-decks";
 import { useGameStore } from "@/stores/game-store";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { CardLoader } from "@/components/ui/card-loader";
 import { Input } from "@/components/ui/input";
 import { LoadError } from "@/components/ui/load-error";
 import { cn } from "@/lib/utils";
+import { DECK_MODES, type DeckMode } from "@flipcard/types";
 import { AiDeckCta } from "@/components/app/ai-deck-cta";
 import { HomeHeader } from "@/components/app/home-header";
 
@@ -22,9 +24,10 @@ type CategoryRow = {
   price_idr: number | null;
   is_ai_generated: boolean;
   theme: string | null;
+  mode: string | null;
 };
 
-type Deck = CategoryRow & { isUnlocked: boolean };
+type Deck = Omit<CategoryRow, "mode"> & { mode: DeckMode; isUnlocked: boolean };
 
 type Filter = "all" | "free" | "mine" | "locked";
 
@@ -45,13 +48,14 @@ export default function HomePage() {
   }>({ loading: true, error: false, categories: [], unlockedIds: new Set() });
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [modeTab, setModeTab] = useState<DeckMode | "all">("all");
 
   useEffect(() => {
     let active = true;
     const supabase = createClient();
     Promise.all([
       supabase.from("categories")
-        .select("id, slug, name, description, is_free, price_idr, is_ai_generated, theme")
+        .select("id, slug, name, description, is_free, price_idr, is_ai_generated, theme, mode")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .order("sort_order", { ascending: true }),
@@ -82,6 +86,7 @@ export default function HomePage() {
   const decks = useMemo<Deck[]>(
     () => state.categories.map((category) => ({
       ...category,
+      mode: resolveDeckMode(category.mode),
       isUnlocked: category.is_free || state.unlockedIds.has(category.id),
     })),
     [state.categories, state.unlockedIds],
@@ -92,12 +97,18 @@ export default function HomePage() {
     .map((id) => decks.find((deck) => deck.id === id))
     .filter((deck): deck is Deck => Boolean(deck?.isUnlocked));
 
+  // Tab jenis hanya untuk jenis yang punya deck; kalau semua deck satu jenis,
+  // tab-nya tidak perlu ada.
+  const modes = DECK_MODES.filter((mode) => decks.some((deck) => deck.mode === mode));
+  const activeMode = modeTab !== "all" && modes.includes(modeTab) ? modeTab : "all";
+  const inMode = activeMode === "all" ? decks : decks.filter((deck) => deck.mode === activeMode);
+
   // Chip filter hanya muncul kalau ada deck yang cocok, supaya tidak ada
   // pilihan yang pasti berujung kosong.
-  const filters = FILTERS.filter((item) => item.value === "all" || decks.some(item.matches));
+  const filters = FILTERS.filter((item) => item.value === "all" || inMode.some(item.matches));
   const activeFilter = filters.find((item) => item.value === filter) ?? FILTERS[0];
   const needle = query.trim().toLocaleLowerCase("id-ID");
-  const results = decks.filter((deck) => activeFilter.matches(deck) && (
+  const results = inMode.filter((deck) => activeFilter.matches(deck) && (
     !needle ||
     deck.name.toLocaleLowerCase("id-ID").includes(needle) ||
     (deck.description ?? "").toLocaleLowerCase("id-ID").includes(needle)
@@ -124,6 +135,28 @@ export default function HomePage() {
         decks.length === 0 ? <EmptyState /> : (
           <section>
             <h2 className="text-lg font-semibold mb-3">Jelajahi deck</h2>
+            {modes.length > 1 && (
+              <div role="tablist" aria-label="Jenis deck" className="-mx-4 mb-3 flex gap-1 overflow-x-auto border-b border-neutral-200 px-4 [scrollbar-width:none]">
+                {(["all", ...modes] as const).map((value) => {
+                  const selected = activeMode === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => setModeTab(value)}
+                      className={cn(
+                        "-mb-px shrink-0 border-b-2 px-2.5 py-2 text-sm transition-colors",
+                        selected ? "border-primary font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {value === "all" ? "Semua" : DECK_MODE_META[value].label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="relative mb-3">
               <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -161,20 +194,20 @@ export default function HomePage() {
               </div>
             )}
             {results.length === 0 ? (
-              <NoResults query={query.trim()} onClear={() => { setQuery(""); setFilter("all"); }} />
+              <NoResults query={query.trim()} onClear={() => { setQuery(""); setFilter("all"); setModeTab("all"); }} />
             ) : browsing ? (
               <div className="space-y-8">
                 {mine.length > 0 && <div>
                   <SectionTitle icon={Sparkles}>Deck buatanmu</SectionTitle>
-                  <DeckGrid decks={mine} />
+                  <DeckGrid decks={mine} showMode={activeMode === "all"} />
                 </div>}
                 {curated.length > 0 && <div>
                   {mine.length > 0 && <SectionTitle>Koleksi FlipCard</SectionTitle>}
-                  <DeckGrid decks={curated} />
+                  <DeckGrid decks={curated} showMode={activeMode === "all"} />
                 </div>}
               </div>
             ) : (
-              <DeckGrid decks={results} />
+              <DeckGrid decks={results} showMode={activeMode === "all"} />
             )}
           </section>
         )}
@@ -239,15 +272,15 @@ function RecentDeckTile({ deck }: { deck: Deck }) {
   );
 }
 
-function DeckGrid({ decks }: { decks: Deck[] }) {
+function DeckGrid({ decks, showMode }: { decks: Deck[]; showMode: boolean }) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      {decks.map((deck) => <DeckTile key={deck.id} deck={deck} />)}
+      {decks.map((deck) => <DeckTile key={deck.id} deck={deck} showMode={showMode} />)}
     </div>
   );
 }
 
-function DeckTile({ deck }: { deck: Deck }) {
+function DeckTile({ deck, showMode }: { deck: Deck; showMode: boolean }) {
   const badge = "bg-white/20 text-white border-0";
   return (
     <Link
@@ -264,6 +297,7 @@ function DeckTile({ deck }: { deck: Deck }) {
           deck.isUnlocked ? <Badge variant="secondary" className={badge}>Terbuka</Badge> :
           <Badge variant="secondary" className={cn(badge, "gap-1")}><Lock className="size-3" />Terkunci</Badge>}
       </div>
+      {showMode && <p className="text-[11px] font-medium uppercase tracking-wide text-white/75">{DECK_MODE_META[deck.mode].emoji} {DECK_MODE_META[deck.mode].label}</p>}
       <h4 className="text-base font-bold leading-snug">{deck.name}</h4>
       {deck.description && <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-white/85">{deck.description}</p>}
       {!deck.isUnlocked && deck.price_idr && <p className="mt-auto pt-3 text-sm font-medium">Rp {deck.price_idr.toLocaleString("id-ID")}</p>}
