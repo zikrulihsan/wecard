@@ -10,43 +10,21 @@ import {
 } from "@flipcard/types";
 
 /**
- * Satu tempat untuk semua yang khas per format kartu: label, emoji, cara
- * membaca `details` dari database, dan apakah kartunya punya sisi jawaban.
+ * Satu tempat untuk semua yang khas per format kartu: emoji, cara membaca
+ * `details` dari database, dan apakah kartunya punya sisi jawaban. Label dan
+ * petunjuknya ada di kamus i18n (`formats`), karena ikut bahasa aplikasi.
  */
 
-export const CARD_FORMAT_META: Record<
-  CardType,
-  { emoji: string; label: string; hint: string }
-> = {
-  talk: { emoji: "💬", label: "TALK", hint: "Jawab dengan cerita" },
-  action: { emoji: "🎯", label: "ACTION", hint: "Kerjakan tantangannya" },
-  special: { emoji: "✨", label: "SPECIAL", hint: "Kartu aturan main" },
-  quiz: { emoji: "🧠", label: "KUIS", hint: "Jawab, lalu balik kartunya" },
-  multiple_choice: {
-    emoji: "🔤",
-    label: "PILIHAN GANDA",
-    hint: "Ketuk jawaban yang menurutmu benar",
-  },
-  true_false: {
-    emoji: "⚖️",
-    label: "MITOS / FAKTA",
-    hint: "Mitos atau fakta?",
-  },
-  clue: {
-    emoji: "🔍",
-    label: "TEBAK CLUE",
-    hint: "Buka clue satu per satu — makin sedikit makin hebat",
-  },
-  ordering: {
-    emoji: "🔢",
-    label: "URUTKAN",
-    hint: "Susun urutan yang benar",
-  },
-  listening: {
-    emoji: "👂",
-    label: "MENDENGAR",
-    hint: "Bacakan teksnya, lalu jawab pertanyaannya",
-  },
+export const CARD_FORMAT_EMOJI: Record<CardType, string> = {
+  talk: "💬",
+  action: "🎯",
+  special: "✨",
+  quiz: "🧠",
+  multiple_choice: "🔤",
+  true_false: "⚖️",
+  clue: "🔍",
+  ordering: "🔢",
+  listening: "👂",
 };
 
 export function isCardType(value: unknown): value is CardType {

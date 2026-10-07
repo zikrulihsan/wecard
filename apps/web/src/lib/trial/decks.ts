@@ -8,6 +8,7 @@ import type {
   GameCard,
 } from "@flipcard/types";
 import { difficultyForLevel } from "@/lib/cards/formats";
+import type { Language } from "@/lib/i18n";
 
 /**
  * Deck umum untuk dicoba tanpa akun.
@@ -72,7 +73,7 @@ function deck(
   };
 }
 
-export const TRIAL_DECKS: TrialDeck[] = [
+const TRIAL_DECKS_ID: TrialDeck[] = [
   deck(
     "kenalan",
     "Kenalan Baru",
@@ -247,6 +248,198 @@ export const TRIAL_DECKS: TrialDeck[] = [
   ),
 ];
 
-export function findTrialDeck(slug: string | undefined): TrialDeck | undefined {
-  return TRIAL_DECKS.find((item) => item.slug === slug);
+/**
+ * Versi Inggris deck coba. Slug-nya sama dengan versi Indonesia, jadi jatah
+ * coba yang sudah terpakai tetap terhitung saat bahasa aplikasi diganti, dan
+ * urutan deck-nya pun sama.
+ */
+const TRIAL_DECKS_EN: TrialDeck[] = [
+  deck(
+    "kenalan",
+    "New Acquaintances",
+    "👋",
+    "Break the ice with people you just met — light, never too nosy.",
+    "violet",
+    [
+      ["talk", "easy", "If you could replay one part of today, which part would it be?"],
+      ["talk", "easy", "What do you always order when you can't decide what to eat?"],
+      ["talk", "easy", "What's a small thing that instantly makes your day better?"],
+      ["action", "easy", "Show the most recent photo in your gallery that's okay to share, then explain the story behind it"],
+      ["talk", "medium", "What's something people often get wrong about you?"],
+      ["talk", "easy", "If you got one extra day off every week, what would you do with it?"],
+      ["action", "easy", "Name 3 songs you've been playing a lot lately"],
+      ["talk", "medium", "What's one thing you're learning or want to master this year?"],
+    ]
+  ),
+  deck(
+    "kuis-pengetahuan",
+    "Trivia Quiz",
+    "🧠",
+    "Test what you know together — answer first, then flip the card to see the answer.",
+    "teal",
+    [
+      ["quiz", 1, "Which planet is closest to the Sun?", {
+        answer: "Mercury",
+        explanation: "A year on Mercury lasts only 88 Earth days.",
+      }],
+      ["true_false", 2, "Bats are blind.", {
+        isTrue: false,
+        explanation: "Bats can see. Many species also use echolocation — bouncing sound off things — to hunt in the dark.",
+      }],
+      ["multiple_choice", 2, "The largest island in Indonesia is…", {
+        options: ["Sumatra", "Borneo", "New Guinea", "Sulawesi"],
+        correctIndex: 2,
+        explanation: "New Guinea (home to Indonesia's Papua) is the second-largest island in the world after Greenland. Borneo is third.",
+      }],
+      ["clue", 3, "What am I?", {
+        clues: [
+          "You can find me in the kitchen and in the sea.",
+          "Without me, food tastes bland.",
+          "Coastal farmers harvest me from seawater dried in the sun.",
+        ],
+        answer: "Salt",
+      }],
+      ["ordering", 3, "Put the steps of rain in order, from start to finish.", {
+        items: [
+          "The Sun heats the seawater",
+          "The water evaporates into water vapor",
+          "The vapor cools and forms clouds",
+          "Droplets in the clouds get heavier and fall as rain",
+        ],
+      }],
+      ["quiz", 4, "Why does the sky look blue during the day?", {
+        answer: "Because air scatters blue light the most.",
+        explanation: "Sunlight contains every color. Blue light's short wavelengths are scattered in all directions by air molecules more easily, so that's the color that reaches our eyes most.",
+      }],
+    ]
+  ),
+  deck(
+    "latihan-mendengar",
+    "Listening Practice",
+    "👂",
+    "One person reads aloud, the others listen and answer. Levels go from ⭐ to ⭐⭐⭐⭐⭐.",
+    "sky",
+    [
+      ["listening", 1, "Ben is eating a red apple.", {
+        questions: [
+          { question: "Who is eating?", answer: "Ben" },
+          { question: "What is he eating?", answer: "A red apple" },
+        ],
+      }],
+      ["listening", 2, "This morning Sarah watered the flowers in the front yard.", {
+        questions: [
+          { question: "When did Sarah water the flowers?", answer: "This morning" },
+          { question: "Where did Sarah water the flowers?", answer: "In the front yard" },
+          { question: "What did Sarah do?", answer: "She watered the flowers" },
+        ],
+      }],
+      ["listening", 3, "Danny put on his blue shoes, picked up his bag, and then walked to school with two of his friends.", {
+        questions: [
+          { question: "What color were Danny's shoes?", answer: "Blue" },
+          { question: "What did Danny do after putting on his shoes?", answer: "He picked up his bag" },
+          { question: "How many friends did Danny walk with?", answer: "Two friends" },
+        ],
+      }],
+      ["listening", 4, "Because her bike tire was flat, Rachel decided to take the bus, and then went to the kids' activity center.", {
+        questions: [
+          { question: "What happened?", answer: "Rachel's bike tire was flat" },
+          { question: "Who made the decision?", answer: "Rachel" },
+          { question: "What did Rachel decide?", answer: "To take the bus" },
+          { question: "Why did Rachel do that?", answer: "Because her bike tire was flat" },
+        ],
+      }],
+      ["listening", 5, "It rained hard that afternoon. Nina waited in front of the school, but her father hadn't arrived yet. Her teacher lent her an umbrella and stayed with Nina until her father came. Nina smiled and said thank you.", {
+        questions: [
+          { question: "Why did Nina have to wait?", answer: "Her father hadn't come to pick her up yet" },
+          { question: "What did the teacher do?", answer: "Lent her an umbrella and stayed with Nina" },
+          { question: "How did Nina feel at the end of the story? How do you know?", answer: "Happy/relieved — Nina smiled and said thank you" },
+        ],
+        explanation: "The last answer is implied: it isn't said directly, so you have to infer it from what Nina does.",
+      }],
+    ]
+  ),
+  deck(
+    "sahabat",
+    "Best Friends",
+    "🤝",
+    "For the close crew whose conversations keep going in circles.",
+    "amber",
+    [
+      ["talk", "easy", "What's the most embarrassing moment we've been through together?"],
+      ["talk", "easy", "If our friendship were a movie, what would it be called?"],
+      ["action", "easy", "Imitate how someone here talks until the others can guess who it is"],
+      ["talk", "medium", "When was the last time a friend really came through for you?"],
+      ["talk", "medium", "What's changed about you since we first met?"],
+      ["action", "easy", "Give the person on your right a new nickname, and explain why"],
+      ["talk", "hard", "Is there something you've wanted to tell us but haven't had the chance?"],
+      ["talk", "medium", "What's one thing about your best friend that you secretly copy?"],
+    ]
+  ),
+  deck(
+    "keluarga",
+    "Family",
+    "🏡",
+    "Dinner-table talk that goes beyond \"how was school/work?\"",
+    "emerald",
+    [
+      ["talk", "easy", "Which home-cooked dish do you miss most when you're away?"],
+      ["talk", "easy", "Which family vacation stuck with you the most?"],
+      ["action", "easy", "Describe a quirky habit of someone in the family — everyone else guesses who"],
+      ["talk", "medium", "What value from this family do you want to carry on?"],
+      ["talk", "medium", "When have you felt proudest to be part of this family?"],
+      ["action", "easy", "Thank the person next to you for one specific thing"],
+      ["talk", "medium", "Which family story do you think must be passed on to the next generation?"],
+      ["talk", "hard", "Is there something you'd like to hear more often from this family?"],
+    ]
+  ),
+  deck(
+    "pasangan",
+    "Couples",
+    "💞",
+    "For date night or a cozy chat before bed.",
+    "pink",
+    [
+      ["talk", "easy", "What was the best part of today?"],
+      ["talk", "easy", "What's one little habit of mine that you love?"],
+      ["action", "easy", "Tell one funny thing from today in the most dramatic way possible 😄"],
+      ["talk", "medium", "What do I do that makes you feel loved?"],
+      ["action", "easy", "Say \"thank you\" to your partner for 3 things"],
+      ["talk", "medium", "What does \"home\" mean to you?"],
+      ["talk", "medium", "What's our most romantic moment, in your opinion?"],
+      ["talk", "medium", "What are your hopes for our relationship?"],
+    ]
+  ),
+  deck(
+    "rekan-kerja",
+    "Coworkers",
+    "💼",
+    "Icebreakers for teams — safe for a meeting or a lunch together.",
+    "indigo",
+    [
+      ["talk", "easy", "What was the very first job you ever had?"],
+      ["talk", "easy", "If you didn't work in this field, what might you be doing?"],
+      ["action", "easy", "Explain your job in 10 words to a 7-year-old"],
+      ["talk", "medium", "What's one thing that got you excited about work this week?"],
+      ["talk", "medium", "Who has taught you the most about work?"],
+      ["action", "easy", "Name one thing a colleague here helped you with that you haven't thanked them for yet"],
+      ["talk", "medium", "What way of working makes you most productive?"],
+      ["talk", "easy", "What small habit makes your day at the office better?"],
+    ]
+  ),
+];
+
+const TRIAL_DECKS: Record<Language, TrialDeck[]> = {
+  id: TRIAL_DECKS_ID,
+  en: TRIAL_DECKS_EN,
+};
+
+export function trialDecks(language: Language): TrialDeck[] {
+  return TRIAL_DECKS[language];
+}
+
+export function findTrialDeck(
+  slug: string | undefined,
+  language: Language
+): TrialDeck | undefined {
+  return TRIAL_DECKS[language].find((item) => item.slug === slug);
 }

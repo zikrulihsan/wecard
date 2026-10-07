@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
 import { TRIAL_DECK_LIMIT } from "@/lib/trial/progress";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * Ajakan daftar setelah jatah coba habis. Isinya menyebut apa yang didapat
@@ -18,6 +19,7 @@ export function SignupGate({
   onClose?: () => void;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div
       role="dialog"
@@ -40,12 +42,11 @@ export function SignupGate({
         </div>
         <div className="space-y-2">
           <h2 id="signup-gate-title" className="text-xl font-bold">
-            Seru, kan? Lanjut pakai akun
+            {t.trial.gateTitle}
           </h2>
           <p className="text-sm leading-relaxed text-neutral-600">
-            {TRIAL_DECK_LIMIT > 0 && `Kamu sudah mencoba ${TRIAL_DECK_LIMIT} deck. `}
-            Buat akun gratis untuk membuka semua deck bawaan lengkap dan bikin {AI_GENERATION_LIMIT}{" "}
-            deck sendiri pakai AI.
+            {TRIAL_DECK_LIMIT > 0 && t.trial.gateTried(TRIAL_DECK_LIMIT)}
+            {t.trial.gateBody(AI_GENERATION_LIMIT)}
           </p>
         </div>
         <div className="space-y-2">
@@ -56,7 +57,7 @@ export function SignupGate({
               className: "h-12 w-full rounded-full bg-pink-600 text-base text-white [a]:hover:bg-pink-700",
             })}
           >
-            Buat akun gratis
+            {t.trial.createAccount}
           </Link>
           <Link
             to="/login"
@@ -66,7 +67,7 @@ export function SignupGate({
               className: "h-12 w-full rounded-full text-base",
             })}
           >
-            Sudah punya akun? Masuk
+            {t.trial.gateLogin}
           </Link>
         </div>
         {onClose && (
@@ -75,7 +76,7 @@ export function SignupGate({
             onClick={onClose}
             className="text-sm text-neutral-500 hover:text-neutral-800"
           >
-            Nanti dulu
+            {t.trial.gateLater}
           </button>
         )}
       </m.div>

@@ -10,18 +10,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { invalidateAiAccess } from "@/lib/ai/access-client";
 import {
-  AUDIENCES,
-  CARD_MIXES,
-  DEPTHS,
-  KNOWLEDGE_DEPTH_LABELS,
   MAX_CARDS_PER_SECTION,
   MAX_SECTIONS,
   MIN_CARDS_PER_SECTION,
   MIN_SECTIONS,
-  TONES,
-  getAudiencePlaceholders,
   isKnowledgeMix,
 } from "@/lib/ai/deck-schema";
+import { LANGUAGES, isLanguage, useI18n, type Language } from "@/lib/i18n";
+import type { Messages } from "@/lib/i18n/messages/id";
+
+type ErrorCode = keyof Messages["create"]["errors"];
+
+/**
+ * Pesan error server dalam bahasa aplikasi. Server tetap mengirim pesan
+ * aslinya (bahasa Indonesia) — dipakai kalau kodenya belum dikenal versi ini.
+ */
+function errorMessage(
+  t: Messages["create"],
+  data: { error?: string; code?: string; limit?: number | null }
+): string | undefined {
+  const code = data.code as ErrorCode | undefined;
+  if (code === "quota_spent") return t.errors.quota_spent(data.limit ?? null);
+  if (code && code in t.errors) {
+    const message = t.errors[code];
+    if (typeof message === "string") return message;
+  }
+  return data.error;
+}
 
 interface CreateFormProps {
   /** Sisa jatah akun ini; null berarti tanpa batas. */
@@ -30,6 +45,8 @@ interface CreateFormProps {
 }
 
 export function CreateForm({ remaining, limit }: CreateFormProps) {
+  const { t: messages, language: appLanguage } = useI18n();
+  const t = messages.create;
   const navigate = useNavigate();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +54,9 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
   const [audience, setAudience] = useState<string>("pasangan");
   const [tone, setTone] = useState<string>("santai");
   const [depth, setDepth] = useState<string>("sedang");
-  const language = "id";
+  // Bawaannya ikut bahasa aplikasi, tapi bisa dipilih terpisah — orang
+  // Indonesia bisa saja ingin deck kuis bahasa Inggris untuk belajar.
+  const [language, setLanguage] = useState<Language>(appLanguage);
   const [deckName, setDeckName] = useState("");
   const [sectionCount, setSectionCount] = useState(3);
   const [cardsPerSection, setCardsPerSection] = useState(10);
@@ -80,9 +99,9 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
       if (!response.ok) {
         // `hint`/`detail` hanya dikirim server di luar production.
         setError(
-          [data.error, data.hint, data.detail]
+          [errorMessage(t, data), data.hint, data.detail]
             .filter(Boolean)
-            .join(" — ") || "Gagal membuat deck. Coba lagi."
+            .join(" — ") || t.form.genericError
         );
         return;
       }
@@ -91,29 +110,26 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
       invalidateAiAccess();
       navigate(`/play/${data.categoryId}`);
     } catch {
-      setError("Koneksi bermasalah. Coba lagi.");
+      setError(t.form.connectionError);
     } finally {
       setIsGenerating(false);
     }
   }
 
   const totalCards = sectionCount * cardsPerSection;
-  const placeholders = getAudiencePlaceholders(audience);
+  const placeholders = t.placeholders[audience] ?? t.placeholders.pasangan;
   const knowledge = isKnowledgeMix(cardMix);
   const listening = cardMix === "mendengar";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Field
-        label="Mau dimainkan sama siapa?"
-        hint="Menentukan sudut pandang dan gaya pertanyaannya."
-      >
+      <Field label={t.form.audience} hint={t.form.audienceHint}>
         <Select
           value={audience}
           onChange={(e) => setAudience(e.target.value)}
           disabled={isGenerating}
         >
-          {AUDIENCES.map((option) => (
+          {t.audiences.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -121,16 +137,32 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         </Select>
       </Field>
 
+      <Field label={t.form.cardLanguage} hint={t.form.cardLanguageHint}>
+        <Select
+          value={language}
+          onChange={(e) => {
+            if (isLanguage(e.target.value)) setLanguage(e.target.value);
+          }}
+          disabled={isGenerating}
+        >
+          {LANGUAGES.map((option) => (
+            <option key={option} value={option}>
+              {t.languages[option]}
+            </option>
+          ))}
+        </Select>
+      </Field>
+
       <Field
-        label="Isi kartu"
-        hint={CARD_MIXES.find((m) => m.value === cardMix)?.hint}
+        label={t.form.cardMix}
+        hint={t.cardMixes.find((m) => m.value === cardMix)?.hint}
       >
         <Select
           value={cardMix}
           onChange={(e) => setCardMix(e.target.value)}
           disabled={isGenerating}
         >
-          {CARD_MIXES.map((option) => (
+          {t.cardMixes.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -140,21 +172,15 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
 
       {knowledge && (
         <Field
-          label={listening ? "Tema cerita (opsional)" : "Topik"}
-          hint={
-            listening
-              ? "Kosongkan untuk cerita sehari-hari di rumah dan sekolah."
-              : "Bidang yang mau diuji. Kosongkan untuk pengetahuan umum."
-          }
+          label={listening ? t.form.storyTheme : t.form.topic}
+          hint={listening ? t.form.storyHint : t.form.topicHint}
         >
           <Input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             maxLength={120}
             placeholder={
-              listening
-                ? "Misal: hewan di kebun binatang"
-                : "Misal: AI Engineering, tata surya, sejarah Islam"
+              listening ? t.form.storyPlaceholder : t.form.topicPlaceholder
             }
             disabled={isGenerating}
           />
@@ -162,13 +188,13 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
       )}
 
       {!knowledge && (
-        <Field label="Nuansa kartu">
+        <Field label={t.form.tone}>
           <Select
             value={tone}
             onChange={(e) => setTone(e.target.value)}
             disabled={isGenerating}
           >
-            {TONES.map((option) => (
+            {t.tones.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -178,28 +204,24 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
       )}
 
       <Field
-        label={knowledge ? "Tingkat kesulitan" : "Kedalaman"}
-        hint={
-          knowledge
-            ? "Level bintang kartunya. Section berikutnya makin sulit."
-            : "Seberapa personal pertanyaannya boleh masuk."
-        }
+        label={knowledge ? t.form.difficulty : t.form.depth}
+        hint={knowledge ? t.form.difficultyHint : t.form.depthHint}
       >
         <Select
           value={depth}
           onChange={(e) => setDepth(e.target.value)}
           disabled={isGenerating}
         >
-          {DEPTHS.map((option) => (
+          {t.depths.map((option) => (
             <option key={option.value} value={option.value}>
-              {knowledge ? KNOWLEDGE_DEPTH_LABELS[option.value] : option.label}
+              {knowledge ? t.knowledgeDepths[option.value] : option.label}
             </option>
           ))}
         </Select>
       </Field>
 
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Jumlah section">
+        <Field label={t.form.sectionCount}>
           <Input
             type="number"
             min={MIN_SECTIONS}
@@ -209,7 +231,7 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
             disabled={isGenerating}
           />
         </Field>
-        <Field label="Kartu per section">
+        <Field label={t.form.cardsPerSection}>
           <Input
             type="number"
             min={MIN_CARDS_PER_SECTION}
@@ -222,7 +244,7 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
       </div>
 
       <p className="text-sm text-muted-foreground -mt-3">
-        Total {totalCards} kartu.
+        {t.form.total(totalCards)}
       </p>
 
       {!knowledge && (
@@ -234,14 +256,14 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
               disabled={isGenerating}
             />
             <span className="font-normal">
-              Sertakan kartu <strong>Special</strong> — Free Pass, Switch,
-              Double.
+              {t.form.specialLead} <strong>{t.form.specialStrong}</strong>{" "}
+              {t.form.specialRest}
             </span>
           </Label>
         </div>
       )}
 
-      <Field label="Nama deck" hint="Kosongkan kalau mau dibuatkan AI.">
+      <Field label={t.form.deckName} hint={t.form.deckNameHint}>
         <Input
           value={deckName}
           onChange={(e) => setDeckName(e.target.value)}
@@ -251,10 +273,7 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         />
       </Field>
 
-      <Field
-        label="Konteks tambahan"
-        hint="Situasi spesifik yang bikin kartunya lebih pas. Jangan isi data pribadi."
-      >
+      <Field label={t.form.context} hint={t.form.contextHint}>
         <Textarea
           value={context}
           onChange={(e) => setContext(e.target.value)}
@@ -265,7 +284,7 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         />
       </Field>
 
-      <Field label="Topik yang dihindari">
+      <Field label={t.form.avoid}>
         <Textarea
           value={avoid}
           onChange={(e) => setAvoid(e.target.value)}
@@ -286,11 +305,12 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
           "generate sekarang atau nanti" benar-benar diambil. */}
       <p className="text-sm text-muted-foreground text-center">
         {remaining === null ? (
-          "Kamu bisa membuat deck AI tanpa batas."
+          t.form.unlimited
         ) : (
           <>
-            Sisa jatah: <strong>{remaining}</strong> dari {limit} deck AI.
-            {remaining === 1 && " Ini kesempatan terakhirmu, pikirkan baik-baik."}
+            {t.form.remainingLead} <strong>{remaining}</strong>{" "}
+            {t.form.remainingRest(limit)}
+            {remaining === 1 && t.form.lastChance}
           </>
         )}
       </p>
@@ -304,19 +324,19 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         {isGenerating ? (
           <>
             <Loader2 className="size-4 animate-spin" />
-            Lagi bikin kartunya…
+            {t.form.generating}
           </>
         ) : (
           <>
             <Sparkles className="size-4" />
-            Generate deck
+            {t.form.generate}
           </>
         )}
       </Button>
 
       {isGenerating && (
         <p className="text-sm text-muted-foreground text-center">
-          Butuh sekitar 20–40 detik. Jangan tutup halaman ini.
+          {t.form.waitHint}
         </p>
       )}
     </form>

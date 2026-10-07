@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { DEFAULT_REDIRECT, safePath } from "@/lib/safe-path";
 import { OAUTH_REDIRECT_KEY } from "@/lib/oauth";
+import { useT } from "@/lib/i18n";
 
 export function GoogleSignInButton({
   redirect = DEFAULT_REDIRECT,
@@ -13,6 +14,7 @@ export function GoogleSignInButton({
   disabled?: boolean;
   onError: (message: string) => void;
 }) {
+  const t = useT();
   const [loading, setLoading] = useState(false);
 
   async function signIn() {
@@ -37,7 +39,7 @@ export function GoogleSignInButton({
       // Jika berhasil, Supabase mengalihkan browser ke Google.
     } catch {
       sessionStorage.removeItem(OAUTH_REDIRECT_KEY);
-      onError("Tidak bisa menghubungi layanan login. Coba lagi.");
+      onError(t.auth.loginUnreachable);
       setLoading(false);
     }
   }
@@ -57,7 +59,7 @@ export function GoogleSignInButton({
         <path fill="#FBBC05" d="M6.54 13.85a5.85 5.85 0 0 1 0-3.7V7.63H3.3a9.74 9.74 0 0 0 0 8.74l3.24-2.52Z" />
         <path fill="#EA4335" d="M12 6.13c1.39 0 2.64.48 3.62 1.42l2.79-2.79A9.36 9.36 0 0 0 12 2.27a9.73 9.73 0 0 0-8.7 5.36l3.24 2.52C7.31 7.84 9.46 6.13 12 6.13Z" />
       </svg>
-      {loading ? "Menghubungkan ke Google..." : "Lanjutkan dengan Google"}
+      {loading ? t.auth.googleConnecting : t.auth.google}
     </Button>
   );
 }

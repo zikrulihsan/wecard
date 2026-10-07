@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { hasAnswerSide } from "@/lib/cards/formats";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import type { DeckTheme, GameCard } from "@flipcard/types";
 
 // Gerbang hidrasi: false saat SSR/hidrasi, true setelahnya — store zustand
@@ -65,6 +66,7 @@ const cardVariants: Variants = {
 };
 
 export default function SessionPage() {
+  const t = useT();
   const navigate = useNavigate();
   const params = useParams();
   const deckId = params.deckId ?? "";
@@ -143,7 +145,7 @@ export default function SessionPage() {
   };
 
   const handleExit = () => {
-    if (confirm("Yakin keluar? Progres tidak akan disimpan.")) {
+    if (confirm(t.game.confirmExit)) {
       endSession();
       navigate(`/play/${deckId}`);
     }
@@ -169,7 +171,7 @@ export default function SessionPage() {
           size="icon"
           onClick={handleExit}
           className="rounded-full shrink-0"
-          aria-label="Keluar"
+          aria-label={t.common.exit}
         >
           <X className="size-5" />
         </Button>
@@ -217,7 +219,7 @@ export default function SessionPage() {
             size="lg"
             className="w-full rounded-full"
           >
-            Buka Kartu
+            {t.game.openCard}
           </Button>
         ) : (
           <div className="flex items-center gap-3">
@@ -227,7 +229,7 @@ export default function SessionPage() {
               variant="outline"
               size="lg"
               className="rounded-full"
-              aria-label="Kartu sebelumnya"
+              aria-label={t.game.previousCard}
             >
               <ChevronLeft className="size-5" />
             </Button>
@@ -237,7 +239,7 @@ export default function SessionPage() {
                 size="lg"
                 className="flex-1 rounded-full"
               >
-                Lihat Jawaban
+                {t.game.showAnswer}
               </Button>
             ) : (
               <Button
@@ -245,7 +247,7 @@ export default function SessionPage() {
                 size="lg"
                 className="flex-1 rounded-full"
               >
-                Kartu Berikutnya
+                {t.game.nextCard}
               </Button>
             )}
             <Button
@@ -253,7 +255,7 @@ export default function SessionPage() {
               variant="outline"
               size="lg"
               className="rounded-full"
-              aria-label="Lewati"
+              aria-label={t.game.skip}
             >
               <SkipForward className="size-5" />
             </Button>
@@ -267,7 +269,7 @@ export default function SessionPage() {
             isCardRevealed ? "opacity-100" : "opacity-0"
           }`}
         >
-          Geser kartu ke kiri untuk lanjut, ke kanan untuk kembali
+          {t.game.swipeHint}
         </p>
       </div>
     </div>
@@ -353,6 +355,7 @@ function CompletionScreen({
   results: Record<string, boolean>;
   onEnd: () => void;
 }) {
+  const t = useT();
   const graded = Object.values(results);
   const correct = graded.filter(Boolean).length;
 
@@ -382,12 +385,12 @@ function CompletionScreen({
         className="max-w-md text-center space-y-6"
       >
         <div className="text-7xl">🎉</div>
-        <h1 className="text-3xl font-bold">Selesai!</h1>
+        <h1 className="text-3xl font-bold">{t.game.done}</h1>
         {graded.length > 0 ? (
           <QuizScore correct={correct} total={graded.length} />
         ) : (
           <p className="text-muted-foreground leading-relaxed">
-            Semoga obrolan kalian tadi bikin makin dekat. Mau main sekali lagi?
+            {t.game.doneTalk}
           </p>
         )}
         <div className="space-y-2">
@@ -396,7 +399,7 @@ function CompletionScreen({
             size="lg"
             className="w-full rounded-full"
           >
-            Main Lagi
+            {t.game.playAgain}
           </Button>
           <Button
             onClick={handleFinish}
@@ -404,7 +407,7 @@ function CompletionScreen({
             size="lg"
             className="w-full rounded-full"
           >
-            Kembali ke Deck
+            {t.game.backToDeck}
           </Button>
         </div>
       </m.div>

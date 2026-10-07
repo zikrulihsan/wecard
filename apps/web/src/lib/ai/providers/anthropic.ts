@@ -46,7 +46,8 @@ export function createAnthropicProvider(): DeckProvider {
 
       if (message.stop_reason === "max_tokens") {
         throw new GenerationFailed(
-          "Hasil generate terpotong. Coba kurangi jumlah section atau kartu."
+          "Hasil generate terpotong. Coba kurangi jumlah section atau kartu.",
+          "truncated"
         );
       }
 

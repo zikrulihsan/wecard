@@ -1,76 +1,14 @@
 import { useRef } from "react";
-import type { DeckTheme } from "@flipcard/types";
 import { DeckCard } from "./deck-card";
+import { useT } from "@/lib/i18n";
 
-type SampleCard = {
-  theme: DeckTheme;
-  kind: string;
-  deck: string;
-  content: string;
-  level?: number;
-};
-
-// Dikutip apa adanya dari seed.sql, seed_anak_orang_tua.sql,
-// seed_kuis_mendengar.sql, dan deck coba — kecuali kartu tebak clue, yang
-// menampilkan clue pertamanya digabung dengan pertanyaannya. Selang-seling
-// obrolan dan kuis supaya keduanya kelihatan tanpa harus menggeser jauh.
-const sampleCards: SampleCard[] = [
-  {
-    theme: "pink",
-    kind: "Talk",
-    deck: "Pasangan",
-    content: "Hal apa dari aku yang bikin kamu merasa dicintai?",
-  },
-  {
-    theme: "indigo",
-    kind: "Kuis",
-    deck: "Uji Diri: AI Engineering",
-    content: "Apa itu embedding?",
-    level: 2,
-  },
-  {
-    theme: "sky",
-    kind: "Talk",
-    deck: "Anak & Orang Tua",
-    content: "Apa kegiatan bareng yang paling kamu tunggu-tunggu?",
-  },
-  {
-    theme: "teal",
-    kind: "Mitos / fakta",
-    deck: "Kuis Pengetahuan",
-    content: "Kelelawar itu buta.",
-    level: 2,
-  },
-  {
-    theme: "pink",
-    kind: "Action",
-    deck: "Pasangan",
-    content: "Ceritakan 1 hal lucu hari ini dengan gaya lebay 😄",
-  },
-  {
-    theme: "sky",
-    kind: "Mendengar",
-    deck: "Latihan Mendengar",
-    content: "Pagi ini Sari menyiram bunga di halaman rumah.",
-    level: 2,
-  },
-  {
-    theme: "teal",
-    kind: "Tebak clue",
-    deck: "Kuis Pengetahuan",
-    content: "Aku bisa ditemukan di dapur dan di laut. Aku ini apa?",
-    level: 3,
-  },
-  {
-    theme: "indigo",
-    kind: "Mitos / fakta",
-    deck: "Uji Diri: AI Engineering",
-    content: "Menaikkan temperature membuat jawaban model lebih akurat.",
-    level: 2,
-  },
-];
+// Isi kartunya ada di kamus i18n (`landing.samples.cards`): dikutip apa
+// adanya dari seed.sql, seed_anak_orang_tua.sql, seed_kuis_mendengar.sql, dan
+// deck coba. Selang-seling obrolan dan kuis supaya keduanya kelihatan tanpa
+// harus menggeser jauh.
 
 export function SampleCardCarousel() {
+  const samples = useT().landing.samples;
   const carouselRef = useRef<HTMLDivElement>(null);
 
   function moveCarousel(direction: -1 | 1) {
@@ -88,10 +26,10 @@ export function SampleCardCarousel() {
       <div
         ref={carouselRef}
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        aria-label="Carousel contoh kartu lainnya"
+        aria-label={samples.carouselLabel}
         tabIndex={0}
       >
-        {sampleCards.map((card) => (
+        {samples.cards.map((card) => (
           <div
             key={`${card.deck}-${card.kind}-${card.content}`}
             className="min-w-[85%] snap-start sm:min-w-[calc(50%-0.5rem)] lg:min-w-[calc(33.333%-0.667rem)]"
@@ -115,7 +53,7 @@ export function SampleCardCarousel() {
           type="button"
           className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:text-pink-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 active:translate-y-0"
           onClick={() => moveCarousel(-1)}
-          aria-label="Geser contoh kartu ke kiri"
+          aria-label={samples.carouselPrev}
         >
           <span aria-hidden="true">←</span>
         </button>
@@ -123,7 +61,7 @@ export function SampleCardCarousel() {
           type="button"
           className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:text-pink-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 active:translate-y-0"
           onClick={() => moveCarousel(1)}
-          aria-label="Geser contoh kartu ke kanan"
+          aria-label={samples.carouselNext}
         >
           <span aria-hidden="true">→</span>
         </button>

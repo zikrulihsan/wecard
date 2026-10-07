@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * Penanda memuat berbentuk kartu yang berbalik.
@@ -18,6 +19,7 @@ export function CardLoader({
   label?: string;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div
       role="status"
@@ -41,7 +43,7 @@ export function CardLoader({
       {label ? (
         <p className="text-sm text-muted-foreground">{label}</p>
       ) : (
-        <span className="sr-only">Memuat</span>
+        <span className="sr-only">{t.common.loading}</span>
       )}
     </div>
   );

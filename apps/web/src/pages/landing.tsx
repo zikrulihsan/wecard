@@ -6,6 +6,7 @@ import { HowItWorks } from "@/components/landing/how-it-works";
 import { Pricing } from "@/components/landing/pricing";
 import { SampleCards } from "@/components/landing/sample-cards";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
+import { useT } from "@/lib/i18n";
 
 /**
  * Halaman marketing.
@@ -19,6 +20,7 @@ import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
  * build — halaman pertama yang dilihat orang tidak boleh menunggu server.
  */
 export default function LandingPage() {
+  const t = useT();
   return (
     <main className="flex-1">
       <Hero />
@@ -30,12 +32,10 @@ export default function LandingPage() {
       <section className="bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-20 text-white">
         <div className="mx-auto max-w-2xl space-y-6 text-center">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Waktu luang berikutnya, jangan krik-krik lagi
+            {t.landing.finalCta.title}
           </h2>
           <p className="text-lg text-pink-50">
-            Bermain, belajar, dan seru-seruan bareng — mulai dari satu kartu.
-            Pilih deck bawaannya, atau bikin sendiri dari situasi atau topik
-            apa pun; {AI_GENERATION_LIMIT} deck AI pertamamu gratis.
+            {t.landing.finalCta.body(AI_GENERATION_LIMIT)}
           </p>
           <div className="pt-2">
             <Link
@@ -46,14 +46,14 @@ export default function LandingPage() {
                 className: "h-12 rounded-full px-8 text-base",
               })}
             >
-              Bikin akun gratis
+              {t.landing.finalCta.button}
             </Link>
           </div>
         </div>
       </section>
 
       <footer className="px-6 py-8 text-center text-sm text-neutral-500">
-        © {new Date().getFullYear()} FlipCard. Made with love.
+        {t.landing.footer(new Date().getFullYear())}
       </footer>
     </main>
   );

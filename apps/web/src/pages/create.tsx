@@ -9,8 +9,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CardLoader } from "@/components/ui/card-loader";
 import { CreateForm } from "@/components/app/create-form";
 import { CreateHeader } from "@/components/app/create-header";
+import { useT } from "@/lib/i18n";
 
 export default function CreateDeckPage() {
+  const t = useT();
   const [access, setAccess] = useState<AiAccess | null>(null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -26,8 +28,8 @@ export default function CreateDeckPage() {
     <div className="max-w-screen-sm mx-auto px-4 py-6">
       <BackLink href="/home" />
       <CreateHeader />
-      {error ? <Card><CardContent className="py-8 text-center space-y-3"><p>Jatah belum bisa dibaca.</p><button className="text-primary underline" onClick={() => { setError(false); setRetry((value) => value + 1); }}>Coba lagi</button></CardContent></Card> :
-        !access ? <CardLoader label="Menyiapkan formulir" /> :
+      {error ? <Card><CardContent className="py-8 text-center space-y-3"><p>{t.create.quotaError}</p><button className="text-primary underline" onClick={() => { setError(false); setRetry((value) => value + 1); }}>{t.common.retry}</button></CardContent></Card> :
+        !access ? <CardLoader label={t.create.preparing} /> :
         !access.enabled ? <DisabledNotice /> :
         access.remaining === 0 && access.limit !== null ? <QuotaSpentNotice used={access.used} limit={access.limit} /> :
         <CreateForm remaining={access.remaining} limit={access.limit} />}
@@ -37,38 +39,29 @@ export default function CreateDeckPage() {
 
 /** Jatah habis — bukan pintu tertutup, jadi nadanya beda dari akses dicabut. */
 function QuotaSpentNotice({ used, limit }: { used: number; limit: number }) {
+  const t = useT().create;
+  const price = formatIdr(AI_TOPUP_PACK.priceIdr);
   return (
     <Card>
       <CardContent className="py-8 text-center space-y-3">
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-500">
           <Sparkles className="size-5" />
         </div>
-        <h2 className="font-semibold">Jatah bikin deck sudah habis</h2>
+        <h2 className="font-semibold">{t.spentTitle}</h2>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-          Tiap akun dapat {limit} deck AI, dan punyamu sudah terpakai semua (
-          {used} dari {limit}). Deck yang sudah jadi tetap ada di beranda dan
-          bisa dimainkan kapan saja.
+          {t.spentBody(used, limit)}
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-          {AI_TOPUP_PACK.available ? (
-            <>
-              Mau bikin lagi? Ada paket tambahan {AI_TOPUP_PACK.generations}{" "}
-              deck seharga Rp {formatIdr(AI_TOPUP_PACK.priceIdr)}.
-            </>
-          ) : (
-            <>
-              Paket tambahan {AI_TOPUP_PACK.generations} deck (Rp{" "}
-              {formatIdr(AI_TOPUP_PACK.priceIdr)}) lagi disiapkan — belum bisa
-              dibeli sekarang.
-            </>
-          )}
+          {AI_TOPUP_PACK.available
+            ? t.topupAvailable(AI_TOPUP_PACK.generations, price)
+            : t.topupSoon(AI_TOPUP_PACK.generations, price)}
         </p>
         <div className="pt-2">
           <Link
             to="/home"
             className="text-sm font-medium text-primary underline underline-offset-4"
           >
-            Main deck yang sudah ada
+            {t.playExisting}
           </Link>
         </div>
       </CardContent>
@@ -78,23 +71,23 @@ function QuotaSpentNotice({ used, limit }: { used: number; limit: number }) {
 
 /** Sakelar `profiles.ai_enabled` dimatikan untuk akun ini. */
 function DisabledNotice() {
+  const t = useT().create;
   return (
     <Card>
       <CardContent className="py-8 text-center space-y-3">
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-500">
           <Lock className="size-5" />
         </div>
-        <h2 className="font-semibold">Sedang tidak aktif</h2>
+        <h2 className="font-semibold">{t.disabledTitle}</h2>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-          Fitur bikin deck dengan AI lagi tidak aktif untuk akunmu. Deck AI yang
-          sudah terlanjur dibuat tetap bisa dimainkan.
+          {t.disabledBody}
         </p>
         <div className="pt-2">
           <Link
             to="/home"
             className="text-sm font-medium text-primary underline underline-offset-4"
           >
-            Main deck yang ada dulu
+            {t.playExistingFirst}
           </Link>
         </div>
       </CardContent>

@@ -1,44 +1,11 @@
 import { LandingCardDemo } from "@/components/cards/landing-card-demo";
 import { SampleCardCarousel } from "./sample-card-carousel";
+import { useT } from "@/lib/i18n";
 
-/**
- * Tiga keluarga format kartu, masing-masing dipasangkan dengan pilar yang
- * dijanjikan hero (seru-seruan, bermain, belajar). Urutannya sama dengan cara
- * orang biasanya mengenal FlipCard: datang untuk ngobrol, lalu tahu bisa
- * dipakai belajar.
- */
-const FORMAT_GROUPS = [
-  {
-    emoji: "💬",
-    pillar: "Seru-seruan",
-    title: "Ngobrol",
-    description:
-      "Talk untuk pertanyaan, Action untuk tantangan kecil. Tanpa jawaban benar-salah — yang penting ceritanya.",
-    formats: ["Talk", "Action"],
-  },
-  {
-    emoji: "🧠",
-    pillar: "Bermain",
-    title: "Kuis",
-    description:
-      "Jawab dulu, lalu balik kartunya untuk lihat jawaban dan penjelasannya. Skor dihitung di akhir.",
-    formats: [
-      "Tanya jawab",
-      "Pilihan ganda",
-      "Mitos / fakta",
-      "Tebak clue",
-      "Urutkan",
-    ],
-  },
-  {
-    emoji: "👂",
-    pillar: "Belajar",
-    title: "Mendengar",
-    description:
-      "Satu orang membacakan — atau HP yang membacakan — lalu yang lain menjawab. Melatih konsentrasi anak.",
-    formats: ["⭐ sampai ⭐⭐⭐⭐⭐"],
-  },
-] as const;
+// Tiga keluarga format kartu (teksnya di kamus i18n, `landing.samples.groups`),
+// masing-masing dipasangkan dengan pilar yang dijanjikan hero (seru-seruan,
+// bermain, belajar). Urutannya sama dengan cara orang biasanya mengenal
+// FlipCard: datang untuk ngobrol, lalu tahu bisa dipakai belajar.
 
 /**
  * Bukti isi. Halaman boleh menjanjikan apa saja soal "kartu yang pas", tapi
@@ -46,21 +13,21 @@ const FORMAT_GROUPS = [
  * ditampilkan di sini, bukan diringkas jadi klaim.
  */
 export function SampleCards() {
+  const samples = useT().landing.samples;
   return (
     <section className="bg-neutral-50 px-6 py-20">
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto max-w-2xl space-y-4 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Kartunya seperti apa?
+            {samples.title}
           </h2>
           <p className="text-lg leading-relaxed text-neutral-600">
-            Satu kartu, satu giliran. Mau seru-seruan, adu pintar, atau belajar
-            fokus — tinggal pilih deck-nya, waktu luang langsung ada isinya.
+            {samples.body}
           </p>
         </div>
 
         <ul className="mt-10 grid gap-4 md:grid-cols-3">
-          {FORMAT_GROUPS.map((group) => (
+          {samples.groups.map((group) => (
             <li
               key={group.title}
               className="rounded-2xl border border-neutral-200 bg-white p-5"
@@ -97,19 +64,16 @@ export function SampleCards() {
         >
           <div className="space-y-4 text-center md:text-left">
             <p className="text-sm font-semibold uppercase tracking-widest text-pink-600">
-              Coba langsung
+              {samples.tryEyebrow}
             </p>
             <h3 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              Ketuk kartunya, lalu balik lagi
+              {samples.tryTitle}
             </h3>
             <p className="leading-relaxed text-neutral-600">
-              Ketuk sekali untuk membuka soalnya. Di kartu obrolan, langsung
-              jawab bergantian. Di kartu kuis, pilih jawabanmu — atau balik
-              sekali lagi untuk melihat jawaban dan penjelasannya.
+              {samples.tryBody}
             </p>
             <p className="text-sm text-neutral-500">
-              Geser untuk mencoba kartu obrolan, mitos/fakta, pilihan ganda,
-              dan latihan mendengar.
+              {samples.tryHint}
             </p>
           </div>
 
@@ -117,14 +81,13 @@ export function SampleCards() {
         </div>
 
         <h3 className="mt-16 text-center text-xl font-semibold text-neutral-900">
-          Contoh kartu lainnya
+          {samples.moreTitle}
         </h3>
 
         <SampleCardCarousel />
 
         <p className="mt-8 text-center text-sm text-neutral-500">
-          Deck buatan AI mengikuti bentuk yang sama — dengan isi yang mengikuti
-          situasi atau topik yang kamu sebutkan.
+          {samples.footnote}
         </p>
       </div>
     </section>

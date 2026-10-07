@@ -14,6 +14,7 @@ import { shuffle } from "@/lib/game/shuffle";
 import { findTrialDeck, type TrialDeck } from "@/lib/trial/decks";
 import { useTriedDecks } from "@/lib/trial/progress";
 import { cn } from "@/lib/utils";
+import { useI18n, useT } from "@/lib/i18n";
 import NotFound from "@/pages/not-found";
 
 // direction: 1 = maju, -1 = mundur — sama seperti layar main yang asli.
@@ -35,12 +36,15 @@ const cardVariants: Variants = {
  */
 export default function TrySessionPage() {
   const { deckSlug } = useParams();
-  const deck = findTrialDeck(deckSlug);
+  const { language } = useI18n();
+  const deck = findTrialDeck(deckSlug, language);
   if (!deck) return <NotFound />;
-  return <TrialSession key={deck.slug} deck={deck} />;
+  // Ganti bahasa di tengah sesi = mulai ulang deck dalam bahasa baru.
+  return <TrialSession key={`${deck.slug}-${language}`} deck={deck} />;
 }
 
 function TrialSession({ deck }: { deck: TrialDeck }) {
+  const t = useT();
   const navigate = useNavigate();
   const { canOpen, markTried, remaining } = useTriedDecks();
   const allowed = canOpen(deck.slug);
@@ -78,7 +82,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
           className="max-w-md space-y-6 text-center"
         >
           <div className="text-7xl">🎉</div>
-          <h1 className="text-3xl font-bold">Deck {deck.name} selesai!</h1>
+          <h1 className="text-3xl font-bold">{t.trial.deckDone(deck.name)}</h1>
           {Object.keys(results).length > 0 && (
             <QuizScore
               correct={Object.values(results).filter(Boolean).length}
@@ -87,8 +91,8 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
           )}
           <p className="leading-relaxed text-muted-foreground">
             {remaining > 0
-              ? `Masih ada ${remaining} deck lagi yang bisa kamu coba tanpa akun.`
-              : `Mau lanjut? Buat akun gratis untuk membuka deck lengkap dan bikin ${AI_GENERATION_LIMIT} deck sendiri pakai AI.`}
+              ? t.trial.moreLeft(remaining)
+              : t.trial.continuePitch(AI_GENERATION_LIMIT)}
           </p>
           <div className="space-y-2">
             {remaining === 0 && (
@@ -96,7 +100,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 to="/register"
                 className={buttonVariants({ size: "lg", className: "w-full rounded-full" })}
               >
-                Buat akun gratis
+                {t.trial.createAccount}
               </Link>
             )}
             <Button
@@ -105,7 +109,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
               className="w-full rounded-full"
               onClick={() => navigate("/coba")}
             >
-              {remaining > 0 ? "Coba deck lain" : "Lihat deck lain"}
+              {remaining > 0 ? t.trial.tryAnother : t.trial.seeOthers}
             </Button>
             <Button
               size="lg"
@@ -119,7 +123,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 setResults({});
               }}
             >
-              Main lagi
+              {t.game.playAgain}
             </Button>
           </div>
         </m.div>
@@ -155,7 +159,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
           size="icon"
           onClick={() => navigate("/coba")}
           className="shrink-0 rounded-full"
-          aria-label="Keluar"
+          aria-label={t.common.exit}
         >
           <X className="size-5" />
         </Button>
@@ -163,7 +167,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
           <GameProgressBar current={index} total={cards.length} />
         </div>
         <span className="shrink-0 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-neutral-600">
-          Mode coba
+          {t.trial.mode}
         </span>
       </header>
 
@@ -196,7 +200,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
       <div className="shrink-0 px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {!revealed ? (
           <Button onClick={() => setRevealed(true)} size="lg" className="w-full rounded-full">
-            Buka Kartu
+            {t.game.openCard}
           </Button>
         ) : (
           <div className="flex items-center gap-3">
@@ -206,7 +210,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
               variant="outline"
               size="lg"
               className="rounded-full"
-              aria-label="Kartu sebelumnya"
+              aria-label={t.game.previousCard}
             >
               <ChevronLeft className="size-5" />
             </Button>
@@ -216,11 +220,11 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 size="lg"
                 className="flex-1 rounded-full"
               >
-                Lihat Jawaban
+                {t.game.showAnswer}
               </Button>
             ) : (
               <Button onClick={goNext} size="lg" className="flex-1 rounded-full">
-                Kartu Berikutnya
+                {t.game.nextCard}
               </Button>
             )}
           </div>

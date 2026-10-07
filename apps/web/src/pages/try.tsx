@@ -4,7 +4,9 @@ import { Lock, Play, RotateCcw } from "lucide-react";
 import { BackLink } from "@/components/nav/back-link";
 import { SignupGate } from "@/components/trial/signup-gate";
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
-import { TRIAL_DECKS } from "@/lib/trial/decks";
+import { trialDecks } from "@/lib/trial/decks";
+import { useI18n } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { TRIAL_DECK_LIMIT, useTriedDecks } from "@/lib/trial/progress";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +16,7 @@ import { cn } from "@/lib/utils";
  * dan memilihnya memunculkan ajakan daftar/masuk.
  */
 export default function TryPage() {
+  const { t, language } = useI18n();
   const navigate = useNavigate();
   const { tried, remaining, canOpen } = useTriedDecks();
   const [gateOpen, setGateOpen] = useState(false);
@@ -26,30 +29,32 @@ export default function TryPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
       <div className="mx-auto max-w-screen-sm px-4 py-6">
-        <BackLink href="/">Beranda</BackLink>
+        <div className="flex items-start justify-between gap-3">
+          <BackLink href="/">{t.trial.backHome}</BackLink>
+          <LanguageSwitcher />
+        </div>
 
         <header className="mb-6 space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Coba dulu, tanpa daftar</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t.trial.title}</h1>
           <p className="text-neutral-600">
-            Pilih deck, ketuk kartunya, lalu mulai main — ngobrol, kuis, atau
-            latihan mendengar.{" "}
+            {t.trial.intro}{" "}
             {remaining > 0 ? (
               <>
-                Kamu bisa mencoba{" "}
+                {t.trial.remainingLead}{" "}
                 <strong className="font-semibold text-neutral-800">
-                  {remaining} deck lagi
+                  {t.trial.remainingStrong(remaining)}
                 </strong>{" "}
-                sebelum perlu akun.
+                {t.trial.remainingRest}
               </>
             ) : (
-              <>Jatah coba sudah habis — deck yang tadi tetap bisa diulang.</>
+              <>{t.trial.spent}</>
             )}
           </p>
           <TrialMeter used={tried.length} />
         </header>
 
         <ul className="space-y-3">
-          {TRIAL_DECKS.map((deck) => {
+          {trialDecks(language).map((deck) => {
             const played = tried.includes(deck.slug);
             const locked = !canOpen(deck.slug);
             return (
@@ -70,16 +75,16 @@ export default function TryPage() {
                       {deck.description}
                     </span>
                     <span className="mt-1 block text-xs text-white/70">
-                      {deck.cards.length} kartu{played && " · sudah dicoba"}
+                      {t.common.cards(deck.cards.length)}{played && t.trial.tried}
                     </span>
                   </span>
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/20">
                     {locked ? (
-                      <Lock className="size-4" aria-label="Terkunci" />
+                      <Lock className="size-4" aria-label={t.trial.locked} />
                     ) : played ? (
-                      <RotateCcw className="size-4" aria-label="Main lagi" />
+                      <RotateCcw className="size-4" aria-label={t.trial.playAgain} />
                     ) : (
-                      <Play className="size-4" aria-label="Main" />
+                      <Play className="size-4" aria-label={t.trial.play} />
                     )}
                   </span>
                 </button>
@@ -89,13 +94,13 @@ export default function TryPage() {
         </ul>
 
         <p className="mt-8 text-center text-sm text-neutral-600">
-          Sudah yakin?{" "}
+          {t.trial.convinced}{" "}
           <Link to="/register" className="font-semibold text-pink-700 hover:underline">
-            Buat akun gratis
+            {t.trial.createAccount}
           </Link>{" "}
-          atau{" "}
+          {t.common.or}{" "}
           <Link to="/login" className="font-semibold text-pink-700 hover:underline">
-            masuk
+            {t.trial.signIn}
           </Link>
         </p>
       </div>
@@ -106,9 +111,10 @@ export default function TryPage() {
 }
 
 function TrialMeter({ used }: { used: number }) {
+  const { t } = useI18n();
   if (TRIAL_DECK_LIMIT === 0) return null;
   return (
-    <div className="flex gap-1.5 pt-1" aria-label={`${Math.min(used, TRIAL_DECK_LIMIT)} dari ${TRIAL_DECK_LIMIT} deck coba terpakai`}>
+    <div className="flex gap-1.5 pt-1" aria-label={t.trial.meter(Math.min(used, TRIAL_DECK_LIMIT), TRIAL_DECK_LIMIT)}>
       {Array.from({ length: TRIAL_DECK_LIMIT }, (_, index) => (
         <span
           key={index}

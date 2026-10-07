@@ -181,7 +181,8 @@ export function createGeminiProvider(): DeckProvider {
       }
       if (finishReason === "MAX_TOKENS") {
         throw new GenerationFailed(
-          "Hasil generate terpotong. Coba kurangi jumlah section atau kartu."
+          "Hasil generate terpotong. Coba kurangi jumlah section atau kartu.",
+          "truncated"
         );
       }
 
@@ -229,7 +230,8 @@ async function withRetry<T>(call: () => Promise<T>): Promise<T> {
       const retryStatus = (retryError as { status?: number })?.status;
       if (retryStatus && RETRY_STATUSES.has(retryStatus)) {
         throw new GenerationFailed(
-          "Model AI sedang penuh. Coba lagi beberapa saat lagi."
+          "Model AI sedang penuh. Coba lagi beberapa saat lagi.",
+          "busy"
         );
       }
       throw retryError;

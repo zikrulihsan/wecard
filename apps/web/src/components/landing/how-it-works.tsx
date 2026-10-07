@@ -1,4 +1,5 @@
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
+import { useT } from "@/lib/i18n";
 
 /**
  * Bagian inti halaman: menjelaskan fitur bikin deck AI dari sisi pemakainya.
@@ -8,42 +9,30 @@ import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
  * mentok, dan fitur ini kebetulan jawabannya.
  */
 export function HowItWorks() {
+  const how = useT().landing.how;
   return (
     <section id="cara-kerja" className="bg-white px-6 py-20">
       <div className="mx-auto max-w-4xl">
         <div className="mx-auto max-w-2xl space-y-4 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Deck bawaan nggak selalu pas. Bikin punyamu sendiri.
+            {how.title}
           </h2>
-          <p className="text-lg leading-relaxed text-neutral-600">
-            Ngumpul sama rekan kerja beda serunya dengan malam santai bareng
-            pasangan. Main kuis tata surya sama anak, atau menguji diri soal AI
-            Engineering, beda lagi. Sebutkan situasi atau topiknya — AI yang
-            menuliskan kartunya, lengkap dengan jawabannya.
-          </p>
+          <p className="text-lg leading-relaxed text-neutral-600">{how.body}</p>
         </div>
 
         <ol className="mt-12 grid gap-6 md:grid-cols-3">
-          <Step
-            step={1}
-            title="Pilih jenis & topiknya"
-            description="Kartu obrolan, kuis pengetahuan, atau latihan mendengar. Sebut mau dimainkan sama siapa dan topiknya — misalnya “baru kenal di kantor baru” atau “tata surya untuk anak SD”."
-          />
-          <Step
-            step={2}
-            title="AI menulis kartunya"
-            description="Sekitar 20–40 detik. Level kesulitannya naik bertahap per bagian, dan kartunya dicek ulang di server — kuis tanpa jawaban yang lengkap langsung dibuang."
-          />
-          <Step
-            step={3}
-            title="Langsung dimainkan"
-            description="Satu HP dioper bergantian, atau main sendiri untuk belajar. Kartu kuis dibalik untuk lihat jawaban, dan skormu tampil di akhir."
-          />
+          {how.steps.map((step, index) => (
+            <Step
+              key={index}
+              step={index + 1}
+              title={step.title}
+              description={step.description}
+            />
+          ))}
         </ol>
 
         <p className="mt-10 text-center text-sm text-neutral-500">
-          Semua akun baru dapat {AI_GENERATION_LIMIT} deck AI gratis — cukup
-          untuk membuktikan hasilnya sebelum keluar uang.
+          {how.footnote(AI_GENERATION_LIMIT)}
         </p>
       </div>
     </section>

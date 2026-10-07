@@ -14,10 +14,10 @@ export const config: Config = { path: "/api/decks/generate" };
 
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== "POST") {
-    return Response.json({ error: "Metode tidak diizinkan" }, { status: 405 });
+    return Response.json({ error: "Metode tidak diizinkan", code: "method_not_allowed" }, { status: 405 });
   }
   const auth = await authenticatedClient(request);
-  if (!auth) return Response.json({ error: "Belum login" }, { status: 401 });
+  if (!auth) return Response.json({ error: "Belum login", code: "unauthenticated" }, { status: 401 });
   const { supabase, user } = auth;
 
   // Dicek sedini mungkin: generateDeck() di bawah memanggil LLM dan itu
@@ -26,7 +26,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (!access.enabled) {
     return Response.json(
-      { error: "Fitur bikin deck AI sedang tidak aktif untuk akunmu." },
+      { error: "Fitur bikin deck AI sedang tidak aktif untuk akunmu.", code: "ai_disabled" },
       { status: 403 }
     );
   }
@@ -38,6 +38,8 @@ export default async function handler(request: Request): Promise<Response> {
     return Response.json(
       {
         error: `Jatah bikin deck AI kamu sudah habis (${access.limit} deck). Deck yang sudah jadi tetap bisa dimainkan.`,
+        code: "quota_spent",
+        limit: access.limit,
       },
       { status: 429 }
     );
@@ -48,7 +50,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (!parsed.success) {
     return Response.json(
-      { error: "Input tidak valid", issues: parsed.error.issues },
+      { error: "Input tidak valid", code: "invalid_input", issues: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -59,10 +61,12 @@ export default async function handler(request: Request): Promise<Response> {
   try {
     result = await generateDeck(input);
   } catch (error) {
-    const message =
-      error instanceof GenerationRefused || error instanceof GenerationFailed
-        ? error.message
-        : "Gagal menghubungi layanan AI. Coba lagi sebentar.";
+    const known =
+      error instanceof GenerationRefused || error instanceof GenerationFailed;
+    const message = known
+      ? error.message
+      : "Gagal menghubungi layanan AI. Coba lagi sebentar.";
+    const code = known ? error.code : "unreachable";
 
     // Provider bisa gagal di-resolve (key hilang) — jangan bikin log gagal juga.
     let provider = "unknown";
@@ -103,7 +107,7 @@ export default async function handler(request: Request): Promise<Response> {
       cause: error instanceof Error ? error.message : String(error),
     });
     return Response.json(
-      { error: message },
+      { error: message, code },
       { status: error instanceof GenerationRefused ? 422 : 502 }
     );
   }
@@ -235,6 +239,7 @@ function saveFailed(step: string, error: unknown) {
   return Response.json(
     {
       error: "Deck berhasil dibuat tapi gagal disimpan.",
+      code: "save_failed",
       ...(isProduction
         ? {}
         : {

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 /**
  * Tautan "Kembali" di kepala halaman. Dipakai bersama oleh `page.tsx` dan
@@ -9,18 +10,19 @@ import { ChevronLeft } from "lucide-react";
  */
 export function BackLink({
   href,
-  children = "Kembali",
+  children,
 }: {
   href: string;
   children?: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <Link
       to={href}
       className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
     >
       <ChevronLeft className="size-4" />
-      {children}
+      {children ?? t.common.back}
     </Link>
   );
 }

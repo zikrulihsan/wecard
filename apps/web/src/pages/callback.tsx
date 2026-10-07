@@ -4,8 +4,10 @@ import { CardLoader } from "@/components/ui/card-loader";
 import { safePath } from "@/lib/safe-path";
 import { createClient } from "@/lib/supabase/client";
 import { OAUTH_REDIRECT_KEY } from "@/lib/oauth";
+import { useT } from "@/lib/i18n";
 
 export default function CallbackPage() {
+  const t = useT();
   const navigate = useNavigate();
   const started = useRef(false);
 
@@ -32,5 +34,5 @@ export default function CallbackPage() {
     }
   }, [navigate]);
 
-  return <div className="mx-auto max-w-screen-sm px-4 py-8"><CardLoader label="Menyelesaikan login" /></div>;
+  return <div className="mx-auto max-w-screen-sm px-4 py-8"><CardLoader label={t.auth.finishing} /></div>;
 }

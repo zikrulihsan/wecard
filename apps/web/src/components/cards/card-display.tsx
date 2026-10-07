@@ -3,7 +3,7 @@ import { m } from "framer-motion";
 import { Eye, EyeOff, Volume2, Square } from "lucide-react";
 import type { CardDetails, GameCard } from "@flipcard/types";
 import {
-  CARD_FORMAT_META,
+  CARD_FORMAT_EMOJI,
   OPTION_LETTERS,
   difficultyForLevel,
   hasAnswerSide,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/cards/formats";
 import { shuffle } from "@/lib/game/shuffle";
 import { cn } from "@/lib/utils";
+import { LOCALES, guessTextLanguage, useT } from "@/lib/i18n";
 
 interface CardDisplayProps {
   card: GameCard;
@@ -29,36 +30,27 @@ interface CardDisplayProps {
 
 const difficultyStyles: Record<
   GameCard["difficulty"],
-  { bg: string; badge: string; label: string }
+  { bg: string; badge: string }
 > = {
   easy: {
     bg: "from-green-400 to-emerald-500",
     badge: "bg-green-100 text-green-700",
-    label: "Santai",
   },
   medium: {
     bg: "from-amber-400 to-orange-500",
     badge: "bg-amber-100 text-amber-800",
-    label: "Dalam",
   },
   hard: {
     bg: "from-rose-500 to-pink-600",
     badge: "bg-rose-100 text-rose-700",
-    label: "Intimate",
   },
 };
 
-/**
- * Label kesulitan dibaca berbeda tergantung tipe kartu. Di kartu talk ia
- * menandai bobot emosional ("Intimate"), tapi di kartu action yang menantang
- * itu tidak masuk akal — apalagi sejak deck bisa berisi tantangan saja untuk
- * dimainkan bersama anak.
- */
-const plainDifficultyLabel: Record<GameCard["difficulty"], string> = {
-  easy: "Santai",
-  medium: "Sedang",
-  hard: "Sulit",
-};
+// Label kesulitan dibaca berbeda tergantung tipe kartu (lihat kamus
+// `card.talkDifficulty` vs `card.plainDifficulty`). Di kartu talk ia menandai
+// bobot emosional ("Intimate"), tapi di kartu action yang menantang itu tidak
+// masuk akal — apalagi sejak deck bisa berisi tantangan saja untuk dimainkan
+// bersama anak.
 
 export function CardDisplay({
   card,
@@ -69,6 +61,7 @@ export function CardDisplay({
   result,
   onResult,
 }: CardDisplayProps) {
+  const t = useT();
   const [localAnswer, setLocalAnswer] = useState(false);
   const answerShown = isAnswerRevealed ?? localAnswer;
   const showAnswer = () => {
@@ -91,11 +84,14 @@ export function CardDisplay({
     ? difficultyForLevel(card.level)
     : card.difficulty;
   const style = difficultyStyles[difficulty];
-  const type = CARD_FORMAT_META[card.cardType];
+  const type = {
+    emoji: CARD_FORMAT_EMOJI[card.cardType],
+    ...t.formats[card.cardType],
+  };
   const difficultyLabel =
     card.cardType === "talk"
-      ? style.label
-      : plainDifficultyLabel[card.difficulty];
+      ? t.card.talkDifficulty[difficulty]
+      : t.card.plainDifficulty[card.difficulty];
   const details = card.details ?? {};
   const withAnswer = hasAnswerSide(card.cardType);
 
@@ -114,7 +110,7 @@ export function CardDisplay({
   const badge = card.level ? (
     <span
       className="text-sm tracking-tight text-amber-500"
-      aria-label={`Level ${card.level} dari 5`}
+      aria-label={t.common.levelOf(card.level)}
     >
       {"★".repeat(card.level)}
       <span className="text-neutral-300">{"★".repeat(5 - card.level)}</span>
@@ -147,7 +143,7 @@ export function CardDisplay({
         {/* Sisi depan: sampul sebelum dibuka, jawaban setelah dibalik lagi */}
         {withAnswer && answerShown ? (
           <Face>
-            <FaceHeader label="✅ JAWABAN" badge={badge} />
+            <FaceHeader label={t.card.answerHeader} badge={badge} />
             <div className="flex-1 min-h-0 overflow-y-auto -mx-2 px-2">
               <AnswerBody
                 card={card}
@@ -181,7 +177,7 @@ export function CardDisplay({
                   </span>
                 </div>
               )}
-              <div className="text-xs opacity-75 mt-6">Ketuk untuk buka</div>
+              <div className="text-xs opacity-75 mt-6">{t.card.tapToOpen}</div>
             </div>
           </div>
         )}
@@ -260,6 +256,7 @@ function QuestionBody({
   active: boolean;
   onPick: (index: number, correct: boolean) => void;
 }) {
+  const t = useT();
   const prompt = (
     <p
       className={cn(
@@ -304,8 +301,8 @@ function QuestionBody({
           {prompt}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "✅ Fakta", value: true },
-              { label: "❌ Mitos", value: false },
+              { label: t.card.factChoice, value: true },
+              { label: t.card.mythChoice, value: false },
             ].map((choice, index) => (
               <button
                 key={choice.label}
@@ -355,6 +352,7 @@ function ClueQuestion({
   clues: string[];
   active: boolean;
 }) {
+  const t = useT();
   const [shown, setShown] = useState(1);
   return (
     <div className="my-auto space-y-4">
@@ -370,7 +368,7 @@ function ClueQuestion({
             className="rounded-xl bg-neutral-50 px-3 py-2 text-sm text-neutral-800"
           >
             <span className="font-semibold text-neutral-500">
-              Clue {index + 1}:
+              {t.card.clue(index + 1)}
             </span>{" "}
             {clue}
           </m.li>
@@ -386,7 +384,7 @@ function ClueQuestion({
           }}
           className="w-full rounded-full border border-dashed border-neutral-300 py-2 text-sm font-medium text-neutral-600 hover:border-primary/50"
         >
-          Buka clue berikutnya ({shown}/{clues.length})
+          {t.card.nextClue(shown, clues.length)}
         </button>
       )}
     </div>
@@ -434,6 +432,7 @@ function ListeningQuestion({
   questions: { question: string }[];
   active: boolean;
 }) {
+  const t = useT();
   const [hidden, setHidden] = useState(false);
   const speech = useSpeech(passage);
   const stopSpeech = speech.stop;
@@ -471,7 +470,7 @@ function ListeningQuestion({
               ) : (
                 <Volume2 className="size-3.5" />
               )}
-              {speech.speaking ? "Berhenti" : "Bacakan"}
+              {speech.speaking ? t.card.stopReading : t.card.readAloud}
             </button>
           )}
           <button
@@ -488,13 +487,13 @@ function ListeningQuestion({
             ) : (
               <EyeOff className="size-3.5" />
             )}
-            {hidden ? "Tampilkan teks" : "Sembunyikan teks"}
+            {hidden ? t.card.showText : t.card.hideText}
           </button>
         </div>
       </div>
       <div>
         <div className="mb-2 inline-block rounded-md bg-neutral-800 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
-          Pertanyaan
+          {t.card.questions}
         </div>
         <ol className="list-decimal space-y-1 pl-5 text-sm text-neutral-700">
           {questions.map((item, index) => (
@@ -515,6 +514,7 @@ function AnswerBody({
   details: CardDetails;
   picked: number | null;
 }) {
+  const t = useT();
   const explanation = details.explanation && (
     <p className="rounded-xl bg-neutral-50 px-3 py-2.5 text-sm leading-relaxed text-neutral-600">
       💡 {details.explanation}
@@ -567,11 +567,11 @@ function AnswerBody({
       return (
         <div className="min-h-full flex flex-col justify-center gap-4">
           <p className="text-center text-sm text-neutral-500">{card.content}</p>
-          {big(details.isTrue ? "✅ FAKTA" : "❌ MITOS")}
+          {big(details.isTrue ? t.card.factVerdict : t.card.mythVerdict)}
           {picked !== null && (
             <Verdict
               correct={(picked === 0) === details.isTrue}
-              picked={picked === 0 ? "Fakta" : "Mitos"}
+              picked={picked === 0 ? t.card.fact : t.card.myth}
             />
           )}
           {explanation}
@@ -622,6 +622,7 @@ function AnswerBody({
 }
 
 function Verdict({ correct, picked }: { correct: boolean; picked: string }) {
+  const t = useT();
   return (
     <p
       className={cn(
@@ -629,7 +630,7 @@ function Verdict({ correct, picked }: { correct: boolean; picked: string }) {
         correct ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
       )}
     >
-      {correct ? "Benar! 🎉" : `Belum tepat — kamu pilih ${picked}`}
+      {correct ? t.card.correct : t.card.wrong(picked)}
     </p>
   );
 }
@@ -641,15 +642,16 @@ function SelfGrade({
   value: boolean | undefined;
   onChange: (correct: boolean) => void;
 }) {
+  const t = useT();
   return (
     <div className="shrink-0 pt-3 mt-3 border-t border-neutral-100">
       <p className="text-center text-xs text-neutral-400 mb-2">
-        Jawabanmu tadi benar?
+        {t.card.selfGradeQuestion}
       </p>
       <div className="grid grid-cols-2 gap-2">
         {[
-          { label: "✅ Benar", correct: true, on: "bg-emerald-500 text-white border-emerald-500" },
-          { label: "❌ Belum", correct: false, on: "bg-rose-500 text-white border-rose-500" },
+          { label: t.card.selfGradeRight, correct: true, on: "bg-emerald-500 text-white border-emerald-500" },
+          { label: t.card.selfGradeWrong, correct: false, on: "bg-rose-500 text-white border-rose-500" },
         ].map((option) => (
           <button
             key={option.label}
@@ -700,7 +702,9 @@ function useSpeech(text: string) {
         return;
       }
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "id-ID";
+      // Suara mengikuti bahasa teksnya, bukan bahasa aplikasi: deck bawaan
+      // berbahasa Indonesia, deck AI bisa berbahasa Inggris.
+      utterance.lang = LOCALES[guessTextLanguage(text)];
       utterance.rate = 0.9;
       utterance.onend = () => setSpeaking(false);
       utterance.onerror = () => setSpeaking(false);

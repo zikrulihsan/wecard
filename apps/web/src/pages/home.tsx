@@ -9,8 +9,10 @@ import { LoadError } from "@/components/ui/load-error";
 import { cn } from "@/lib/utils";
 import { AiDeckCta } from "@/components/app/ai-deck-cta";
 import { HomeHeader } from "@/components/app/home-header";
+import { useT } from "@/lib/i18n";
 
 export default function HomePage() {
+  const t = useT();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState<{
     loading: boolean;
@@ -59,13 +61,13 @@ export default function HomePage() {
     <div className="max-w-screen-sm mx-auto px-4 py-8">
       <HomeHeader />
       <AiDeckCta />
-      {state.loading ? <CardLoader label="Mengambil daftar deck" /> :
-        state.error ? <LoadError title="Daftar deck belum bisa dimuat" description="Sambungan ke server bermasalah, jadi deck-mu belum kelihatan. Deck-nya aman — coba lagi sebentar." onRetry={() => { setState((previous) => ({ ...previous, loading: true })); setRetry((value) => value + 1); }} /> :
+      {state.loading ? <CardLoader label={t.home.loading} /> :
+        state.error ? <LoadError title={t.home.errorTitle} description={t.home.errorDescription} onRetry={() => { setState((previous) => ({ ...previous, loading: true })); setRetry((value) => value + 1); }} /> :
         state.categories.length === 0 ? <EmptyState /> : (
           <div className="space-y-8">
             <DeckGrid categories={curated} unlockedIds={state.unlockedIds} />
             {aiDecks.length > 0 && <section>
-              <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-1.5"><Sparkles className="size-4" />Deck buatanmu</h2>
+              <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-1.5"><Sparkles className="size-4" />{t.home.yourDecks}</h2>
               <DeckGrid categories={aiDecks} unlockedIds={state.unlockedIds} />
             </section>}
           </div>
@@ -130,6 +132,7 @@ function CategoryCard({
   isAiGenerated: boolean;
   theme: string | null;
 }) {
+  const t = useT();
   const content = (
     <div
       className={cn(
@@ -149,16 +152,16 @@ function CategoryCard({
         )}
         {isFree ? (
           <Badge variant="secondary" className="bg-white/20 text-white border-0">
-            Gratis
+            {t.home.free}
           </Badge>
         ) : isUnlocked ? (
           <Badge variant="secondary" className="bg-white/20 text-white border-0">
-            Terbuka
+            {t.home.unlocked}
           </Badge>
         ) : (
           <Badge variant="secondary" className="bg-white/20 text-white border-0 gap-1">
             <Lock className="size-3" />
-            Terkunci
+            {t.home.locked}
           </Badge>
         )}
       </div>
@@ -180,25 +183,26 @@ function CategoryCard({
 
   if (isUnlocked) {
     return (
-      <Link to={`/play/${id}`} className="block" aria-label={`Mainkan ${name}`}>
+      <Link to={`/play/${id}`} className="block" aria-label={t.home.play(name)}>
         {content}
       </Link>
     );
   }
 
   return (
-    <Link to="/store" className="block" aria-label={`Beli ${name}`}>
+    <Link to="/store" className="block" aria-label={t.home.buy(name)}>
       {content}
     </Link>
   );
 }
 
 function EmptyState() {
+  const t = useT();
   return (
     <div className="text-center py-16 text-muted-foreground space-y-3">
-      <p>Belum ada kategori yang tersedia.</p>
+      <p>{t.home.empty}</p>
       <Link to="/create" className="inline-block underline">
-        Bikin deck sendiri pakai AI
+        {t.home.emptyCta}
       </Link>
     </div>
   );

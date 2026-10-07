@@ -7,6 +7,7 @@ import {
   AI_TOPUP_PRICE_PER_DECK,
   formatIdr,
 } from "@/lib/pricing";
+import { useT } from "@/lib/i18n";
 
 /**
  * Harga, disebut terbuka.
@@ -22,42 +23,38 @@ import {
  * paket Gratis.
  */
 export function Pricing() {
+  const p = useT().landing.pricing;
   return (
     <section id="harga" className="bg-white px-6 py-20">
       <div className="mx-auto max-w-4xl">
         <div className="mx-auto max-w-2xl space-y-4 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Coba dulu, bayar kalau memang kepakai
+            {p.title}
           </h2>
           <p className="text-lg leading-relaxed text-neutral-600">
-            Deck bawaan gratis selamanya. Yang berbayar cuma jatah bikin deck
-            baru pakai AI — itu pun setelah {AI_GENERATION_LIMIT} deck
-            gratismu habis.
+            {p.body(AI_GENERATION_LIMIT)}
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           {/* Gratis */}
           <div className="flex min-w-0 flex-col rounded-2xl border border-neutral-200 p-6 sm:p-8">
-            <h3 className="font-semibold">Gratis</h3>
-            <p className="mt-3 text-4xl font-bold tracking-tight">Rp 0</p>
+            <h3 className="font-semibold">{p.freeTitle}</h3>
+            <p className="mt-3 text-4xl font-bold tracking-tight">{p.freePrice}</p>
             <p className="mt-1 text-sm text-neutral-500">
-              Semua akun, tanpa kartu kredit
+              {p.freeSubtitle}
             </p>
 
             <ul className="mt-6 space-y-3 text-sm">
               <Item>
                 <strong className="font-semibold">
-                  {AI_GENERATION_LIMIT} deck AI
+                  {p.freeAiStrong(AI_GENERATION_LIMIT)}
                 </strong>{" "}
-                buatanmu sendiri
+                {p.freeAiRest}
               </Item>
-              <Item>
-                Deck Pasangan, Anak &amp; Orang Tua, Latihan Mendengar, dan Uji
-                Diri: AI Engineering — semua kartunya
-              </Item>
-              <Item>Main sepuasnya — jatah itu untuk bikin, bukan main</Item>
-              <Item>Deck yang sudah jadi tetap milikmu</Item>
+              <Item>{p.freeDecks}</Item>
+              <Item>{p.freePlay}</Item>
+              <Item>{p.freeKeep}</Item>
             </ul>
 
             <div className="mt-8 pt-2">
@@ -65,7 +62,7 @@ export function Pricing() {
                 to="/register"
                 className="inline-flex h-11 w-full items-center justify-center rounded-full border border-neutral-300 bg-white px-6 text-base font-semibold text-neutral-800 shadow-sm transition hover:-translate-y-0.5 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 active:translate-y-0"
               >
-                Buat akun gratis
+                {p.freeCta}
               </Link>
             </div>
           </div>
@@ -74,39 +71,38 @@ export function Pricing() {
           <div className="relative flex min-w-0 flex-col rounded-2xl border-2 border-pink-300 bg-gradient-to-b from-pink-50/70 to-white p-6 sm:p-8">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-semibold">
-                Tambah {AI_TOPUP_PACK.generations} deck AI
+                {p.topupTitle(AI_TOPUP_PACK.generations)}
               </h3>
               {!AI_TOPUP_PACK.available && (
                 <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-pink-700 ring-1 ring-pink-200">
-                  Segera hadir
+                  {p.comingSoon}
                 </span>
               )}
             </div>
 
             <p className="mt-3 text-4xl font-bold tracking-tight">
-              Rp {formatIdr(AI_TOPUP_PACK.priceIdr)}
+              {p.price(formatIdr(AI_TOPUP_PACK.priceIdr))}
             </p>
             <p className="mt-1 text-sm text-neutral-500">
-              Sekitar Rp {formatIdr(AI_TOPUP_PRICE_PER_DECK)} per deck · bayar
-              sekali, bukan langganan
+              {p.perDeck(formatIdr(AI_TOPUP_PRICE_PER_DECK))}
             </p>
 
             <ul className="mt-6 space-y-3 text-sm">
               <Item>
                 <strong className="font-semibold">
-                  {AI_TOPUP_PACK.generations} deck AI
+                  {p.topupStrong(AI_TOPUP_PACK.generations)}
                 </strong>{" "}
-                baru, dipakai kapan pun
+                {p.topupRest}
               </Item>
-              <Item>Jatahnya tidak hangus — tidak ada masa berlaku</Item>
-              <Item>Bisa top-up lagi kalau habis</Item>
-              <Item>Deck yang gagal dibuat tidak memotong jatah</Item>
+              <Item>{p.topupNoExpiry}</Item>
+              <Item>{p.topupAgain}</Item>
+              <Item>{p.topupFailed}</Item>
             </ul>
 
             <div className="mt-8 pt-2">
               {AI_TOPUP_PACK.available ? (
                 <PrimaryCta href="/store" className="h-11 w-full">
-                  Beli paket
+                  {p.buy}
                 </PrimaryCta>
               ) : (
                 <div
@@ -114,11 +110,10 @@ export function Pricing() {
                   className="rounded-xl border border-dashed border-pink-300 bg-white/80 px-4 py-3 text-center shadow-sm"
                 >
                   <p className="text-sm font-semibold text-neutral-800">
-                    Pembelian belum dibuka
+                    {p.closedTitle}
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-neutral-500">
-                    Saat ini paket Gratis sudah mencakup {AI_GENERATION_LIMIT}{" "}
-                    deck AI untuk setiap akun.
+                    {p.closedBody(AI_GENERATION_LIMIT)}
                   </p>
                 </div>
               )}

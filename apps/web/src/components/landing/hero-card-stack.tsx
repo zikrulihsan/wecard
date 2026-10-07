@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { m, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { DeckCard } from "./deck-card";
+import { useT } from "@/lib/i18n";
 
 type HoveredCard = "left" | "center" | "right" | null;
 
@@ -15,6 +16,7 @@ type HoveredCard = "left" | "center" | "right" | null;
  * itu hover kartu tengah tidak putus saat visualnya terangkat dari pointer.
  */
 export function HeroCardStack() {
+  const stack = useT().landing.heroStack;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<HoveredCard>(null);
@@ -73,10 +75,10 @@ export function HeroCardStack() {
 
   function cardLabel(name: string) {
     if (isMobile && !reduceMotion && activeCard === null) {
-      return `Animasikan kartu ${name}; ketuk lagi untuk membuka simulasi`;
+      return stack.animate(name);
     }
 
-    return `Buka simulasi dari kartu ${name}`;
+    return stack.open(name);
   }
 
   return (
@@ -97,7 +99,7 @@ export function HeroCardStack() {
             onMouseEnter={() => desktopMotion && setHoveredCard("left")}
             onMouseLeave={() => desktopMotion && setHoveredCard(null)}
             onClick={() => activateCard("left")}
-            aria-label={cardLabel("Mendengar Latihan Mendengar")}
+            aria-label={cardLabel(`${stack.left.kind} ${stack.left.deck}`)}
             aria-pressed={isMobile ? activeCard === "left" : undefined}
           >
             <m.div
@@ -121,13 +123,13 @@ export function HeroCardStack() {
             >
               <DeckCard
                 theme="sky"
-                kind="Mendengar"
-                deck="Latihan Mendengar"
+                kind={stack.left.kind}
+                deck={stack.left.deck}
                 level={1}
                 answer
                 className="h-full w-full -translate-x-[4.5rem] -rotate-12 text-base sm:-translate-x-24"
               >
-                Budi makan apel merah.
+                {stack.left.content}
               </DeckCard>
             </m.div>
           </button>
@@ -145,7 +147,7 @@ export function HeroCardStack() {
             onMouseEnter={() => desktopMotion && setHoveredCard("center")}
             onMouseLeave={() => desktopMotion && setHoveredCard(null)}
             onClick={() => activateCard("center")}
-            aria-label={cardLabel("Talk Pasangan")}
+            aria-label={cardLabel(`${stack.center.kind} ${stack.center.deck}`)}
             aria-pressed={isMobile ? activeCard === "center" : undefined}
           >
             <m.div
@@ -180,11 +182,11 @@ export function HeroCardStack() {
             >
               <DeckCard
                 theme="pink"
-                kind="Talk"
-                deck="Pasangan"
+                kind={stack.center.kind}
+                deck={stack.center.deck}
                 className="h-full w-full rotate-2"
               >
-                Apa kebiasaan kecil aku yang kamu suka?
+                {stack.center.content}
               </DeckCard>
             </m.div>
           </button>
@@ -204,7 +206,7 @@ export function HeroCardStack() {
             onMouseEnter={() => desktopMotion && setHoveredCard("right")}
             onMouseLeave={() => desktopMotion && setHoveredCard(null)}
             onClick={() => activateCard("right")}
-            aria-label={cardLabel("Kuis Bikinan AI")}
+            aria-label={cardLabel(`${stack.right.kind} ${stack.right.deck}`)}
             aria-pressed={isMobile ? activeCard === "right" : undefined}
           >
             <m.div
@@ -228,13 +230,13 @@ export function HeroCardStack() {
             >
               <DeckCard
                 theme="indigo"
-                kind="Kuis"
-                deck="Bikinan AI"
+                kind={stack.right.kind}
+                deck={stack.right.deck}
                 level={2}
                 answer
                 className="h-full w-full translate-x-[4.5rem] rotate-12 sm:translate-x-24"
               >
-                Apa yang dimaksud dengan context window?
+                {stack.right.content}
               </DeckCard>
             </m.div>
           </button>

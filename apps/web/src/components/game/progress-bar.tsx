@@ -1,4 +1,5 @@
 import { m } from "framer-motion";
+import { useT } from "@/lib/i18n";
 
 export function GameProgressBar({
   current,
@@ -7,13 +8,14 @@ export function GameProgressBar({
   current: number;
   total: number;
 }) {
+  const t = useT();
   const progress = total === 0 ? 0 : Math.min(current / total, 1);
 
   return (
     <div className="w-full">
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
         <span>
-          Kartu {Math.min(current + 1, total)} dari {total}
+          {t.game.progress(Math.min(current + 1, total), total)}
         </span>
         <span>{Math.round(progress * 100)}%</span>
       </div>

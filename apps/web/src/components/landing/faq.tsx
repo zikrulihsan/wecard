@@ -1,5 +1,6 @@
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
 import { AI_TOPUP_PACK, formatIdr } from "@/lib/pricing";
+import { useT } from "@/lib/i18n";
 
 /**
  * Keberatan yang muncul sebelum orang menekan tombol daftar, dijawab di
@@ -10,65 +11,25 @@ import { AI_TOPUP_PACK, formatIdr } from "@/lib/pricing";
  * terbaca mesin pencari.
  */
 export function Faq() {
+  const faq = useT().landing.faq;
+  const items = faq.items(
+    AI_GENERATION_LIMIT,
+    AI_TOPUP_PACK.generations,
+    formatIdr(AI_TOPUP_PACK.priceIdr)
+  );
   return (
     <section className="bg-neutral-50 px-6 py-20">
       <div className="mx-auto max-w-2xl">
         <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
-          Yang biasanya ditanyakan
+          {faq.title}
         </h2>
 
         <div className="mt-10 divide-y divide-neutral-200 border-y border-neutral-200">
-          <Item question="Bisa dipakai untuk belajar, bukan cuma ngobrol?">
-            Bisa. Selain kartu obrolan, ada kartu kuis — tanya jawab, pilihan
-            ganda, mitos/fakta, tebak clue, dan urutkan — yang jawabannya ada
-            di balik kartu, plus latihan mendengar untuk anak. Pilihan ganda
-            dan mitos/fakta dinilai otomatis, sisanya kamu nilai sendiri, dan
-            skornya muncul di akhir. Topiknya bebas: dari tata surya sampai AI
-            Engineering.
-          </Item>
-
-          <Item question="Jawaban kuis buatan AI pasti benar?">
-            AI diminta hanya menulis fakta yang awet dan bisa dicek, dan kuis
-            yang jawabannya tidak lengkap otomatis dibuang. Tapi AI tetap bisa
-            keliru — untuk materi penting seperti bahan ujian, cek ulang
-            jawabannya, terutama di topik yang cepat berubah.
-          </Item>
-
-          <Item question={`Jatah ${AI_GENERATION_LIMIT} deck itu untuk main atau untuk bikin?`}>
-            Untuk bikin. Sekali deck-nya jadi, kartunya bisa dimainkan
-            berkali-kali, kapan pun, tanpa batas — sendirian maupun ramai-ramai.
-          </Item>
-
-          <Item question="Kalau hasil AI-nya kurang cocok, jatahnya hangus?">
-            Deck yang gagal dibuat — misalnya layanan AI-nya bermasalah — tidak
-            memotong jatah sama sekali. Tapi deck yang berhasil jadi tetap
-            terhitung meski isinya kurang kamu suka, jadi sebutkan konteksnya
-            sespesifik mungkin sebelum menekan generate.
-          </Item>
-
-          <Item question="Deck buatanku bisa dilihat orang lain?">
-            Tidak. Deck AI cuma muncul di akunmu, tidak masuk toko, dan tidak
-            dibagikan ke pemain lain.
-          </Item>
-
-          <Item question="Berapa lama bikinnya?">
-            Sekitar 20–40 detik untuk satu deck utuh — biasanya 2–5 bagian,
-            masing-masing 5–15 kartu, sesuai yang kamu minta.
-          </Item>
-
-          <Item question="Harus install aplikasi?">
-            Tidak. Buka di browser HP, langsung main. Satu HP dioper
-            bergantian, jadi yang lain tidak perlu ikut daftar. Kartu
-            mendengar bahkan bisa dibacakan oleh HP-nya sendiri.
-          </Item>
-
-          <Item question="Kalau jatah gratisnya habis?">
-            Deck yang sudah jadi tetap bisa dimainkan selamanya, dan deck
-            bawaan tetap terbuka. Untuk bikin deck baru, nanti ada paket
-            tambahan {AI_TOPUP_PACK.generations} deck seharga Rp{" "}
-            {formatIdr(AI_TOPUP_PACK.priceIdr)} — sekali bayar, bukan
-            langganan.
-          </Item>
+          {items.map((item) => (
+            <Item key={item.question} question={item.question}>
+              {item.answer}
+            </Item>
+          ))}
         </div>
       </div>
     </section>

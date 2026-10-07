@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
+import { useT } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { PrimaryCta } from "./cta";
 import { HeroCardStack } from "./hero-card-stack";
 
@@ -20,8 +22,11 @@ import { HeroCardStack } from "./hero-card-stack";
  * keluaran fitur generate.
  */
 export function Hero() {
+  const t = useT();
+  const hero = t.landing.hero;
   return (
-    <section className="relative overflow-hidden px-6 pt-10 pb-14 md:pt-20 md:pb-24">
+    <section className="relative overflow-hidden px-6 pt-16 pb-14 md:pt-20 md:pb-24">
+      <LanguageSwitcher className="absolute top-4 right-4 z-10" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50" />
       <div className="absolute -top-10 right-0 -z-10 size-72 rounded-full bg-pink-200 opacity-40 blur-3xl" />
       <div className="absolute bottom-0 -left-10 -z-10 size-72 rounded-full bg-rose-200 opacity-40 blur-3xl" />
@@ -30,33 +35,26 @@ export function Hero() {
         <div className="space-y-5 text-center md:space-y-6 md:text-left">
           <div className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white/80 px-4 py-1.5 text-sm backdrop-blur">
             <Sparkles className="size-3.5 text-pink-600" />
-            <span className="text-neutral-700">
-              Bermain · Belajar · Seru-seruan bareng
-            </span>
+            <span className="text-neutral-700">{hero.pillars}</span>
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl">
-            Waktu Luang Bareng,{" "}
-            {/* U+2011 (non-breaking hyphen) di "Krik‑Krik" — hyphen biasa
-                jadi titik putus yang sah buat perata baris, dan itu bikin
-                kata ini pernah kepotong "Krik-" / "Krik" di layar sempit. */}
+            {hero.titleLead}{" "}
             <span className="bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">
-              Nggak Krik‑Krik Lagi
+              {hero.titleAccent}
             </span>
           </h1>
 
           <p className="text-base leading-relaxed text-neutral-600 sm:text-lg">
-            Lagi nunggu makanan, kumpul keluarga, atau perjalanan jauh? Ambil
-            satu kartu: ngobrol seru, adu kuis, atau latihan mendengar bareng
-            anak. Nggak nemu yang pas?{" "}
+            {hero.bodyLead}{" "}
             <strong className="font-semibold text-neutral-800">
-              Bikin sendiri pakai AI
+              {hero.bodyStrong}
             </strong>
-            .
+            {hero.bodyEnd}
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center md:justify-start">
-            <PrimaryCta href="/coba">Coba gratis — tanpa daftar</PrimaryCta>
+            <PrimaryCta href="/coba">{hero.tryFree}</PrimaryCta>
             <Link
               to="/login"
               className={buttonVariants({
@@ -65,13 +63,12 @@ export function Hero() {
                 className: "h-12 rounded-full px-8 text-base",
               })}
             >
-              Sudah punya akun
+              {hero.haveAccount}
             </Link>
           </div>
 
           <p className="text-sm text-neutral-500">
-            Langsung main tanpa akun · Daftar gratis untuk {AI_GENERATION_LIMIT}{" "}
-            deck AI
+            {hero.footnote(AI_GENERATION_LIMIT)}
           </p>
         </div>
 

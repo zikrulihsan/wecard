@@ -138,7 +138,7 @@ export function normalizeDeck(
   const usable = sections.filter((s) => s.cards.length > 0);
 
   if (usable.length === 0) {
-    throw new GenerationFailed("Deck yang dihasilkan kosong. Coba lagi.");
+    throw new GenerationFailed("Deck yang dihasilkan kosong. Coba lagi.", "empty_deck");
   }
 
   return {

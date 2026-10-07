@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
+import { useT } from "@/lib/i18n";
+import type { Messages } from "@/lib/i18n/messages/id";
 import type {
   CardTimerSettings,
   GameCard,
@@ -70,11 +72,11 @@ function saveTimerSettings(settings: CardTimerSettings) {
   }
 }
 
-function timerLabel(seconds: number) {
-  if (seconds === 0) return "Mati";
-  if (seconds < 60) return `${seconds} dtk`;
+function timerLabel(seconds: number, t: Messages["picker"]) {
+  if (seconds === 0) return t.timerOff;
+  if (seconds < 60) return t.seconds(seconds);
   const minutes = seconds / 60;
-  return Number.isInteger(minutes) ? `${minutes} mnt` : `${seconds} dtk`;
+  return Number.isInteger(minutes) ? t.minutes(minutes) : t.seconds(seconds);
 }
 
 interface Section {
@@ -96,6 +98,7 @@ export function SectionPicker({
   deckTheme: DeckTheme;
   sections: Section[];
 }) {
+  const t = useT();
   const navigate = useNavigate();
   const startSession = useGameStore((s) => s.startSession);
 
@@ -171,13 +174,13 @@ export function SectionPicker({
       // berarti apa-apa bagi mereka. Aslinya tetap ada di konsol browser
       // untuk ditelusuri.
       console.error("[play] gagal mengambil kartu", fetchError);
-      setError("Kartunya gagal diambil. Cek sambunganmu, lalu coba lagi.");
+      setError(t.picker.fetchFailed);
       setLoading(false);
       return;
     }
 
     if (!cards || cards.length === 0) {
-      setError("Level ini belum ada kartunya. Coba pilih level lain.");
+      setError(t.picker.emptyLevel);
       setLoading(false);
       return;
     }
@@ -206,7 +209,7 @@ export function SectionPicker({
     });
 
     if (gameCards.length === 0) {
-      setError("Kartu di level ini belum bisa dimainkan di versi aplikasi ini.");
+      setError(t.picker.unsupported);
       setLoading(false);
       return;
     }
@@ -221,7 +224,7 @@ export function SectionPicker({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-semibold mb-3">Pilih Level</h2>
+        <h2 className="font-semibold mb-3">{t.picker.chooseLevel}</h2>
         <div className="space-y-2">
           {sections.map((section) => {
             const isSelected = selected.has(section.id);
@@ -241,7 +244,7 @@ export function SectionPicker({
                     <div>
                       <div className="font-medium">{section.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {section.cardCount} kartu
+                        {t.common.cards(section.cardCount)}
                       </div>
                     </div>
                   </div>
@@ -255,12 +258,12 @@ export function SectionPicker({
       <div>
         <h2 className="font-semibold mb-3 flex items-center gap-1.5">
           <Timer className="size-4" />
-          Timer per Kartu
+          {t.picker.timerTitle}
         </h2>
         <Card className="p-4 space-y-4">
           <div
             role="radiogroup"
-            aria-label="Durasi timer per kartu"
+            aria-label={t.picker.timerGroup}
             className="grid grid-cols-3 gap-2"
           >
             {TIMER_OPTIONS.map((seconds) => {
@@ -279,7 +282,7 @@ export function SectionPicker({
                       : "border-input hover:border-primary/40"
                   )}
                 >
-                  {timerLabel(seconds)}
+                  {timerLabel(seconds, t.picker)}
                 </button>
               );
             })}
@@ -295,9 +298,9 @@ export function SectionPicker({
                 className="mt-0.5"
               />
               <span className="text-sm">
-                <span className="font-medium">Otomatis lanjut</span>
+                <span className="font-medium">{t.picker.autoAdvance}</span>
                 <span className="block text-xs text-muted-foreground">
-                  Pindah ke kartu berikutnya begitu waktunya habis.
+                  {t.picker.autoAdvanceHint}
                 </span>
               </span>
             </label>
@@ -305,8 +308,8 @@ export function SectionPicker({
 
           <p className="text-xs text-muted-foreground">
             {timer.seconds > 0
-              ? "Timer mulai berjalan saat kartu dibuka. Ketuk timernya untuk jeda."
-              : "Tanpa batas waktu — ngobrol sepuasnya."}
+              ? t.picker.timerOnHint
+              : t.picker.timerOffHint}
           </p>
         </Card>
       </div>
@@ -336,8 +339,8 @@ export function SectionPicker({
           )}
         >
           {loading
-            ? "Menyiapkan kartu..."
-            : `Mulai Main (${totalCards} kartu)`}
+            ? t.picker.preparing
+            : t.picker.start(totalCards)}
         </Button>
       </div>
     </div>

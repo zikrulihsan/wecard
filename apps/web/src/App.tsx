@@ -5,6 +5,8 @@ import { BottomNav } from "@/components/nav/bottom-nav";
 import { CardLoader } from "@/components/ui/card-loader";
 import { LoadError } from "@/components/ui/load-error";
 import { createClient } from "@/lib/supabase/client";
+import { useDocumentLanguage, useT } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import LandingPage from "@/pages/landing";
 
 const LoginPage = lazy(() => import("@/pages/login"));
@@ -28,6 +30,7 @@ function LandingOrCallback() {
 }
 
 function RequireAuth() {
+  const t = useT();
   const location = useLocation();
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [supabase] = useState(() => {
@@ -49,10 +52,10 @@ function RequireAuth() {
   }, [supabase]);
 
   if (!supabase) {
-    return <div className="mx-auto max-w-screen-sm px-4 py-8"><LoadError title="Login belum tersedia" description="Konfigurasi layanan login belum tersedia. Coba lagi nanti." onRetry={() => window.location.reload()} /></div>;
+    return <div className="mx-auto max-w-screen-sm px-4 py-8"><LoadError title={t.app.loginUnavailableTitle} description={t.app.loginUnavailableDescription} onRetry={() => window.location.reload()} /></div>;
   }
   if (authenticated === null) {
-    return <div className="mx-auto max-w-screen-sm px-4 py-8"><CardLoader label="Memeriksa sesi" /></div>;
+    return <div className="mx-auto max-w-screen-sm px-4 py-8"><CardLoader label={t.app.checkingSession} /></div>;
   }
   if (!authenticated) {
     const destination = `${location.pathname}${location.search}`;
@@ -72,16 +75,19 @@ function AppLayout() {
 
 function AuthLayout() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50 px-6 py-12">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50 px-6 py-12">
+      <LanguageSwitcher className="absolute top-4 right-4" />
       <div className="w-full max-w-md"><Outlet /></div>
     </div>
   );
 }
 
 export default function App() {
+  const t = useT();
+  useDocumentLanguage();
   return (
     <MotionProvider>
-      <Suspense fallback={<div className="mx-auto max-w-screen-sm px-4 py-8"><CardLoader label="Membuka halaman" /></div>}>
+      <Suspense fallback={<div className="mx-auto max-w-screen-sm px-4 py-8"><CardLoader label={t.app.openingPage} /></div>}>
       <Routes>
         <Route path="/" element={<LandingOrCallback />} />
         <Route element={<AuthLayout />}>
