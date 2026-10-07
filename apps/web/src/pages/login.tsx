@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { createClient } from "@/lib/supabase/client";
-import { safePath } from "@/lib/safe-path";
+import { DEFAULT_REDIRECT, safePath } from "@/lib/safe-path";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,7 +101,7 @@ function LoginForm() {
         <p className="text-center text-sm text-muted-foreground mt-6">
           {t.auth.noAccount}{" "}
           <Link
-            to="/register"
+            to={redirect === DEFAULT_REDIRECT ? "/register" : `/register?redirect=${encodeURIComponent(redirect)}`}
             className="text-primary font-medium hover:underline"
           >
             {t.auth.registerHere}

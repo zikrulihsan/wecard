@@ -54,13 +54,13 @@ export const en: Messages = {
       titleLead: "Free Time Together,",
       titleAccent: "Never Awkward Again",
       bodyLead:
-        "Waiting for food, at a family get-together, or on a long trip? Draw a card: a fun conversation, a quiz showdown, or listening practice with your kids. Can't find the right one?",
+        "Draw a card: chat, a quiz showdown, or listening practice. Can't find the right one?",
       bodyStrong: "Make your own with AI",
       bodyEnd: ".",
       tryFree: "Try free — no sign-up",
       haveAccount: "I have an account",
       footnote: (limit: number) =>
-        `Play right away without an account · Sign up free for ${limit} AI decks`,
+        `Sign up free and get ${limit} AI decks`,
     },
     heroStack: {
       animate: (name: string) =>
@@ -83,72 +83,55 @@ export const en: Messages = {
       },
     },
     how: {
-      title: "Built-in decks don't always fit. Make your own.",
-      body: "A get-together with coworkers is a different kind of fun from a cozy night with your partner. A solar-system quiz with your kids, or testing yourself on AI Engineering, is different again. Describe the situation or topic — AI writes the cards, answers included.",
+      eyebrow: "Make it with AI",
+      title: "No deck that fits? Make your own.",
+      body: "Name the topic and your cards are ready in about 30 seconds.",
       steps: [
-        {
-          title: "Pick the type & topic",
-          description:
-            "Conversation cards, a knowledge quiz, or listening practice. Say who you're playing with and the topic — like “just met at a new job” or “the solar system for 3rd graders”.",
-        },
-        {
-          title: "AI writes the cards",
-          description:
-            "About 20–40 seconds. Difficulty ramps up section by section, and every card is re-checked on the server — quizzes without a complete answer are thrown out.",
-        },
-        {
-          title: "Play right away",
-          description:
-            "Pass one phone around, or play solo to study. Flip quiz cards to see the answer, and your score shows up at the end.",
-        },
+        "Name the topic & who's playing",
+        "AI writes the cards & answers",
+        "Start playing",
       ],
-      footnote: (limit: number) =>
-        `Every new account gets ${limit} free AI decks — enough to see the results before spending anything.`,
+      footnote: (limit: number) => `Your first ${limit} AI decks are free.`,
+      demoTopicLabel: "Topic",
+      demoTopic: "The solar system for 3rd graders",
+      demoChips: ["Quiz", "Kids", "10 cards"],
+      demoCards: [
+        { kind: "Multiple choice", content: "Which planet is closest to the Sun?" },
+        { kind: "Myth / fact", content: "The Sun is also a star." },
+      ],
+      demoDeck: "Made by AI",
     },
     samples: {
-      title: "What do the cards look like?",
-      body: "One card, one turn. Whether you want laughs, a battle of wits, or focus practice — just pick a deck and your free time has something in it.",
+      eyebrow: "Three ways to play",
+      title: "One card, one turn.",
       groups: [
         {
           emoji: "💬",
           pillar: "Fun",
           title: "Conversation",
-          description:
-            "Talk for questions, Action for small challenges. No right or wrong answers — it's all about the stories.",
+          description: "Questions and little challenges. No right or wrong.",
           formats: ["Talk", "Action"],
         },
         {
           emoji: "🧠",
           pillar: "Play",
           title: "Quiz",
-          description:
-            "Answer first, then flip the card to see the answer and explanation. Your score is tallied at the end.",
-          formats: [
-            "Q&A",
-            "Multiple choice",
-            "Myth / fact",
-            "Guess the clue",
-            "Put in order",
-          ],
+          description: "Answer, flip the card, score at the end.",
+          formats: ["Q&A", "Multiple choice", "Myth / fact", "Guess the clue", "Put in order"],
         },
         {
           emoji: "👂",
           pillar: "Learn",
           title: "Listening",
-          description:
-            "One person reads aloud — or the phone does — and the others answer. Great for building kids' concentration.",
-          formats: ["⭐ to ⭐⭐⭐⭐⭐"],
+          description: "The phone reads aloud, kids answer. Builds focus.",
+          formats: ["Level ⭐ – ⭐⭐⭐⭐⭐"],
         },
       ],
       tryEyebrow: "Try it now",
-      tryTitle: "Tap the card, then flip it again",
+      tryTitle: "Tap the card.",
       tryBody:
-        "Tap once to reveal the prompt. On conversation cards, take turns answering. On quiz cards, pick your answer — or flip once more to see the answer and explanation.",
-      tryHint:
-        "Swipe to try a conversation card, myth/fact, multiple choice, and listening practice.",
+        "Tap to open, flip again to see the answer. Swipe for more cards.",
       moreTitle: "More sample cards",
-      footnote:
-        "AI-made decks take the same shape — filled with content that fits the situation or topic you describe.",
       carouselLabel: "Carousel of more sample cards",
       carouselPrev: "Scroll sample cards left",
       carouselNext: "Scroll sample cards right",
@@ -236,88 +219,72 @@ export const en: Messages = {
       ],
     },
     pricing: {
-      title: "Try first, pay only if you use it",
-      body: (limit: number) =>
-        `Built-in decks are free forever. The only paid part is making new decks with AI — and only after your ${limit} free decks are used up.`,
+      title: "Start free",
+      body: "Built-in decks are free forever. The only paid part is credits for making AI decks.",
       freeTitle: "Free",
       freePrice: "Rp 0",
       freeSubtitle: "Every account, no credit card",
       freeAiStrong: (limit: number) => `${limit} AI decks`,
       freeAiRest: "made by you",
-      freeDecks:
-        "The Couples, Kids & Parents, Listening Practice, and Self-Test: AI Engineering decks — every card",
-      freePlay: "Play as much as you like — the allowance is for creating, not playing",
-      freeKeep: "Decks you've made stay yours",
+      freeDecks: "Every built-in deck",
+      freePlay: "Play as much as you like",
       freeCta: "Create a free account",
       topupTitle: (count: number) => `Add ${count} AI decks`,
       comingSoon: "Coming soon",
       price: (amount: string) => `Rp ${amount}`,
-      perDeck: (amount: string) =>
-        `About Rp ${amount} per deck · one-time payment, not a subscription`,
-      topupStrong: (count: number) => `${count} new AI decks`,
-      topupRest: "to use whenever you like",
-      topupNoExpiry: "Credits never expire",
-      topupAgain: "Top up again whenever you run out",
-      topupFailed: "Failed generations don't use up credits",
+      perDeck: (amount: string) => `≈Rp ${amount} per deck · one-time payment`,
+      topupStrong: (count: number) => `${count} extra`,
+      topupRest: "AI decks",
+      topupNoExpiry: "Not a subscription, never expires",
+      topupFailed: "Failed generations aren't charged",
       buy: "Buy pack",
       closedTitle: "Purchases aren't open yet",
-      closedBody: (limit: number) =>
-        `For now, the Free plan already includes ${limit} AI decks for every account.`,
     },
     faq: {
-      title: "Frequently asked questions",
+      eyebrow: "FAQ",
+      title: "Still unsure?",
       items: (limit: number, packCount: number, packPrice: string) => [
+        {
+          question: "Do I need to install an app?",
+          answer:
+            "No. Open it in your phone's browser and pass the phone around. Nobody else needs to sign up.",
+        },
         {
           question: "Can I use it to study, not just to chat?",
           answer:
-            "Yes. Besides conversation cards there are quiz cards — Q&A, multiple choice, myth/fact, guess the clue, and put in order — with the answer on the back, plus listening practice for kids. Multiple choice and myth/fact are graded automatically, you grade the rest yourself, and your score appears at the end. Any topic works: from the solar system to AI Engineering.",
+            "Yes. There are quiz cards on any topic, from the solar system to AI Engineering, plus listening practice for kids.",
         },
         {
           question: "Are the AI's quiz answers always right?",
           answer:
-            "The AI is told to only write durable, checkable facts, and quizzes with incomplete answers are thrown out automatically. But AI can still be wrong — for important material like exam prep, double-check the answers, especially on fast-changing topics.",
+            "Quizzes without a complete answer are thrown out automatically, but AI can still be wrong. For exam prep, double-check the answers.",
         },
         {
-          question: `Are the ${limit} decks for playing or for creating?`,
+          question: `Are the ${limit} decks for playing or creating?`,
           answer:
-            "For creating. Once a deck is made, you can play it again and again, anytime, with no limit — solo or with a crowd.",
-        },
-        {
-          question: "If I don't like the AI's result, is the credit gone?",
-          answer:
-            "A deck that fails to generate — say the AI service has a problem — doesn't use a credit at all. But a deck that's created successfully still counts even if you don't love it, so describe the context as specifically as you can before hitting generate.",
+            "For creating. Decks you've made can be played without limit. Decks that fail to generate don't use a credit.",
         },
         {
           question: "Can other people see the decks I make?",
-          answer:
-            "No. AI decks only show up in your account, never go into the store, and are never shared with other players.",
+          answer: "No. AI decks only live in your account.",
         },
         {
           question: "Can I make decks in English?",
           answer:
-            "Yes. The create-deck form has a card-language option — Indonesian or English — independent of the app's language.",
+            "Yes. Pick the card language in the create-deck form — Indonesian or English.",
         },
         {
-          question: "How long does it take?",
-          answer:
-            "About 20–40 seconds for a whole deck — usually 2–5 sections of 5–15 cards each, whatever you ask for.",
-        },
-        {
-          question: "Do I need to install an app?",
-          answer:
-            "No. Open it in your phone's browser and start playing. One phone gets passed around, so nobody else needs to sign up. The phone can even read listening cards aloud.",
-        },
-        {
-          question: "What happens when my free allowance runs out?",
-          answer: `Decks you've made stay playable forever, and the built-in decks stay open. To make new decks, there will be an add-on pack of ${packCount} decks for Rp ${packPrice} — a one-time payment, not a subscription.`,
+          question: "What if my free credits run out?",
+          answer: `Decks you've made stay playable. There will be a pack of ${packCount} decks for Rp ${packPrice}, one-time payment.`,
         },
       ],
     },
     finalCta: {
-      title: "Make your next free moment anything but awkward",
+      title: "Start with a single card.",
       body: (limit: number) =>
-        `Play, learn, and have fun together — starting with a single card. Pick a built-in deck, or make your own from any situation or topic; your first ${limit} AI decks are free.`,
-      button: "Create a free account",
+        `Play now without signing up, or create an account for ${limit} free AI decks.`,
+      tryButton: "Try free",
+      button: "Create account",
     },
     footer: (year: number) => `© ${year} FlipCard. Made with love.`,
   },
@@ -422,9 +389,36 @@ export const en: Messages = {
       `Start Playing (${count} ${count === 1 ? "card" : "cards"})`,
   },
 
+  modes: {
+    ngobrol: { label: "Conversation", hint: "Questions answered with stories." },
+    tantangan: { label: "Challenges", hint: "Challenges you do together on the spot." },
+    kuis: { label: "Quiz", hint: "Test your knowledge — answers on the back." },
+    mendengar: { label: "Listening", hint: "One reads aloud, the others answer." },
+  },
+
   home: {
-    title: "Pick a Category",
-    subtitle: "Which cards are we playing today?",
+    title: "What are we playing today?",
+    subtitle: "Pick up where you left off, find a deck, or make your own.",
+    recent: "Recently played",
+    browse: "Browse decks",
+    modeTabs: "Deck type",
+    all: "All",
+    search: "Search decks…",
+    searchLabel: "Search decks",
+    clearSearch: "Clear search",
+    filterGroup: "Filter decks",
+    filterAll: "All",
+    filterFree: "Free",
+    filterMine: "Mine",
+    filterLocked: "Locked",
+    collection: "FlipCard collection",
+    continue: "Continue playing",
+    continueProgress: (current: number, total: number) =>
+      `${current}/${total} cards`,
+    noMatch: (query: string) => `No decks match “${query}” yet.`,
+    noneInFilter: "No decks in this selection yet.",
+    showAll: "Show all decks",
+    makeWithAi: "Make your own with AI",
     loading: "Fetching your decks",
     errorTitle: "Couldn't load your decks",
     errorDescription:
@@ -471,8 +465,13 @@ export const en: Messages = {
       "Making decks with AI is turned off for your account right now. AI decks you've already made can still be played.",
     playExistingFirst: "Play the existing decks for now",
     form: {
+      modeLegend: "What do you want to play?",
+      modeGroup: "Deck type",
+      withChallenges: "Mix in challenges — about a third of the cards.",
       audience: "Who are you playing with?",
       audienceHint: "Sets the point of view and style of the questions.",
+      audienceKnowledge: "Who's playing?",
+      audienceKnowledgeHint: "Sets the vocabulary and question level.",
       cardLanguage: "Card language",
       cardLanguageHint:
         "The language of the deck's content. It doesn't have to match the app language.",
@@ -521,6 +520,12 @@ export const en: Messages = {
       { value: "belajar-sendiri", label: "Just me — study & self-test" },
       { value: "lainnya", label: "Other (explain in the context)" },
     ],
+    audienceModeLabels: {
+      sahabat: { kuis: "With friends", mendengar: "With friends" },
+      "anak-orang-tua": { mendengar: "Kids — read aloud by a parent" },
+      "rekan-kerja": { kuis: "Team / class", mendengar: "Team / class" },
+      "belajar-sendiri": { kuis: "Just me — study & self-test" },
+    },
     tones: [
       { value: "santai", label: "Relaxed & light" },
       { value: "romantis", label: "Romantic & warm" },
@@ -538,33 +543,6 @@ export const en: Messages = {
       sedang: "Medium — ⭐⭐ to ⭐⭐⭐⭐",
       dalam: "Challenging — ramps up to ⭐⭐⭐⭐⭐",
     },
-    cardMixes: [
-      {
-        value: "campuran",
-        label: "Mixed — questions & challenges",
-        hint: "About a third of the cards are challenges.",
-      },
-      {
-        value: "talk",
-        label: "Questions only",
-        hint: "Every card is answered with a story. All about conversation.",
-      },
-      {
-        value: "action",
-        label: "Challenges only",
-        hint: "Every card is a challenge you do on the spot — nothing to answer.",
-      },
-      {
-        value: "kuis",
-        label: "Knowledge quiz — with answers",
-        hint: "A mix of Q&A, multiple choice, myth/fact, guess the clue, and put in order. Answers are on the back.",
-      },
-      {
-        value: "mendengar",
-        label: "Listening & concentration practice",
-        hint: "One person reads a short text aloud, the others answer questions about it. Levels ramp up gradually.",
-      },
-    ],
     placeholders: {
       pasangan: {
         deckName: "E.g. Friday Night for Two",
@@ -681,37 +659,59 @@ export const en: Messages = {
 
   trial: {
     backHome: "Home",
-    title: "Try it first, no sign-up",
-    intro:
-      "Pick a deck, tap the card, and start playing — conversation, quiz, or listening practice.",
-    remainingLead: "You can try",
-    remainingStrong: (count: number) =>
-      `${count} more ${count === 1 ? "deck" : "decks"}`,
-    remainingRest: "before you need an account.",
-    spent: "You've used your free tries — decks you've opened can still be replayed.",
-    tried: " · tried",
-    locked: "Locked",
+    titleGuest: "Try every deck, free",
+    titleSignedIn: "Trial decks, fully unlocked",
+    introSignedIn:
+      "You're signed in, so every card here can be played to the end.",
+    introLead: "Pick a type, then play the",
+    introStrong: (count: number) => `first ${count} cards`,
+    introRest: "of every deck without signing up. Like it? Sign in to keep going.",
+    modeTabs: "Deck type",
+    freeUsedUp: "Free cards used",
+    freeCount: (count: number) => `${count} free cards`,
+    lockedMore: (count: number) => `${count} more`,
+    freeMeter: (used: number, free: number) =>
+      `${used} of ${free} free cards played`,
     playAgain: "Play again",
     play: "Play",
-    convinced: "Convinced?",
+    makeWithAi: "Make your own deck with AI",
+    ladderTitle: "From trying it to having your own decks",
+    ladderTryTitle: "Try without an account",
+    ladderTryTag: "You're here",
+    ladderTryPoints: (free: number) => [
+      `The first ${free} cards of every deck`,
+      "Every type: conversation, challenges, quiz, listening",
+    ],
+    ladderFreeTitle: "Free account",
+    ladderFreeTag: "Free",
+    ladderFreePoints: (limit: number) => [
+      "Every card unlocked, continue from your last card",
+      `${limit} decks of your own made with AI`,
+    ],
+    ladderTopupTitle: "AI deck top-up",
+    ladderTopupSoon: "Coming soon",
+    ladderPrice: (price: string) => `Rp${price}`,
+    ladderTopupPoints: (count: number, price: string) => [
+      `+${count} AI decks for Rp${price}`,
+      "Any topic, for anyone",
+    ],
     createAccount: "Create a free account",
-    signIn: "sign in",
-    meter: (used: number, limit: number) =>
-      `${used} of ${limit} trial decks used`,
+    signIn: "Sign in",
     deckDone: (name: string) => `${name} deck complete!`,
-    moreLeft: (count: number) =>
-      `You can still try ${count} more ${count === 1 ? "deck" : "decks"} without an account.`,
-    continuePitch: (limit: number) =>
-      `Want more? Create a free account to unlock the full decks and make ${limit} of your own with AI.`,
+    doneSignedIn: (limit: number) =>
+      `Want a deck on your own topic? Make one with AI — your account includes ${limit} free decks.`,
+    doneGuest: "There are plenty more decks you can try for free.",
+    makeOwn: "Make your own deck",
     tryAnother: "Try another deck",
-    seeOthers: "See other decks",
-    mode: "Trial mode",
-    gateTitle: "Fun, right? Keep going with an account",
-    gateTried: (count: number) =>
-      `You've tried ${count} ${count === 1 ? "deck" : "decks"}. `,
-    gateBody: (limit: number) =>
-      `Create a free account to unlock every built-in deck in full and make ${limit} decks of your own with AI.`,
-    gateLogin: "Have an account? Sign in",
-    gateLater: "Maybe later",
+    freeBadge: (current: number, free: number) => `${current}/${free} free`,
+    lockTitle: (next: number) => `Fun, right? Continue from card ${next}`,
+    lockRemaining: (count: number) =>
+      `${count} more ${count === 1 ? "card" : "cards"} locked`,
+    lockBody: (deck: string, limit: number) =>
+      `Sign in for free to unlock the rest of ${deck} — plus every other deck with no limit, and ${limit} decks of your own made with AI.`,
+    lockScoreLead: "So far",
+    lockScoreRest: "correct answers",
+    lockEmail: "Sign in with email",
+    lockRegister: "Sign up",
   },
 };

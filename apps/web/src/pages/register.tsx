@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { createClient } from "@/lib/supabase/client";
+import { DEFAULT_REDIRECT, safePath } from "@/lib/safe-path";
+import { SIGNUP_REDIRECT_KEY } from "@/lib/oauth";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +19,10 @@ import {
 export default function RegisterPage() {
   const t = useT();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Mis. kembali ke deck coba yang tadi terkunci.
+  const redirect = safePath(searchParams.get("redirect"));
+  const loginHref = redirect === DEFAULT_REDIRECT ? "/login" : `/login?redirect=${encodeURIComponent(redirect)}`;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,8 +51,13 @@ export default function RegisterPage() {
       }
 
       if (data.session) {
-        navigate("/home", { replace: true });
+        navigate(redirect, { replace: true });
       } else {
+        try {
+          localStorage.setItem(SIGNUP_REDIRECT_KEY, redirect);
+        } catch {
+          // Penyimpanan diblokir — setelah konfirmasi mendarat di beranda.
+        }
         setSuccess(true);
       }
     } catch {
@@ -67,7 +78,7 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Link to="/login" className={buttonVariants({ size: "lg", className: "w-full" })}>
+          <Link to={loginHref} className={buttonVariants({ size: "lg", className: "w-full" })}>
             {t.auth.backToLogin}
           </Link>
         </CardContent>
@@ -131,11 +142,11 @@ export default function RegisterPage() {
           {t.common.or}
           <span className="h-px flex-1 bg-border" />
         </div>
-        <GoogleSignInButton disabled={loading} onError={setError} />
+        <GoogleSignInButton redirect={redirect} disabled={loading} onError={setError} />
         <p className="text-center text-sm text-muted-foreground mt-6">
           {t.auth.haveAccount}{" "}
           <Link
-            to="/login"
+            to={loginHref}
             className="text-primary font-medium hover:underline"
           >
             {t.auth.loginHere}

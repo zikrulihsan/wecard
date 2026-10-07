@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CARD_TYPES, DECK_THEMES } from "@flipcard/types";
+import { CARD_TYPES, DECK_THEMES, type DeckMode } from "@flipcard/types";
 
 // ============================================================
 // INPUT — field yang diisi user di form generate
@@ -9,15 +9,31 @@ import { CARD_TYPES, DECK_THEMES } from "@flipcard/types";
 // Teks yang tampil di form — label, contoh placeholder, petunjuk — ada di
 // kamus i18n (`create.*`), dicocokkan lewat `value`.
 export const AUDIENCES = [
-  { value: "pasangan", label: "Pasangan" },
-  { value: "sahabat", label: "Sahabat / teman dekat" },
-  { value: "keluarga", label: "Keluarga" },
-  { value: "anak-orang-tua", label: "Anak & orang tua" },
-  { value: "rekan-kerja", label: "Rekan kerja / tim" },
-  { value: "kenalan-baru", label: "Kenalan baru" },
-  { value: "belajar-sendiri", label: "Diri sendiri — belajar & uji kemampuan" },
-  { value: "lainnya", label: "Lainnya (jelaskan di konteks)" },
+  { value: "pasangan", modes: ["ngobrol", "tantangan"], label: "Pasangan" },
+  { value: "sahabat", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Sahabat / teman dekat" },
+  { value: "keluarga", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Keluarga" },
+  { value: "anak-orang-tua", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Anak & orang tua" },
+  { value: "rekan-kerja", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Rekan kerja / tim" },
+  { value: "kenalan-baru", modes: ["ngobrol", "tantangan"], label: "Kenalan baru" },
+  { value: "belajar-sendiri", modes: ["kuis"], label: "Diri sendiri — belajar & uji kemampuan" },
+  { value: "lainnya", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Lainnya (jelaskan di konteks)" },
 ] as const;
+
+type AudienceOption = {
+  value: string;
+  /** Jenis deck yang masuk akal untuk pemain ini. */
+  modes: readonly DeckMode[];
+};
+
+/**
+ * Nilai pilihan "dimainkan sama siapa" untuk satu jenis deck — kuis untuk
+ * pasangan atau latihan mendengar sendirian tidak ditawarkan.
+ */
+export function audiencesForMode(mode: DeckMode): string[] {
+  return (AUDIENCES as readonly AudienceOption[])
+    .filter((option) => option.modes.includes(mode))
+    .map((option) => option.value);
+}
 
 export const TONES = [
   { value: "santai", label: "Santai & ringan" },
@@ -56,6 +72,19 @@ export const CARD_MIXES = [
   },
 ] as const;
 
+/** Jenis deck yang tersimpan di `categories.mode` untuk tiap isi kartu. */
+export const CARD_MIX_MODE: Record<(typeof CARD_MIXES)[number]["value"], DeckMode> = {
+  campuran: "ngobrol",
+  talk: "ngobrol",
+  action: "tantangan",
+  kuis: "kuis",
+  mendengar: "mendengar",
+};
+
+export function modeForCardMix(mix: string): DeckMode {
+  return CARD_MIX_MODE[mix as keyof typeof CARD_MIX_MODE] ?? "ngobrol";
+}
+
 /** Mode deck yang isinya kuis/latihan dengan jawaban, bukan obrolan. */
 export const KNOWLEDGE_MIXES = ["kuis", "mendengar"] as const;
 
@@ -88,7 +117,11 @@ export const generateDeckInputSchema = z.object({
   topic: z.string().trim().max(120).optional(),
   context: z.string().trim().max(500).optional(),
   avoid: z.string().trim().max(300).optional(),
-});
+}).refine(
+  (input) =>
+    audiencesForMode(modeForCardMix(input.cardMix)).includes(input.audience),
+  { path: ["audience"], message: "Pilihan pemain tidak cocok dengan jenis deck ini." }
+);
 
 export type GenerateDeckInput = z.infer<typeof generateDeckInputSchema>;
 

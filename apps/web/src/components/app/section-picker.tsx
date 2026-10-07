@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
+import { markDeckPlayed } from "@/lib/recent-decks";
 import { useT } from "@/lib/i18n";
 import type { Messages } from "@/lib/i18n/messages/id";
 import type {
@@ -218,6 +219,7 @@ export function SectionPicker({
 
     saveTimerSettings(timer);
     startSession(deckId, deckName, deckTheme, selectedSlugs, shuffled, timer);
+    markDeckPlayed(deckId);
     navigate(`/play/${deckId}/session`);
   }
 

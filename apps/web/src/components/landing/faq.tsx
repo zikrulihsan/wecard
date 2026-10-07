@@ -18,13 +18,18 @@ export function Faq() {
     formatIdr(AI_TOPUP_PACK.priceIdr)
   );
   return (
-    <section className="bg-neutral-50 px-6 py-20">
-      <div className="mx-auto max-w-2xl">
-        <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
-          {faq.title}
-        </h2>
+    <section className="bg-white px-6 py-20">
+      <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[1fr_1.6fr] md:gap-16">
+        <div className="space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-pink-600">
+            {faq.eyebrow}
+          </p>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {faq.title}
+          </h2>
+        </div>
 
-        <div className="mt-10 divide-y divide-neutral-200 border-y border-neutral-200">
+        <div className="divide-y divide-neutral-200 border-y border-neutral-200">
           {items.map((item) => (
             <Item key={item.question} question={item.question}>
               {item.answer}

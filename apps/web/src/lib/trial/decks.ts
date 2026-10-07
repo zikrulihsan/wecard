@@ -4,6 +4,7 @@ import type {
   CardDifficulty,
   CardLevel,
   CardType,
+  DeckMode,
   DeckTheme,
   GameCard,
 } from "@flipcard/types";
@@ -15,11 +16,15 @@ import type { Language } from "@/lib/i18n";
  *
  * Sengaja ditulis statis di sini, bukan dibaca dari Supabase: pengunjung yang
  * belum login tidak boleh bergantung pada policy baca tabel, dan halaman coba
- * harus langsung jalan meski server sedang lambat. Isinya pendek (5–8 kartu)
- * — cukup untuk merasakan alurnya, bukan pengganti deck lengkap.
+ * harus langsung jalan meski server sedang lambat. Isinya pendek (5–8 kartu).
+ * Tamu memainkan beberapa kartu pertama (`TRIAL_FREE_CARDS`), jadi urutan di
+ * sini adalah urutan main: taruh kartu yang paling menggambarkan deck di depan.
+ * Tiap jenis deck (`mode`) sebaiknya punya paling tidak satu deck coba.
  */
 export type TrialDeck = {
   slug: string;
+  /** Jenis deck — halaman coba memisahkan deck per jenis. */
+  mode: DeckMode;
   name: string;
   emoji: string;
   description: string;
@@ -57,6 +62,7 @@ function toGameCard(raw: RawCard, slug: string, name: string, index: number): Ga
 
 function deck(
   slug: string,
+  mode: DeckMode,
   name: string,
   emoji: string,
   description: string,
@@ -65,6 +71,7 @@ function deck(
 ): TrialDeck {
   return {
     slug,
+    mode,
     name,
     emoji,
     description,
@@ -76,6 +83,7 @@ function deck(
 const TRIAL_DECKS_ID: TrialDeck[] = [
   deck(
     "kenalan",
+    "ngobrol",
     "Kenalan Baru",
     "👋",
     "Pecah suasana sama orang yang baru ketemu — ringan, nggak kepo berlebihan.",
@@ -93,6 +101,7 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
   ),
   deck(
     "kuis-pengetahuan",
+    "kuis",
     "Kuis Pengetahuan",
     "🧠",
     "Uji wawasan bareng — jawab dulu, lalu balik kartu untuk lihat jawabannya.",
@@ -135,6 +144,7 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
   ),
   deck(
     "latihan-mendengar",
+    "mendengar",
     "Latihan Mendengar",
     "👂",
     "Satu orang membacakan, yang lain menyimak lalu menjawab. Level naik dari ⭐ sampai ⭐⭐⭐⭐⭐.",
@@ -180,6 +190,7 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
   ),
   deck(
     "sahabat",
+    "ngobrol",
     "Sahabat",
     "🤝",
     "Buat tongkrongan yang udah akrab tapi ngobrolnya itu-itu aja.",
@@ -197,6 +208,7 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
   ),
   deck(
     "keluarga",
+    "ngobrol",
     "Keluarga",
     "🏡",
     "Obrolan di meja makan yang lebih dari sekadar \"gimana sekolah/kerjaan?\"",
@@ -214,6 +226,7 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
   ),
   deck(
     "pasangan",
+    "ngobrol",
     "Pasangan",
     "💞",
     "Buat date night atau ngobrol santai sebelum tidur.",
@@ -231,6 +244,7 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
   ),
   deck(
     "rekan-kerja",
+    "ngobrol",
     "Rekan Kerja",
     "💼",
     "Ice breaker buat tim — aman dibawa ke rapat atau makan siang bareng.",
@@ -246,6 +260,132 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
       ["talk", "easy", "Kebiasaan kecil apa yang bikin harimu di kantor lebih enak?"],
     ]
   ),
+  deck(
+    "tantangan-tongkrongan",
+    "tantangan",
+    "Tantangan Tongkrongan",
+    "🔥",
+    "Langsung dikerjakan, bukan dijawab — biar nongkrong nggak cuma scroll HP.",
+    "amber",
+    [
+      ["action", "easy", "Tirukan suara hewan favoritmu sampai ada yang bisa menebak"],
+      ["action", "easy", "Ceritakan kejadian hari ini dalam 3 kata saja — yang lain menebak ceritanya"],
+      ["action", "easy", "Peragakan film terkenal tanpa bicara, yang lain menebak judulnya"],
+      ["action", "medium", "Pilih satu orang di sini, lalu puji dia selama 20 detik tanpa berhenti"],
+      ["action", "easy", "Nyanyikan reff lagu yang lagi viral dengan gaya dangdut"],
+      ["action", "medium", "Bacakan pesan terakhir yang kamu kirim — boleh disensor seperlunya"],
+      ["action", "easy", "Buat pose foto grup dalam 10 detik, lalu foto beneran"],
+      ["action", "medium", "Kasih tahu satu kebiasaan aneh kamu yang belum pernah diceritakan ke siapa pun di sini"],
+    ]
+  ),
+  deck(
+    "tantangan-keluarga",
+    "tantangan",
+    "Tantangan Keluarga",
+    "🎲",
+    "Tantangan ringan buat main bareng anak, kakak, adik, sampai kakek-nenek.",
+    "emerald",
+    [
+      ["action", "easy", "Peluk anggota keluarga yang paling dekat denganmu selama 5 detik"],
+      ["action", "easy", "Tirukan cara bicara salah satu anggota keluarga — yang lain menebak siapa"],
+      ["action", "easy", "Sebutkan 5 masakan rumah secepat mungkin"],
+      ["action", "medium", "Ceritakan kenangan masa kecil dalam 30 detik, tanpa jeda"],
+      ["action", "easy", "Buat gerakan tari 4 langkah, lalu semua orang menirukannya"],
+      ["action", "easy", "Gambar wajah orang di sebelahmu dengan mata tertutup"],
+      ["action", "medium", "Ucapkan satu hal yang kamu kagumi dari tiap orang di sini"],
+      ["action", "easy", "Kalahkan siapa saja dalam suit jari — yang kalah memilih kartu berikutnya"],
+    ]
+  ),
+  deck(
+    "kuis-nusantara",
+    "kuis",
+    "Kuis Nusantara",
+    "🗺️",
+    "Seberapa kenal kamu sama Indonesia? Dari makanan, budaya, sampai peta.",
+    "emerald",
+    [
+      ["multiple_choice", 1, "Rendang berasal dari daerah mana?", {
+        options: ["Sumatra Barat", "Jawa Tengah", "Sulawesi Selatan", "Bali"],
+        correctIndex: 0,
+        explanation: "Rendang adalah masakan Minangkabau dari Sumatra Barat. Dimasak berjam-jam sampai bumbunya kering dan meresap.",
+      }],
+      ["true_false", 2, "Komodo hanya hidup liar di Indonesia.", {
+        isTrue: true,
+        explanation: "Komodo liar hanya ada di beberapa pulau di Nusa Tenggara Timur, seperti Pulau Komodo, Rinca, dan Flores.",
+      }],
+      ["quiz", 2, "Apa nama alat musik dari bambu asal Jawa Barat yang dimainkan dengan digoyangkan?", {
+        answer: "Angklung",
+        explanation: "Angklung diakui UNESCO sebagai Warisan Budaya Takbenda sejak 2010.",
+      }],
+      ["clue", 3, "Aku ini apa?", {
+        clues: [
+          "Aku dibuat dengan lilin malam dan canting.",
+          "Motifku bisa berbeda di tiap kota, dari Pekalongan sampai Solo.",
+          "Tanggal 2 Oktober diperingati sebagai hariku.",
+        ],
+        answer: "Batik",
+      }],
+      ["ordering", 3, "Urutkan pulau-pulau ini dari barat ke timur.", {
+        items: ["Sumatra", "Jawa", "Bali", "Sulawesi", "Papua"],
+      }],
+      ["quiz", 4, "Selat apa yang memisahkan Pulau Jawa dan Pulau Sumatra?", {
+        answer: "Selat Sunda",
+        explanation: "Di Selat Sunda ada Gunung Anak Krakatau, yang muncul dari laut setelah letusan besar Krakatau tahun 1883.",
+      }],
+    ]
+  ),
+  deck(
+    "dengar-cerita",
+    "mendengar",
+    "Dengar & Ceritakan",
+    "📖",
+    "Cerita pendek sehari-hari. Simak sekali, lalu jawab tanpa mengintip.",
+    "violet",
+    [
+      ["listening", 1, "Ayah membeli roti di toko dekat rumah.", {
+        questions: [
+          { question: "Siapa yang membeli roti?", answer: "Ayah" },
+          { question: "Di mana Ayah membeli roti?", answer: "Di toko dekat rumah" },
+        ],
+      }],
+      ["listening", 2, "Setiap Minggu pagi, Tono dan adiknya bersepeda ke taman kota.", {
+        questions: [
+          { question: "Kapan Tono bersepeda?", answer: "Setiap Minggu pagi" },
+          { question: "Dengan siapa Tono bersepeda?", answer: "Dengan adiknya" },
+          { question: "Ke mana mereka pergi?", answer: "Ke taman kota" },
+        ],
+      }],
+      ["listening", 3, "Lina lupa membawa bekal, jadi teman sebangkunya membagi setengah nasi gorengnya.", {
+        questions: [
+          { question: "Apa yang dilupakan Lina?", answer: "Bekal" },
+          { question: "Siapa yang menolong Lina?", answer: "Teman sebangkunya" },
+          { question: "Makanan apa yang dibagi?", answer: "Nasi goreng" },
+        ],
+      }],
+      ["listening", 3, "Sebelum tidur, Ibu membacakan dongeng kancil, lalu mematikan lampu kamar.", {
+        questions: [
+          { question: "Kapan Ibu membacakan dongeng?", answer: "Sebelum tidur" },
+          { question: "Dongeng apa yang dibacakan?", answer: "Dongeng kancil" },
+          { question: "Apa yang Ibu lakukan setelah itu?", answer: "Mematikan lampu kamar" },
+        ],
+      }],
+      ["listening", 4, "Kucing tetangga terjebak di atas pohon. Andi mengambil tangga, sementara kakaknya memegangi tangga itu supaya tidak goyang.", {
+        questions: [
+          { question: "Apa masalahnya?", answer: "Kucing tetangga terjebak di atas pohon" },
+          { question: "Apa yang diambil Andi?", answer: "Tangga" },
+          { question: "Apa tugas kakak Andi?", answer: "Memegangi tangga supaya tidak goyang" },
+        ],
+      }],
+      ["listening", 5, "Pak Joko menanam cabai di halaman. Setiap pagi ia menyiramnya, tapi suatu hari daunnya menguning. Ternyata pot-potnya terlalu dekat dengan atap sehingga jarang terkena matahari. Pak Joko pun memindahkannya ke tempat terbuka.", {
+        questions: [
+          { question: "Apa yang ditanam Pak Joko?", answer: "Cabai" },
+          { question: "Apa yang terjadi pada daunnya?", answer: "Menguning" },
+          { question: "Kenapa daunnya menguning?", answer: "Jarang terkena matahari karena terlalu dekat dengan atap" },
+          { question: "Apa yang dilakukan Pak Joko untuk mengatasinya?", answer: "Memindahkan pot ke tempat terbuka" },
+        ],
+      }],
+    ]
+  ),
 ];
 
 /**
@@ -256,6 +396,7 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
 const TRIAL_DECKS_EN: TrialDeck[] = [
   deck(
     "kenalan",
+    "ngobrol",
     "New Acquaintances",
     "👋",
     "Break the ice with people you just met — light, never too nosy.",
@@ -273,6 +414,7 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
   ),
   deck(
     "kuis-pengetahuan",
+    "kuis",
     "Trivia Quiz",
     "🧠",
     "Test what you know together — answer first, then flip the card to see the answer.",
@@ -315,6 +457,7 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
   ),
   deck(
     "latihan-mendengar",
+    "mendengar",
     "Listening Practice",
     "👂",
     "One person reads aloud, the others listen and answer. Levels go from ⭐ to ⭐⭐⭐⭐⭐.",
@@ -360,6 +503,7 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
   ),
   deck(
     "sahabat",
+    "ngobrol",
     "Best Friends",
     "🤝",
     "For the close crew whose conversations keep going in circles.",
@@ -377,6 +521,7 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
   ),
   deck(
     "keluarga",
+    "ngobrol",
     "Family",
     "🏡",
     "Dinner-table talk that goes beyond \"how was school/work?\"",
@@ -394,6 +539,7 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
   ),
   deck(
     "pasangan",
+    "ngobrol",
     "Couples",
     "💞",
     "For date night or a cozy chat before bed.",
@@ -411,6 +557,7 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
   ),
   deck(
     "rekan-kerja",
+    "ngobrol",
     "Coworkers",
     "💼",
     "Icebreakers for teams — safe for a meeting or a lunch together.",
@@ -424,6 +571,132 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
       ["action", "easy", "Name one thing a colleague here helped you with that you haven't thanked them for yet"],
       ["talk", "medium", "What way of working makes you most productive?"],
       ["talk", "easy", "What small habit makes your day at the office better?"],
+    ]
+  ),
+  deck(
+    "tantangan-tongkrongan",
+    "tantangan",
+    "Hangout Challenges",
+    "🔥",
+    "Do it, don't just answer it — so hanging out isn't just scrolling your phone.",
+    "amber",
+    [
+      ["action", "easy", "Imitate your favorite animal's sound until someone guesses it"],
+      ["action", "easy", "Tell what happened today in just 3 words — the others guess the story"],
+      ["action", "easy", "Act out a famous movie without speaking while the others guess the title"],
+      ["action", "medium", "Pick someone here and compliment them for 20 seconds without stopping"],
+      ["action", "easy", "Sing the chorus of a viral song in a totally different style"],
+      ["action", "medium", "Read out the last message you sent — censor it as needed"],
+      ["action", "easy", "Strike a group photo pose in 10 seconds, then take the photo for real"],
+      ["action", "medium", "Share one odd habit you've never told anyone here about"],
+    ]
+  ),
+  deck(
+    "tantangan-keluarga",
+    "tantangan",
+    "Family Challenges",
+    "🎲",
+    "Light challenges to play with kids, siblings, all the way up to grandparents.",
+    "emerald",
+    [
+      ["action", "easy", "Hug the family member closest to you for 5 seconds"],
+      ["action", "easy", "Imitate how a family member talks — the others guess who"],
+      ["action", "easy", "Name 5 home-cooked dishes as fast as you can"],
+      ["action", "medium", "Tell a childhood memory in 30 seconds without pausing"],
+      ["action", "easy", "Make up a 4-step dance move, then everyone copies it"],
+      ["action", "easy", "Draw the face of the person next to you with your eyes closed"],
+      ["action", "medium", "Say one thing you admire about each person here"],
+      ["action", "easy", "Beat anyone at rock-paper-scissors — the loser picks the next card"],
+    ]
+  ),
+  deck(
+    "kuis-nusantara",
+    "kuis",
+    "Indonesia Quiz",
+    "🗺️",
+    "How well do you know Indonesia? From food and culture to the map.",
+    "emerald",
+    [
+      ["multiple_choice", 1, "Which region does rendang come from?", {
+        options: ["West Sumatra", "Central Java", "South Sulawesi", "Bali"],
+        correctIndex: 0,
+        explanation: "Rendang is a Minangkabau dish from West Sumatra. It's cooked for hours until the spices dry out and soak in.",
+      }],
+      ["true_false", 2, "Komodo dragons only live in the wild in Indonesia.", {
+        isTrue: true,
+        explanation: "Wild Komodo dragons are found only on a few islands in East Nusa Tenggara, such as Komodo, Rinca, and Flores.",
+      }],
+      ["quiz", 2, "What is the bamboo musical instrument from West Java that's played by shaking it?", {
+        answer: "Angklung",
+        explanation: "UNESCO recognized the angklung as Intangible Cultural Heritage in 2010.",
+      }],
+      ["clue", 3, "What am I?", {
+        clues: [
+          "I'm made with wax and a tool called a canting.",
+          "My patterns differ from city to city, from Pekalongan to Solo.",
+          "October 2 is celebrated as my day.",
+        ],
+        answer: "Batik",
+      }],
+      ["ordering", 3, "Put these islands in order from west to east.", {
+        items: ["Sumatra", "Java", "Bali", "Sulawesi", "Papua"],
+      }],
+      ["quiz", 4, "Which strait separates Java from Sumatra?", {
+        answer: "The Sunda Strait",
+        explanation: "The Sunda Strait is home to Anak Krakatau, a volcano that rose from the sea after Krakatoa's massive eruption in 1883.",
+      }],
+    ]
+  ),
+  deck(
+    "dengar-cerita",
+    "mendengar",
+    "Listen & Retell",
+    "📖",
+    "Short everyday stories. Listen once, then answer without peeking.",
+    "violet",
+    [
+      ["listening", 1, "Dad bought bread at the shop near our house.", {
+        questions: [
+          { question: "Who bought bread?", answer: "Dad" },
+          { question: "Where did Dad buy the bread?", answer: "At the shop near the house" },
+        ],
+      }],
+      ["listening", 2, "Every Sunday morning, Tom and his little sister ride their bikes to the city park.", {
+        questions: [
+          { question: "When does Tom ride his bike?", answer: "Every Sunday morning" },
+          { question: "Who does Tom ride with?", answer: "His little sister" },
+          { question: "Where do they go?", answer: "To the city park" },
+        ],
+      }],
+      ["listening", 3, "Lily forgot her lunch, so her deskmate shared half of her fried rice.", {
+        questions: [
+          { question: "What did Lily forget?", answer: "Her lunch" },
+          { question: "Who helped Lily?", answer: "Her deskmate" },
+          { question: "What food was shared?", answer: "Fried rice" },
+        ],
+      }],
+      ["listening", 3, "Before bed, Mom read a mouse-deer fable, then turned off the bedroom light.", {
+        questions: [
+          { question: "When did Mom read the story?", answer: "Before bed" },
+          { question: "What story did she read?", answer: "A mouse-deer fable" },
+          { question: "What did Mom do after that?", answer: "Turned off the bedroom light" },
+        ],
+      }],
+      ["listening", 4, "The neighbor's cat was stuck up a tree. Andy fetched a ladder, while his older brother held it steady so it wouldn't wobble.", {
+        questions: [
+          { question: "What was the problem?", answer: "The neighbor's cat was stuck up a tree" },
+          { question: "What did Andy fetch?", answer: "A ladder" },
+          { question: "What was Andy's brother's job?", answer: "Holding the ladder steady so it wouldn't wobble" },
+        ],
+      }],
+      ["listening", 5, "Mr. Joe planted chili peppers in his yard. He watered them every morning, but one day the leaves turned yellow. It turned out the pots were too close to the roof, so they rarely got sunlight. Mr. Joe moved them to an open spot.", {
+        questions: [
+          { question: "What did Mr. Joe plant?", answer: "Chili peppers" },
+          { question: "What happened to the leaves?", answer: "They turned yellow" },
+          { question: "Why did the leaves turn yellow?", answer: "They rarely got sunlight because they were too close to the roof" },
+          { question: "What did Mr. Joe do to fix it?", answer: "Moved the pots to an open spot" },
+        ],
+      }],
     ]
   ),
 ];

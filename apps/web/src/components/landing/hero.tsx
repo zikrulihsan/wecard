@@ -22,8 +22,7 @@ import { HeroCardStack } from "./hero-card-stack";
  * keluaran fitur generate.
  */
 export function Hero() {
-  const t = useT();
-  const hero = t.landing.hero;
+  const hero = useT().landing.hero;
   return (
     <section className="relative overflow-hidden px-6 pt-16 pb-14 md:pt-20 md:pb-24">
       <LanguageSwitcher className="absolute top-4 right-4 z-10" />

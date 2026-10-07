@@ -9,11 +9,15 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { invalidateAiAccess } from "@/lib/ai/access-client";
+import { DECK_MODES, type DeckMode } from "@flipcard/types";
+import { DECK_MODE_META } from "@/lib/deck-mode";
+import { cn } from "@/lib/utils";
 import {
   MAX_CARDS_PER_SECTION,
   MAX_SECTIONS,
   MIN_CARDS_PER_SECTION,
   MIN_SECTIONS,
+  audiencesForMode,
   isKnowledgeMix,
 } from "@/lib/ai/deck-schema";
 import { LANGUAGES, isLanguage, useI18n, type Language } from "@/lib/i18n";
@@ -38,6 +42,16 @@ function errorMessage(
   return data.error;
 }
 
+/** Isi kartu (`cardMix` di API) untuk tiap jenis deck. */
+function cardMixFor(mode: DeckMode, withChallenges: boolean) {
+  switch (mode) {
+    case "ngobrol": return withChallenges ? "campuran" : "talk";
+    case "tantangan": return "action";
+    case "kuis": return "kuis";
+    case "mendengar": return "mendengar";
+  }
+}
+
 interface CreateFormProps {
   /** Sisa jatah akun ini; null berarti tanpa batas. */
   remaining: number | null;
@@ -60,7 +74,24 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
   const [deckName, setDeckName] = useState("");
   const [sectionCount, setSectionCount] = useState(3);
   const [cardsPerSection, setCardsPerSection] = useState(10);
-  const [cardMix, setCardMix] = useState<string>("campuran");
+  const [mode, setMode] = useState<DeckMode>("ngobrol");
+  const [withChallenges, setWithChallenges] = useState(true);
+  const cardMix = cardMixFor(mode, withChallenges);
+  const audiences = audiencesForMode(mode).map((value) => ({
+    value,
+    label:
+      t.audienceModeLabels[value]?.[mode] ??
+      t.audiences.find((option) => option.value === value)?.label ??
+      value,
+  }));
+
+  function chooseMode(next: DeckMode) {
+    setMode(next);
+    // Pemain yang tidak cocok dengan jenis baru (misal pasangan di kuis)
+    // diganti pilihan pertama jenis itu.
+    const options = audiencesForMode(next);
+    if (!options.includes(audience)) setAudience(options[0]);
+  }
   const [includeSpecial, setIncludeSpecial] = useState(false);
   const [topic, setTopic] = useState("");
   const [context, setContext] = useState("");
@@ -123,13 +154,74 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Field label={t.form.audience} hint={t.form.audienceHint}>
+      <fieldset className="space-y-1.5" disabled={isGenerating}>
+        <legend className="mb-1.5 text-sm font-medium">{t.form.modeLegend}</legend>
+        <div role="radiogroup" aria-label={t.form.modeGroup} className="grid grid-cols-2 gap-2">
+          {DECK_MODES.map((value) => {
+            const meta = DECK_MODE_META[value];
+            const selected = mode === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => chooseMode(value)}
+                className={cn(
+                  "rounded-xl border p-3 text-left transition-colors disabled:opacity-50",
+                  selected
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-neutral-200 hover:bg-neutral-50",
+                )}
+              >
+                <span className="block text-sm font-medium">{meta.emoji} {messages.modes[value].label}</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">{messages.modes[value].hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      {mode === "ngobrol" && (
+        <Label className="items-start gap-3 -mt-2">
+          <Checkbox
+            checked={withChallenges}
+            onCheckedChange={(checked) => setWithChallenges(checked === true)}
+            disabled={isGenerating}
+          />
+          <span className="font-normal">
+            {t.form.withChallenges}
+          </span>
+        </Label>
+      )}
+
+      {knowledge && (
+        <Field
+          label={listening ? t.form.storyTheme : t.form.topic}
+          hint={listening ? t.form.storyHint : t.form.topicHint}
+        >
+          <Input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            maxLength={120}
+            placeholder={
+              listening ? t.form.storyPlaceholder : t.form.topicPlaceholder
+            }
+            disabled={isGenerating}
+          />
+        </Field>
+      )}
+
+      <Field
+        label={knowledge ? t.form.audienceKnowledge : t.form.audience}
+        hint={knowledge ? t.form.audienceKnowledgeHint : t.form.audienceHint}
+      >
         <Select
           value={audience}
           onChange={(e) => setAudience(e.target.value)}
           disabled={isGenerating}
         >
-          {t.audiences.map((option) => (
+          {audiences.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -152,40 +244,6 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
           ))}
         </Select>
       </Field>
-
-      <Field
-        label={t.form.cardMix}
-        hint={t.cardMixes.find((m) => m.value === cardMix)?.hint}
-      >
-        <Select
-          value={cardMix}
-          onChange={(e) => setCardMix(e.target.value)}
-          disabled={isGenerating}
-        >
-          {t.cardMixes.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-      </Field>
-
-      {knowledge && (
-        <Field
-          label={listening ? t.form.storyTheme : t.form.topic}
-          hint={listening ? t.form.storyHint : t.form.topicHint}
-        >
-          <Input
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            maxLength={120}
-            placeholder={
-              listening ? t.form.storyPlaceholder : t.form.topicPlaceholder
-            }
-            disabled={isGenerating}
-          />
-        </Field>
-      )}
 
       {!knowledge && (
         <Field label={t.form.tone}>

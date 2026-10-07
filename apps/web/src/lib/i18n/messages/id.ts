@@ -1,4 +1,4 @@
-import type { CardType, DeckTheme, GameCard } from "@flipcard/types";
+import type { CardType, DeckMode, DeckTheme, GameCard } from "@flipcard/types";
 
 /**
  * Teks antarmuka bahasa Indonesia. Bentuk objek ini sekaligus jadi tipe
@@ -82,13 +82,12 @@ export const id = {
       // "Krik-" / "Krik" di layar sempit.
       titleAccent: "Nggak Krik‑Krik Lagi",
       bodyLead:
-        "Lagi nunggu makanan, kumpul keluarga, atau perjalanan jauh? Ambil satu kartu: ngobrol seru, adu kuis, atau latihan mendengar bareng anak. Nggak nemu yang pas?",
+        "Ambil satu kartu: ngobrol, adu kuis, atau latihan mendengar. Nggak nemu yang pas?",
       bodyStrong: "Bikin sendiri pakai AI",
       bodyEnd: ".",
       tryFree: "Coba gratis — tanpa daftar",
       haveAccount: "Sudah punya akun",
-      footnote: (limit: number) =>
-        `Langsung main tanpa akun · Daftar gratis untuk ${limit} deck AI`,
+      footnote: (limit: number) => `Daftar gratis dapat ${limit} deck AI`,
     },
     heroStack: {
       animate: (name: string) =>
@@ -111,72 +110,55 @@ export const id = {
       },
     },
     how: {
-      title: "Deck bawaan nggak selalu pas. Bikin punyamu sendiri.",
-      body: "Ngumpul sama rekan kerja beda serunya dengan malam santai bareng pasangan. Main kuis tata surya sama anak, atau menguji diri soal AI Engineering, beda lagi. Sebutkan situasi atau topiknya — AI yang menuliskan kartunya, lengkap dengan jawabannya.",
+      eyebrow: "Bikin pakai AI",
+      title: "Nggak ada deck yang pas? Bikin sendiri.",
+      body: "Sebut topiknya, kartunya jadi dalam ±30 detik.",
       steps: [
-        {
-          title: "Pilih jenis & topiknya",
-          description:
-            "Kartu obrolan, kuis pengetahuan, atau latihan mendengar. Sebut mau dimainkan sama siapa dan topiknya — misalnya “baru kenal di kantor baru” atau “tata surya untuk anak SD”.",
-        },
-        {
-          title: "AI menulis kartunya",
-          description:
-            "Sekitar 20–40 detik. Level kesulitannya naik bertahap per bagian, dan kartunya dicek ulang di server — kuis tanpa jawaban yang lengkap langsung dibuang.",
-        },
-        {
-          title: "Langsung dimainkan",
-          description:
-            "Satu HP dioper bergantian, atau main sendiri untuk belajar. Kartu kuis dibalik untuk lihat jawaban, dan skormu tampil di akhir.",
-        },
+        "Sebut topik & lawan mainnya",
+        "AI menulis kartu & jawabannya",
+        "Langsung main",
       ],
-      footnote: (limit: number) =>
-        `Semua akun baru dapat ${limit} deck AI gratis — cukup untuk membuktikan hasilnya sebelum keluar uang.`,
+      footnote: (limit: number) => `${limit} deck AI pertama gratis.`,
+      demoTopicLabel: "Topik",
+      demoTopic: "Tata surya untuk anak SD",
+      demoChips: ["Kuis", "Anak", "10 kartu"],
+      demoCards: [
+        { kind: "Pilihan ganda", content: "Planet mana yang paling dekat dengan Matahari?" },
+        { kind: "Mitos / fakta", content: "Matahari juga sebuah bintang." },
+      ],
+      demoDeck: "Bikinan AI",
     },
     samples: {
-      title: "Kartunya seperti apa?",
-      body: "Satu kartu, satu giliran. Mau seru-seruan, adu pintar, atau belajar fokus — tinggal pilih deck-nya, waktu luang langsung ada isinya.",
+      eyebrow: "Tiga cara main",
+      title: "Satu kartu, satu giliran.",
       groups: [
         {
           emoji: "💬",
           pillar: "Seru-seruan",
           title: "Ngobrol",
-          description:
-            "Talk untuk pertanyaan, Action untuk tantangan kecil. Tanpa jawaban benar-salah — yang penting ceritanya.",
+          description: "Pertanyaan dan tantangan kecil. Nggak ada benar-salah.",
           formats: ["Talk", "Action"],
         },
         {
           emoji: "🧠",
           pillar: "Bermain",
           title: "Kuis",
-          description:
-            "Jawab dulu, lalu balik kartunya untuk lihat jawaban dan penjelasannya. Skor dihitung di akhir.",
-          formats: [
-            "Tanya jawab",
-            "Pilihan ganda",
-            "Mitos / fakta",
-            "Tebak clue",
-            "Urutkan",
-          ],
+          description: "Jawab, balik kartunya, skor di akhir.",
+          formats: ["Tanya jawab", "Pilihan ganda", "Mitos / fakta", "Tebak clue", "Urutkan"],
         },
         {
           emoji: "👂",
           pillar: "Belajar",
           title: "Mendengar",
-          description:
-            "Satu orang membacakan — atau HP yang membacakan — lalu yang lain menjawab. Melatih konsentrasi anak.",
-          formats: ["⭐ sampai ⭐⭐⭐⭐⭐"],
+          description: "HP membacakan, anak menjawab. Melatih fokus.",
+          formats: ["Level ⭐ – ⭐⭐⭐⭐⭐"],
         },
       ] as FormatGroup[],
       tryEyebrow: "Coba langsung",
-      tryTitle: "Ketuk kartunya, lalu balik lagi",
+      tryTitle: "Ketuk kartunya.",
       tryBody:
-        "Ketuk sekali untuk membuka soalnya. Di kartu obrolan, langsung jawab bergantian. Di kartu kuis, pilih jawabanmu — atau balik sekali lagi untuk melihat jawaban dan penjelasannya.",
-      tryHint:
-        "Geser untuk mencoba kartu obrolan, mitos/fakta, pilihan ganda, dan latihan mendengar.",
+        "Ketuk untuk buka, balik lagi untuk lihat jawaban. Geser untuk kartu lainnya.",
       moreTitle: "Contoh kartu lainnya",
-      footnote:
-        "Deck buatan AI mengikuti bentuk yang sama — dengan isi yang mengikuti situasi atau topik yang kamu sebutkan.",
       carouselLabel: "Carousel contoh kartu lainnya",
       carouselPrev: "Geser contoh kartu ke kiri",
       carouselNext: "Geser contoh kartu ke kanan",
@@ -267,88 +249,72 @@ export const id = {
       ] as GameCard[],
     },
     pricing: {
-      title: "Coba dulu, bayar kalau memang kepakai",
-      body: (limit: number) =>
-        `Deck bawaan gratis selamanya. Yang berbayar cuma jatah bikin deck baru pakai AI — itu pun setelah ${limit} deck gratismu habis.`,
+      title: "Mulai gratis",
+      body: "Deck bawaan gratis selamanya. Yang berbayar cuma jatah bikin deck AI.",
       freeTitle: "Gratis",
       freePrice: "Rp 0",
       freeSubtitle: "Semua akun, tanpa kartu kredit",
       freeAiStrong: (limit: number) => `${limit} deck AI`,
       freeAiRest: "buatanmu sendiri",
-      freeDecks:
-        "Deck Pasangan, Anak & Orang Tua, Latihan Mendengar, dan Uji Diri: AI Engineering — semua kartunya",
-      freePlay: "Main sepuasnya — jatah itu untuk bikin, bukan main",
-      freeKeep: "Deck yang sudah jadi tetap milikmu",
+      freeDecks: "Semua deck bawaan",
+      freePlay: "Main sepuasnya, tanpa batas",
       freeCta: "Buat akun gratis",
       topupTitle: (count: number) => `Tambah ${count} deck AI`,
       comingSoon: "Segera hadir",
       price: (amount: string) => `Rp ${amount}`,
-      perDeck: (amount: string) =>
-        `Sekitar Rp ${amount} per deck · bayar sekali, bukan langganan`,
+      perDeck: (amount: string) => `±Rp ${amount} per deck · sekali bayar`,
       topupStrong: (count: number) => `${count} deck AI`,
-      topupRest: "baru, dipakai kapan pun",
-      topupNoExpiry: "Jatahnya tidak hangus — tidak ada masa berlaku",
-      topupAgain: "Bisa top-up lagi kalau habis",
-      topupFailed: "Deck yang gagal dibuat tidak memotong jatah",
+      topupRest: "tambahan",
+      topupNoExpiry: "Bukan langganan, tidak hangus",
+      topupFailed: "Gagal dibuat = tidak terpotong",
       buy: "Beli paket",
       closedTitle: "Pembelian belum dibuka",
-      closedBody: (limit: number) =>
-        `Saat ini paket Gratis sudah mencakup ${limit} deck AI untuk setiap akun.`,
     },
     faq: {
-      title: "Yang biasanya ditanyakan",
+      eyebrow: "FAQ",
+      title: "Masih ragu?",
       items: (limit: number, packCount: number, packPrice: string) => [
         {
-          question: "Bisa dipakai untuk belajar, bukan cuma ngobrol?",
+          question: "Harus install aplikasi?",
           answer:
-            "Bisa. Selain kartu obrolan, ada kartu kuis — tanya jawab, pilihan ganda, mitos/fakta, tebak clue, dan urutkan — yang jawabannya ada di balik kartu, plus latihan mendengar untuk anak. Pilihan ganda dan mitos/fakta dinilai otomatis, sisanya kamu nilai sendiri, dan skornya muncul di akhir. Topiknya bebas: dari tata surya sampai AI Engineering.",
+            "Tidak. Buka di browser HP, lalu oper HP-nya bergantian. Yang lain tidak perlu daftar.",
+        },
+        {
+          question: "Bisa untuk belajar, bukan cuma ngobrol?",
+          answer:
+            "Bisa. Ada kartu kuis dengan topik bebas, dari tata surya sampai AI Engineering, plus latihan mendengar untuk anak.",
         },
         {
           question: "Jawaban kuis buatan AI pasti benar?",
           answer:
-            "AI diminta hanya menulis fakta yang awet dan bisa dicek, dan kuis yang jawabannya tidak lengkap otomatis dibuang. Tapi AI tetap bisa keliru — untuk materi penting seperti bahan ujian, cek ulang jawabannya, terutama di topik yang cepat berubah.",
+            "Kuis tanpa jawaban lengkap otomatis dibuang, tapi AI tetap bisa keliru. Untuk bahan ujian, cek ulang jawabannya.",
         },
         {
-          question: `Jatah ${limit} deck itu untuk main atau untuk bikin?`,
+          question: `Jatah ${limit} deck itu untuk main atau bikin?`,
           answer:
-            "Untuk bikin. Sekali deck-nya jadi, kartunya bisa dimainkan berkali-kali, kapan pun, tanpa batas — sendirian maupun ramai-ramai.",
-        },
-        {
-          question: "Kalau hasil AI-nya kurang cocok, jatahnya hangus?",
-          answer:
-            "Deck yang gagal dibuat — misalnya layanan AI-nya bermasalah — tidak memotong jatah sama sekali. Tapi deck yang berhasil jadi tetap terhitung meski isinya kurang kamu suka, jadi sebutkan konteksnya sespesifik mungkin sebelum menekan generate.",
+            "Untuk bikin. Deck yang sudah jadi bisa dimainkan tanpa batas. Deck yang gagal dibuat tidak memotong jatah.",
         },
         {
           question: "Deck buatanku bisa dilihat orang lain?",
-          answer:
-            "Tidak. Deck AI cuma muncul di akunmu, tidak masuk toko, dan tidak dibagikan ke pemain lain.",
+          answer: "Tidak. Deck AI cuma ada di akunmu.",
         },
         {
-          question: "Bisa bikin deck dalam bahasa Inggris?",
+          question: "Bisa bikin deck bahasa Inggris?",
           answer:
-            "Bisa. Di formulir bikin deck ada pilihan bahasa kartu — Indonesia atau Inggris — terlepas dari bahasa aplikasinya.",
-        },
-        {
-          question: "Berapa lama bikinnya?",
-          answer:
-            "Sekitar 20–40 detik untuk satu deck utuh — biasanya 2–5 bagian, masing-masing 5–15 kartu, sesuai yang kamu minta.",
-        },
-        {
-          question: "Harus install aplikasi?",
-          answer:
-            "Tidak. Buka di browser HP, langsung main. Satu HP dioper bergantian, jadi yang lain tidak perlu ikut daftar. Kartu mendengar bahkan bisa dibacakan oleh HP-nya sendiri.",
+            "Bisa. Pilih bahasa kartunya di formulir bikin deck — Indonesia atau Inggris.",
         },
         {
           question: "Kalau jatah gratisnya habis?",
-          answer: `Deck yang sudah jadi tetap bisa dimainkan selamanya, dan deck bawaan tetap terbuka. Untuk bikin deck baru, nanti ada paket tambahan ${packCount} deck seharga Rp ${packPrice} — sekali bayar, bukan langganan.`,
+          answer: `Deck yang sudah jadi tetap bisa dimainkan. Nanti ada paket ${packCount} deck seharga Rp ${packPrice}, sekali bayar.`,
         },
       ],
     },
     finalCta: {
-      title: "Waktu luang berikutnya, jangan krik-krik lagi",
+      title: "Mulai dari satu kartu.",
       body: (limit: number) =>
-        `Bermain, belajar, dan seru-seruan bareng — mulai dari satu kartu. Pilih deck bawaannya, atau bikin sendiri dari situasi atau topik apa pun; ${limit} deck AI pertamamu gratis.`,
-      button: "Bikin akun gratis",
+        `Main sekarang tanpa daftar, atau bikin akun untuk ${limit} deck AI gratis.`,
+      tryButton: "Coba gratis",
+      button: "Bikin akun",
     },
     footer: (year: number) => `© ${year} FlipCard. Dibuat dengan cinta.`,
   },
@@ -452,9 +418,37 @@ export const id = {
     start: (count: number) => `Mulai Main (${count} kartu)`,
   },
 
+  /** Jenis deck (`categories.mode`): label tab & petunjuk singkatnya. */
+  modes: {
+    ngobrol: { label: "Ngobrol", hint: "Pertanyaan yang dijawab dengan cerita." },
+    tantangan: { label: "Tantangan", hint: "Tantangan yang langsung dikerjakan bareng." },
+    kuis: { label: "Kuis", hint: "Uji pengetahuan, jawabannya di balik kartu." },
+    mendengar: { label: "Mendengar", hint: "Satu membacakan, yang lain menjawab." },
+  } as Record<DeckMode, { label: string; hint: string }>,
+
   home: {
-    title: "Pilih Kategori",
-    subtitle: "Mau main kartu apa hari ini?",
+    title: "Mau main apa hari ini?",
+    subtitle: "Lanjutkan yang tadi, cari deck, atau bikin sendiri.",
+    recent: "Terakhir dimainkan",
+    browse: "Jelajahi deck",
+    modeTabs: "Jenis deck",
+    all: "Semua",
+    search: "Cari deck…",
+    searchLabel: "Cari deck",
+    clearSearch: "Hapus pencarian",
+    filterGroup: "Saring deck",
+    filterAll: "Semua",
+    filterFree: "Gratis",
+    filterMine: "Buatanku",
+    filterLocked: "Terkunci",
+    collection: "Koleksi FlipCard",
+    continue: "Lanjutkan main",
+    continueProgress: (current: number, total: number) =>
+      `${current}/${total} kartu`,
+    noMatch: (query: string) => `Belum ada deck yang cocok dengan “${query}”.`,
+    noneInFilter: "Belum ada deck di pilihan ini.",
+    showAll: "Tampilkan semua deck",
+    makeWithAi: "Bikin sendiri pakai AI",
     loading: "Mengambil daftar deck",
     errorTitle: "Daftar deck belum bisa dimuat",
     errorDescription:
@@ -501,8 +495,13 @@ export const id = {
       "Fitur bikin deck dengan AI lagi tidak aktif untuk akunmu. Deck AI yang sudah terlanjur dibuat tetap bisa dimainkan.",
     playExistingFirst: "Main deck yang ada dulu",
     form: {
+      modeLegend: "Mau main apa?",
+      modeGroup: "Jenis deck",
+      withChallenges: "Selipkan tantangan — sekitar sepertiga kartu.",
       audience: "Mau dimainkan sama siapa?",
       audienceHint: "Menentukan sudut pandang dan gaya pertanyaannya.",
+      audienceKnowledge: "Siapa yang main?",
+      audienceKnowledgeHint: "Menentukan kosakata dan tingkat soalnya.",
       cardLanguage: "Bahasa kartu",
       cardLanguageHint:
         "Bahasa isi deck. Tidak harus sama dengan bahasa aplikasi.",
@@ -551,6 +550,13 @@ export const id = {
       { value: "belajar-sendiri", label: "Diri sendiri — belajar & uji kemampuan" },
       { value: "lainnya", label: "Lainnya (jelaskan di konteks)" },
     ] as Option[],
+    /** Label pengganti di jenis deck tertentu, misal "Tim / kelas" untuk kuis. */
+    audienceModeLabels: {
+      sahabat: { kuis: "Bareng teman", mendengar: "Bareng teman" },
+      "anak-orang-tua": { mendengar: "Anak — dibacakan orang tua" },
+      "rekan-kerja": { kuis: "Tim / kelas", mendengar: "Tim / kelas" },
+      "belajar-sendiri": { kuis: "Sendiri — belajar & uji kemampuan" },
+    } as Record<string, Partial<Record<DeckMode, string>>>,
     tones: [
       { value: "santai", label: "Santai & ringan" },
       { value: "romantis", label: "Romantis & hangat" },
@@ -568,33 +574,6 @@ export const id = {
       sedang: "Sedang — ⭐⭐ sampai ⭐⭐⭐⭐",
       dalam: "Menantang — naik bertahap sampai ⭐⭐⭐⭐⭐",
     } as Record<string, string>,
-    cardMixes: [
-      {
-        value: "campuran",
-        label: "Campuran — pertanyaan & tantangan",
-        hint: "Sekitar sepertiga kartu berupa tantangan.",
-      },
-      {
-        value: "talk",
-        label: "Pertanyaan saja",
-        hint: "Semua kartu dijawab dengan cerita. Fokus ngobrol.",
-      },
-      {
-        value: "action",
-        label: "Tantangan saja",
-        hint: "Semua kartu berupa tantangan yang langsung dikerjakan — tidak ada yang perlu dijawab.",
-      },
-      {
-        value: "kuis",
-        label: "Kuis pengetahuan — ada jawabannya",
-        hint: "Campuran tanya jawab, pilihan ganda, mitos/fakta, tebak clue, dan urutkan. Jawaban ada di balik kartu.",
-      },
-      {
-        value: "mendengar",
-        label: "Latihan mendengar & konsentrasi",
-        hint: "Satu orang membacakan teks pendek, yang lain menjawab pertanyaannya. Level naik bertahap.",
-      },
-    ] as Option[],
     placeholders: {
       pasangan: {
         deckName: "Misal: Malam Jumat Berdua",
@@ -715,36 +694,59 @@ export const id = {
 
   trial: {
     backHome: "Beranda",
-    title: "Coba dulu, tanpa daftar",
-    intro:
-      "Pilih deck, ketuk kartunya, lalu mulai main — ngobrol, kuis, atau latihan mendengar.",
-    remainingLead: "Kamu bisa mencoba",
-    remainingStrong: (count: number) => `${count} deck lagi`,
-    remainingRest: "sebelum perlu akun.",
-    spent: "Jatah coba sudah habis — deck yang tadi tetap bisa diulang.",
-    tried: " · sudah dicoba",
-    locked: "Terkunci",
+    titleGuest: "Coba semua deck, gratis",
+    titleSignedIn: "Deck coba, terbuka penuh",
+    introSignedIn:
+      "Kamu sudah masuk, jadi semua kartu di sini bisa dimainkan sampai habis.",
+    introLead: "Pilih jenisnya, lalu mainkan",
+    introStrong: (count: number) => `${count} kartu pertama`,
+    introRest: "tiap deck tanpa daftar. Suka? Masuk untuk lanjut sampai habis.",
+    modeTabs: "Jenis deck",
+    freeUsedUp: "Gratisnya habis",
+    freeCount: (count: number) => `${count} kartu gratis`,
+    lockedMore: (count: number) => `${count} lagi`,
+    freeMeter: (used: number, free: number) =>
+      `${used} dari ${free} kartu gratis dimainkan`,
     playAgain: "Main lagi",
     play: "Main",
-    convinced: "Sudah yakin?",
+    makeWithAi: "Bikin deck sendiri pakai AI",
+    ladderTitle: "Dari coba sampai punya deck sendiri",
+    ladderTryTitle: "Coba tanpa akun",
+    ladderTryTag: "Kamu di sini",
+    ladderTryPoints: (free: number) => [
+      `${free} kartu pertama tiap deck`,
+      "Semua jenis: ngobrol, tantangan, kuis, mendengar",
+    ],
+    ladderFreeTitle: "Akun gratis",
+    ladderFreeTag: "Gratis",
+    ladderFreePoints: (limit: number) => [
+      "Semua kartu terbuka, lanjut dari kartu terakhir",
+      `${limit} deck buatanmu sendiri pakai AI`,
+    ],
+    ladderTopupTitle: "Top-up deck AI",
+    ladderTopupSoon: "Segera hadir",
+    ladderPrice: (price: string) => `Rp${price}`,
+    ladderTopupPoints: (count: number, price: string) => [
+      `+${count} deck AI seharga Rp${price}`,
+      "Topik apa saja, untuk siapa saja",
+    ],
     createAccount: "Buat akun gratis",
-    signIn: "masuk",
-    meter: (used: number, limit: number) =>
-      `${used} dari ${limit} deck coba terpakai`,
+    signIn: "Masuk",
     deckDone: (name: string) => `Deck ${name} selesai!`,
-    moreLeft: (count: number) =>
-      `Masih ada ${count} deck lagi yang bisa kamu coba tanpa akun.`,
-    continuePitch: (limit: number) =>
-      `Mau lanjut? Buat akun gratis untuk membuka deck lengkap dan bikin ${limit} deck sendiri pakai AI.`,
+    doneSignedIn: (limit: number) =>
+      `Mau deck dengan topik kalian sendiri? Bikin pakai AI — akunmu punya jatah ${limit} deck gratis.`,
+    doneGuest: "Masih banyak deck lain yang bisa kamu coba gratis.",
+    makeOwn: "Bikin deck sendiri",
     tryAnother: "Coba deck lain",
-    seeOthers: "Lihat deck lain",
-    mode: "Mode coba",
-    gateTitle: "Seru, kan? Lanjut pakai akun",
-    gateTried: (count: number) => `Kamu sudah mencoba ${count} deck. `,
-    gateBody: (limit: number) =>
-      `Buat akun gratis untuk membuka semua deck bawaan lengkap dan bikin ${limit} deck sendiri pakai AI.`,
-    gateLogin: "Sudah punya akun? Masuk",
-    gateLater: "Nanti dulu",
+    freeBadge: (current: number, free: number) => `${current}/${free} gratis`,
+    lockTitle: (next: number) => `Seru, kan? Lanjut dari kartu ke-${next}`,
+    lockRemaining: (count: number) => `${count} kartu lagi terkunci`,
+    lockBody: (deck: string, limit: number) =>
+      `Masuk gratis untuk membuka sisa deck ${deck} — plus semua deck lain tanpa batas, dan ${limit} deck buatanmu sendiri pakai AI.`,
+    lockScoreLead: "Sejauh ini",
+    lockScoreRest: "jawaban benar",
+    lockEmail: "Masuk pakai email",
+    lockRegister: "Daftar",
   },
 };
 

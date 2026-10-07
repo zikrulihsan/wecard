@@ -25,20 +25,23 @@ import { useT } from "@/lib/i18n";
 export function Pricing() {
   const p = useT().landing.pricing;
   return (
-    <section id="harga" className="bg-white px-6 py-20">
+    <section
+      id="harga"
+      className="bg-gradient-to-b from-rose-50 via-orange-50/60 to-white px-6 py-20"
+    >
       <div className="mx-auto max-w-4xl">
         <div className="mx-auto max-w-2xl space-y-4 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             {p.title}
           </h2>
           <p className="text-lg leading-relaxed text-neutral-600">
-            {p.body(AI_GENERATION_LIMIT)}
+            {p.body}
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           {/* Gratis */}
-          <div className="flex min-w-0 flex-col rounded-2xl border border-neutral-200 p-6 sm:p-8">
+          <div className="flex min-w-0 flex-col rounded-3xl bg-white p-6 shadow-sm ring-1 ring-neutral-200 sm:p-8">
             <h3 className="font-semibold">{p.freeTitle}</h3>
             <p className="mt-3 text-4xl font-bold tracking-tight">{p.freePrice}</p>
             <p className="mt-1 text-sm text-neutral-500">
@@ -54,7 +57,6 @@ export function Pricing() {
               </Item>
               <Item>{p.freeDecks}</Item>
               <Item>{p.freePlay}</Item>
-              <Item>{p.freeKeep}</Item>
             </ul>
 
             <div className="mt-8 pt-2">
@@ -68,7 +70,7 @@ export function Pricing() {
           </div>
 
           {/* Top-up */}
-          <div className="relative flex min-w-0 flex-col rounded-2xl border-2 border-pink-300 bg-gradient-to-b from-pink-50/70 to-white p-6 sm:p-8">
+          <div className="relative flex min-w-0 flex-col rounded-3xl bg-white p-6 shadow-xl shadow-pink-500/10 ring-2 ring-pink-300 sm:p-8">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-semibold">
                 {p.topupTitle(AI_TOPUP_PACK.generations)}
@@ -95,7 +97,6 @@ export function Pricing() {
                 {p.topupRest}
               </Item>
               <Item>{p.topupNoExpiry}</Item>
-              <Item>{p.topupAgain}</Item>
               <Item>{p.topupFailed}</Item>
             </ul>
 
@@ -111,9 +112,6 @@ export function Pricing() {
                 >
                   <p className="text-sm font-semibold text-neutral-800">
                     {p.closedTitle}
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-neutral-500">
-                    {p.closedBody(AI_GENERATION_LIMIT)}
                   </p>
                 </div>
               )}

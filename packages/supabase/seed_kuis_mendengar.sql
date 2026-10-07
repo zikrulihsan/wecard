@@ -4,7 +4,7 @@
 --      sampai cerita pendek dengan pertanyaan tersirat
 --   2. Uji Diri: AI Engineering — kuis berjawaban, 3 subtopik
 --
--- WAJIB jalankan migration 00006_card_formats.sql lebih dulu,
+-- WAJIB jalankan migration 00006_card_formats.sql (lalu 00007) lebih dulu,
 -- di eksekusi terpisah (nilai enum baru belum bisa dipakai di
 -- transaksi yang sama dengan pembuatannya).
 --
@@ -13,8 +13,8 @@
 -- ============================================================
 
 -- Latihan Mendengar
-INSERT INTO categories (id, slug, name, description, is_free, sort_order, theme) VALUES
-  ('33333333-3333-3333-3333-333333333333', 'latihan-mendengar', 'Latihan Mendengar', 'Latih konsentrasi dan daya simak anak. Satu orang membacakan, yang lain menjawab — level naik dari satu kalimat sederhana sampai cerita pendek.', true, 3, 'sky');
+INSERT INTO categories (id, slug, name, description, is_free, sort_order, theme, mode) VALUES
+  ('33333333-3333-3333-3333-333333333333', 'latihan-mendengar', 'Latihan Mendengar', 'Latih konsentrasi dan daya simak anak. Satu orang membacakan, yang lain menjawab — level naik dari satu kalimat sederhana sampai cerita pendek.', true, 3, 'sky', 'mendengar');
 INSERT INTO sections (id, category_id, slug, name, description, icon, sort_order) VALUES
   ('cccc0001-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333', 'level-1', 'Level 1 — Siapa & Apa', 'Satu kalimat, satu tokoh, satu kejadian.', '1️⃣', 1),
   ('cccc0002-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333333', 'level-2', 'Level 2 — Di Mana & Kapan', 'Ada keterangan tempat dan waktu.', '2️⃣', 2),
@@ -39,8 +39,8 @@ INSERT INTO cards (section_id, card_type, difficulty, level, content_text, detai
   ('cccc0005-0000-0000-0000-000000000005', 'listening', 'hard', 5, 'Ibu menaruh kue di meja untuk tamu. Adik melihatnya dan ingin mengambil satu. Kakak berkata, "Tunggu dulu, tanya Ibu." Adik pun bertanya. Ibu tersenyum dan memberi Adik satu kue dari dapur.', '{"questions": [{"question": "Untuk siapa kue di meja itu?", "answer": "Untuk tamu"}, {"question": "Apa yang dilakukan Adik setelah dinasihati Kakak?", "answer": "Bertanya dulu ke Ibu"}, {"question": "Menurutmu, kenapa Ibu memberi kue dari dapur, bukan dari meja?", "answer": "Karena kue di meja untuk tamu"}], "explanation": "Pertanyaan ketiga melatih menyimpulkan dari detail di awal cerita."}'::jsonb, 3, false);
 
 -- Uji Diri: AI Engineering
-INSERT INTO categories (id, slug, name, description, is_free, sort_order, theme) VALUES
-  ('44444444-4444-4444-4444-444444444444', 'uji-diri-ai-engineering', 'Uji Diri: AI Engineering', 'Kuis untuk menguji pemahaman membangun aplikasi berbasis LLM — dari konsep dasar, RAG, sampai agent dan evaluasi. Jawab dulu, lalu balik kartunya.', true, 4, 'indigo');
+INSERT INTO categories (id, slug, name, description, is_free, sort_order, theme, mode) VALUES
+  ('44444444-4444-4444-4444-444444444444', 'uji-diri-ai-engineering', 'Uji Diri: AI Engineering', 'Kuis untuk menguji pemahaman membangun aplikasi berbasis LLM — dari konsep dasar, RAG, sampai agent dan evaluasi. Jawab dulu, lalu balik kartunya.', true, 4, 'indigo', 'kuis');
 INSERT INTO sections (id, category_id, slug, name, description, icon, sort_order) VALUES
   ('dddd0001-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'dasar-llm', 'Dasar LLM', 'Token, context window, prompt, dan parameter sampling.', '🧩', 1),
   ('dddd0002-0000-0000-0000-000000000002', '44444444-4444-4444-4444-444444444444', 'rag', 'RAG & Retrieval', 'Membuat model menjawab dari dokumenmu sendiri.', '📚', 2),

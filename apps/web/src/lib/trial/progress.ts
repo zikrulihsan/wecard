@@ -1,41 +1,51 @@
 import { useCallback, useSyncExternalStore } from "react";
 
-const DEFAULT_TRIAL_DECK_LIMIT = 2;
+const DEFAULT_TRIAL_FREE_CARDS = 4;
 
 /**
- * Berapa deck berbeda yang boleh dimainkan sebelum diminta daftar/masuk.
- * Deck yang sudah pernah dibuka tetap bisa diulang — yang dibatasi hanya
- * membuka deck baru.
+ * Berapa kartu pertama tiap deck yang boleh dimainkan tanpa akun. Semua deck
+ * coba bisa dibuka; yang dikunci hanya kartu sesudahnya, jadi orang sempat
+ * merasakan setiap jenis deck sebelum diminta masuk.
  *
- * Diatur lewat `VITE_TRIAL_DECK_LIMIT`. Nilainya ditanam saat build, jadi
- * mengubahnya di hosting perlu redeploy. Kosong atau tidak valid → bawaan 2.
+ * Diatur lewat `VITE_TRIAL_FREE_CARDS`. Nilainya ditanam saat build, jadi
+ * mengubahnya di hosting perlu redeploy. Kosong atau tidak valid → bawaan 4.
  */
-export const TRIAL_DECK_LIMIT = parseLimit(import.meta.env.VITE_TRIAL_DECK_LIMIT);
+export const TRIAL_FREE_CARDS = parseLimit(import.meta.env.VITE_TRIAL_FREE_CARDS);
 
 function parseLimit(value: unknown): number {
   const parsed = Number(value);
-  return typeof value === "string" && value.trim() !== "" && Number.isInteger(parsed) && parsed >= 0
+  return typeof value === "string" && value.trim() !== "" && Number.isInteger(parsed) && parsed > 0
     ? parsed
-    : DEFAULT_TRIAL_DECK_LIMIT;
+    : DEFAULT_TRIAL_FREE_CARDS;
 }
 
-const STORAGE_KEY = "flipcard:trial-decks";
+/** Banyak kartu yang terbuka tanpa akun untuk deck berisi `total` kartu. */
+export function freeCardCount(total: number): number {
+  return Math.min(total, TRIAL_FREE_CARDS);
+}
+
+const STORAGE_KEY = "flipcard:trial-progress";
 const listeners = new Set<() => void>();
 
 function read(): string {
   try {
-    return localStorage.getItem(STORAGE_KEY) ?? "[]";
+    return localStorage.getItem(STORAGE_KEY) ?? "{}";
   } catch {
-    return "[]";
+    return "{}";
   }
 }
 
-function parse(raw: string): string[] {
+function parse(raw: string): Record<string, number> {
   try {
     const value: unknown = JSON.parse(raw);
-    return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(
+      Object.entries(value).filter(
+        (entry): entry is [string, number] => typeof entry[1] === "number" && entry[1] > 0
+      )
+    );
   } catch {
-    return [];
+    return {};
   }
 }
 
@@ -51,30 +61,25 @@ function subscribe(listener: () => void) {
   };
 }
 
-/** Slug deck yang sudah pernah dibuka di perangkat ini. */
-export function useTriedDecks() {
+/**
+ * Kartu terjauh yang sudah dilihat per deck coba di perangkat ini. Dipakai
+ * halaman coba untuk menunjukkan berapa kartu gratis yang sudah dimainkan.
+ */
+export function useTrialProgress() {
   // Snapshot berupa string mentah supaya identitasnya stabil antar-render.
-  const raw = useSyncExternalStore(subscribe, read, () => "[]");
-  const tried = parse(raw);
+  const raw = useSyncExternalStore(subscribe, read, () => "{}");
+  const seen = parse(raw);
 
-  const markTried = useCallback((slug: string) => {
+  const markSeen = useCallback((slug: string, count: number) => {
     const current = parse(read());
-    if (current.includes(slug)) return;
+    if ((current[slug] ?? 0) >= count) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...current, slug]));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, [slug]: count }));
     } catch {
       // Penyimpanan diblokir (mode privat) — biarkan tetap bisa main.
     }
     listeners.forEach((listener) => listener());
   }, []);
 
-  const canOpen = (slug: string) =>
-    tried.includes(slug) || tried.length < TRIAL_DECK_LIMIT;
-
-  return {
-    tried,
-    remaining: Math.max(TRIAL_DECK_LIMIT - tried.length, 0),
-    canOpen,
-    markTried,
-  };
+  return { seen, markSeen };
 }

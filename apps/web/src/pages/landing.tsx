@@ -12,9 +12,12 @@ import { useT } from "@/lib/i18n";
  * Halaman marketing.
  *
  * Urutannya mengikuti pertanyaan yang muncul di kepala pengunjung: ini apa
- * (Hero) → kenapa aku butuh dan bagaimana caranya (HowItWorks) → kartunya
- * beneran bagus? (SampleCards) → berapa harganya (Pricing) → tapi bagaimana
- * kalau… (Faq) → ya sudah, coba (CTA).
+ * (Hero) → kartunya seperti apa? (SampleCards) → kalau deck bawaannya nggak
+ * pas? (HowItWorks) → berapa harganya (Pricing) → tapi bagaimana kalau… (Faq)
+ * → ya sudah, coba (CTA).
+ *
+ * Latar tiap bagian sengaja berganti (terang, gelap, hangat, putih, pink) dan
+ * judulnya dibuat pendek — halaman ini dibaca sambil lalu di HP.
  *
  * Semua bagiannya statis dan tanpa state, jadi rute ini tetap dirender saat
  * build — halaman pertama yang dilihat orang tidak boleh menunggu server.
@@ -24,27 +27,35 @@ export default function LandingPage() {
   return (
     <main className="flex-1">
       <Hero />
-      <HowItWorks />
       <SampleCards />
+      <HowItWorks />
       <Pricing />
       <Faq />
 
-      <section className="bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-20 text-white">
-        <div className="mx-auto max-w-2xl space-y-6 text-center">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+      <section className="relative overflow-hidden bg-gradient-to-br from-pink-500 via-rose-500 to-orange-400 px-6 py-20 text-white">
+        <div className="absolute -right-16 -top-16 size-72 rotate-12 rounded-[2.5rem] bg-white/10" />
+        <div className="absolute -bottom-20 -left-10 size-64 -rotate-12 rounded-[2.5rem] bg-white/10" />
+        <div className="relative mx-auto max-w-2xl space-y-6 text-center">
+          <h2 className="text-3xl font-bold tracking-tight md:text-5xl">
             {t.landing.finalCta.title}
           </h2>
           <p className="text-lg text-pink-50">
             {t.landing.finalCta.body(AI_GENERATION_LIMIT)}
           </p>
-          <div className="pt-2">
+          <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
             <Link
-              to="/register"
+              to="/coba"
               className={buttonVariants({
                 size: "lg",
                 variant: "secondary",
                 className: "h-12 rounded-full px-8 text-base",
               })}
+            >
+              {t.landing.finalCta.tryButton}
+            </Link>
+            <Link
+              to="/register"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/60 px-8 text-base font-semibold text-white transition hover:bg-white/10"
             >
               {t.landing.finalCta.button}
             </Link>
