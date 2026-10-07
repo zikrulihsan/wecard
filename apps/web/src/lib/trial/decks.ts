@@ -4,6 +4,7 @@ import type {
   CardDifficulty,
   CardLevel,
   CardType,
+  DeckMode,
   DeckTheme,
   GameCard,
 } from "@flipcard/types";
@@ -14,11 +15,15 @@ import { difficultyForLevel } from "@/lib/cards/formats";
  *
  * Sengaja ditulis statis di sini, bukan dibaca dari Supabase: pengunjung yang
  * belum login tidak boleh bergantung pada policy baca tabel, dan halaman coba
- * harus langsung jalan meski server sedang lambat. Isinya pendek (5–8 kartu)
- * — cukup untuk merasakan alurnya, bukan pengganti deck lengkap.
+ * harus langsung jalan meski server sedang lambat. Isinya pendek (5–8 kartu).
+ * Tamu memainkan beberapa kartu pertama (`TRIAL_FREE_CARDS`), jadi urutan di
+ * sini adalah urutan main: taruh kartu yang paling menggambarkan deck di depan.
+ * Tiap jenis deck (`mode`) sebaiknya punya paling tidak satu deck coba.
  */
 export type TrialDeck = {
   slug: string;
+  /** Jenis deck — halaman coba memisahkan deck per jenis. */
+  mode: DeckMode;
   name: string;
   emoji: string;
   description: string;
@@ -56,6 +61,7 @@ function toGameCard(raw: RawCard, slug: string, name: string, index: number): Ga
 
 function deck(
   slug: string,
+  mode: DeckMode,
   name: string,
   emoji: string,
   description: string,
@@ -64,6 +70,7 @@ function deck(
 ): TrialDeck {
   return {
     slug,
+    mode,
     name,
     emoji,
     description,
@@ -75,6 +82,7 @@ function deck(
 export const TRIAL_DECKS: TrialDeck[] = [
   deck(
     "kenalan",
+    "ngobrol",
     "Kenalan Baru",
     "👋",
     "Pecah suasana sama orang yang baru ketemu — ringan, nggak kepo berlebihan.",
@@ -92,6 +100,7 @@ export const TRIAL_DECKS: TrialDeck[] = [
   ),
   deck(
     "kuis-pengetahuan",
+    "kuis",
     "Kuis Pengetahuan",
     "🧠",
     "Uji wawasan bareng — jawab dulu, lalu balik kartu untuk lihat jawabannya.",
@@ -134,6 +143,7 @@ export const TRIAL_DECKS: TrialDeck[] = [
   ),
   deck(
     "latihan-mendengar",
+    "mendengar",
     "Latihan Mendengar",
     "👂",
     "Satu orang membacakan, yang lain menyimak lalu menjawab. Level naik dari ⭐ sampai ⭐⭐⭐⭐⭐.",
@@ -179,6 +189,7 @@ export const TRIAL_DECKS: TrialDeck[] = [
   ),
   deck(
     "sahabat",
+    "ngobrol",
     "Sahabat",
     "🤝",
     "Buat tongkrongan yang udah akrab tapi ngobrolnya itu-itu aja.",
@@ -196,6 +207,7 @@ export const TRIAL_DECKS: TrialDeck[] = [
   ),
   deck(
     "keluarga",
+    "ngobrol",
     "Keluarga",
     "🏡",
     "Obrolan di meja makan yang lebih dari sekadar \"gimana sekolah/kerjaan?\"",
@@ -213,6 +225,7 @@ export const TRIAL_DECKS: TrialDeck[] = [
   ),
   deck(
     "pasangan",
+    "ngobrol",
     "Pasangan",
     "💞",
     "Buat date night atau ngobrol santai sebelum tidur.",
@@ -230,6 +243,7 @@ export const TRIAL_DECKS: TrialDeck[] = [
   ),
   deck(
     "rekan-kerja",
+    "ngobrol",
     "Rekan Kerja",
     "💼",
     "Ice breaker buat tim — aman dibawa ke rapat atau makan siang bareng.",
@@ -243,6 +257,132 @@ export const TRIAL_DECKS: TrialDeck[] = [
       ["action", "easy", "Sebutkan satu bantuan rekan di sini yang belum sempat kamu apresiasi"],
       ["talk", "medium", "Cara kerja seperti apa yang bikin kamu paling produktif?"],
       ["talk", "easy", "Kebiasaan kecil apa yang bikin harimu di kantor lebih enak?"],
+    ]
+  ),
+  deck(
+    "tantangan-tongkrongan",
+    "tantangan",
+    "Tantangan Tongkrongan",
+    "🔥",
+    "Langsung dikerjakan, bukan dijawab — biar nongkrong nggak cuma scroll HP.",
+    "amber",
+    [
+      ["action", "easy", "Tirukan suara hewan favoritmu sampai ada yang bisa menebak"],
+      ["action", "easy", "Ceritakan kejadian hari ini dalam 3 kata saja — yang lain menebak ceritanya"],
+      ["action", "easy", "Peragakan film terkenal tanpa bicara, yang lain menebak judulnya"],
+      ["action", "medium", "Pilih satu orang di sini, lalu puji dia selama 20 detik tanpa berhenti"],
+      ["action", "easy", "Nyanyikan reff lagu yang lagi viral dengan gaya dangdut"],
+      ["action", "medium", "Bacakan pesan terakhir yang kamu kirim — boleh disensor seperlunya"],
+      ["action", "easy", "Buat pose foto grup dalam 10 detik, lalu foto beneran"],
+      ["action", "medium", "Kasih tahu satu kebiasaan aneh kamu yang belum pernah diceritakan ke siapa pun di sini"],
+    ]
+  ),
+  deck(
+    "tantangan-keluarga",
+    "tantangan",
+    "Tantangan Keluarga",
+    "🎲",
+    "Tantangan ringan buat main bareng anak, kakak, adik, sampai kakek-nenek.",
+    "emerald",
+    [
+      ["action", "easy", "Peluk anggota keluarga yang paling dekat denganmu selama 5 detik"],
+      ["action", "easy", "Tirukan cara bicara salah satu anggota keluarga — yang lain menebak siapa"],
+      ["action", "easy", "Sebutkan 5 masakan rumah secepat mungkin"],
+      ["action", "medium", "Ceritakan kenangan masa kecil dalam 30 detik, tanpa jeda"],
+      ["action", "easy", "Buat gerakan tari 4 langkah, lalu semua orang menirukannya"],
+      ["action", "easy", "Gambar wajah orang di sebelahmu dengan mata tertutup"],
+      ["action", "medium", "Ucapkan satu hal yang kamu kagumi dari tiap orang di sini"],
+      ["action", "easy", "Kalahkan siapa saja dalam suit jari — yang kalah memilih kartu berikutnya"],
+    ]
+  ),
+  deck(
+    "kuis-nusantara",
+    "kuis",
+    "Kuis Nusantara",
+    "🗺️",
+    "Seberapa kenal kamu sama Indonesia? Dari makanan, budaya, sampai peta.",
+    "emerald",
+    [
+      ["multiple_choice", 1, "Rendang berasal dari daerah mana?", {
+        options: ["Sumatra Barat", "Jawa Tengah", "Sulawesi Selatan", "Bali"],
+        correctIndex: 0,
+        explanation: "Rendang adalah masakan Minangkabau dari Sumatra Barat. Dimasak berjam-jam sampai bumbunya kering dan meresap.",
+      }],
+      ["true_false", 2, "Komodo hanya hidup liar di Indonesia.", {
+        isTrue: true,
+        explanation: "Komodo liar hanya ada di beberapa pulau di Nusa Tenggara Timur, seperti Pulau Komodo, Rinca, dan Flores.",
+      }],
+      ["quiz", 2, "Apa nama alat musik dari bambu asal Jawa Barat yang dimainkan dengan digoyangkan?", {
+        answer: "Angklung",
+        explanation: "Angklung diakui UNESCO sebagai Warisan Budaya Takbenda sejak 2010.",
+      }],
+      ["clue", 3, "Aku ini apa?", {
+        clues: [
+          "Aku dibuat dengan lilin malam dan canting.",
+          "Motifku bisa berbeda di tiap kota, dari Pekalongan sampai Solo.",
+          "Tanggal 2 Oktober diperingati sebagai hariku.",
+        ],
+        answer: "Batik",
+      }],
+      ["ordering", 3, "Urutkan pulau-pulau ini dari barat ke timur.", {
+        items: ["Sumatra", "Jawa", "Bali", "Sulawesi", "Papua"],
+      }],
+      ["quiz", 4, "Selat apa yang memisahkan Pulau Jawa dan Pulau Sumatra?", {
+        answer: "Selat Sunda",
+        explanation: "Di Selat Sunda ada Gunung Anak Krakatau, yang muncul dari laut setelah letusan besar Krakatau tahun 1883.",
+      }],
+    ]
+  ),
+  deck(
+    "dengar-cerita",
+    "mendengar",
+    "Dengar & Ceritakan",
+    "📖",
+    "Cerita pendek sehari-hari. Simak sekali, lalu jawab tanpa mengintip.",
+    "violet",
+    [
+      ["listening", 1, "Ayah membeli roti di toko dekat rumah.", {
+        questions: [
+          { question: "Siapa yang membeli roti?", answer: "Ayah" },
+          { question: "Di mana Ayah membeli roti?", answer: "Di toko dekat rumah" },
+        ],
+      }],
+      ["listening", 2, "Setiap Minggu pagi, Tono dan adiknya bersepeda ke taman kota.", {
+        questions: [
+          { question: "Kapan Tono bersepeda?", answer: "Setiap Minggu pagi" },
+          { question: "Dengan siapa Tono bersepeda?", answer: "Dengan adiknya" },
+          { question: "Ke mana mereka pergi?", answer: "Ke taman kota" },
+        ],
+      }],
+      ["listening", 3, "Lina lupa membawa bekal, jadi teman sebangkunya membagi setengah nasi gorengnya.", {
+        questions: [
+          { question: "Apa yang dilupakan Lina?", answer: "Bekal" },
+          { question: "Siapa yang menolong Lina?", answer: "Teman sebangkunya" },
+          { question: "Makanan apa yang dibagi?", answer: "Nasi goreng" },
+        ],
+      }],
+      ["listening", 3, "Sebelum tidur, Ibu membacakan dongeng kancil, lalu mematikan lampu kamar.", {
+        questions: [
+          { question: "Kapan Ibu membacakan dongeng?", answer: "Sebelum tidur" },
+          { question: "Dongeng apa yang dibacakan?", answer: "Dongeng kancil" },
+          { question: "Apa yang Ibu lakukan setelah itu?", answer: "Mematikan lampu kamar" },
+        ],
+      }],
+      ["listening", 4, "Kucing tetangga terjebak di atas pohon. Andi mengambil tangga, sementara kakaknya memegangi tangga itu supaya tidak goyang.", {
+        questions: [
+          { question: "Apa masalahnya?", answer: "Kucing tetangga terjebak di atas pohon" },
+          { question: "Apa yang diambil Andi?", answer: "Tangga" },
+          { question: "Apa tugas kakak Andi?", answer: "Memegangi tangga supaya tidak goyang" },
+        ],
+      }],
+      ["listening", 5, "Pak Joko menanam cabai di halaman. Setiap pagi ia menyiramnya, tapi suatu hari daunnya menguning. Ternyata pot-potnya terlalu dekat dengan atap sehingga jarang terkena matahari. Pak Joko pun memindahkannya ke tempat terbuka.", {
+        questions: [
+          { question: "Apa yang ditanam Pak Joko?", answer: "Cabai" },
+          { question: "Apa yang terjadi pada daunnya?", answer: "Menguning" },
+          { question: "Kenapa daunnya menguning?", answer: "Jarang terkena matahari karena terlalu dekat dengan atap" },
+          { question: "Apa yang dilakukan Pak Joko untuk mengatasinya?", answer: "Memindahkan pot ke tempat terbuka" },
+        ],
+      }],
     ]
   ),
 ];
