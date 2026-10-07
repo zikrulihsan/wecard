@@ -95,7 +95,6 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
       ["action", "easy", "Tunjukkan foto terakhir di galerimu yang boleh dilihat, lalu ceritakan konteksnya"],
       ["talk", "medium", "Apa hal yang orang sering salah kira tentang kamu?"],
       ["talk", "easy", "Kalau punya satu hari libur tambahan tiap minggu, mau dipakai buat apa?"],
-      ["action", "easy", "Sebutkan 3 lagu yang lagi sering kamu putar"],
       ["talk", "medium", "Apa satu hal yang lagi kamu pelajari atau ingin kamu kuasai tahun ini?"],
     ]
   ),
@@ -272,7 +271,6 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
       ["action", "easy", "Ceritakan kejadian hari ini dalam 3 kata saja — yang lain menebak ceritanya"],
       ["action", "easy", "Peragakan film terkenal tanpa bicara, yang lain menebak judulnya"],
       ["action", "medium", "Pilih satu orang di sini, lalu puji dia selama 20 detik tanpa berhenti"],
-      ["action", "easy", "Nyanyikan reff lagu yang lagi viral dengan gaya dangdut"],
       ["action", "medium", "Bacakan pesan terakhir yang kamu kirim — boleh disensor seperlunya"],
       ["action", "easy", "Buat pose foto grup dalam 10 detik, lalu foto beneran"],
       ["action", "medium", "Kasih tahu satu kebiasaan aneh kamu yang belum pernah diceritakan ke siapa pun di sini"],
@@ -290,7 +288,6 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
       ["action", "easy", "Tirukan cara bicara salah satu anggota keluarga — yang lain menebak siapa"],
       ["action", "easy", "Sebutkan 5 masakan rumah secepat mungkin"],
       ["action", "medium", "Ceritakan kenangan masa kecil dalam 30 detik, tanpa jeda"],
-      ["action", "easy", "Buat gerakan tari 4 langkah, lalu semua orang menirukannya"],
       ["action", "easy", "Gambar wajah orang di sebelahmu dengan mata tertutup"],
       ["action", "medium", "Ucapkan satu hal yang kamu kagumi dari tiap orang di sini"],
       ["action", "easy", "Kalahkan siapa saja dalam suit jari — yang kalah memilih kartu berikutnya"],
@@ -312,10 +309,6 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
       ["true_false", 2, "Komodo hanya hidup liar di Indonesia.", {
         isTrue: true,
         explanation: "Komodo liar hanya ada di beberapa pulau di Nusa Tenggara Timur, seperti Pulau Komodo, Rinca, dan Flores.",
-      }],
-      ["quiz", 2, "Apa nama alat musik dari bambu asal Jawa Barat yang dimainkan dengan digoyangkan?", {
-        answer: "Angklung",
-        explanation: "Angklung diakui UNESCO sebagai Warisan Budaya Takbenda sejak 2010.",
       }],
       ["clue", 3, "Aku ini apa?", {
         clues: [
@@ -408,7 +401,6 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
       ["action", "easy", "Show the most recent photo in your gallery that's okay to share, then explain the story behind it"],
       ["talk", "medium", "What's something people often get wrong about you?"],
       ["talk", "easy", "If you got one extra day off every week, what would you do with it?"],
-      ["action", "easy", "Name 3 songs you've been playing a lot lately"],
       ["talk", "medium", "What's one thing you're learning or want to master this year?"],
     ]
   ),
@@ -585,7 +577,6 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
       ["action", "easy", "Tell what happened today in just 3 words — the others guess the story"],
       ["action", "easy", "Act out a famous movie without speaking while the others guess the title"],
       ["action", "medium", "Pick someone here and compliment them for 20 seconds without stopping"],
-      ["action", "easy", "Sing the chorus of a viral song in a totally different style"],
       ["action", "medium", "Read out the last message you sent — censor it as needed"],
       ["action", "easy", "Strike a group photo pose in 10 seconds, then take the photo for real"],
       ["action", "medium", "Share one odd habit you've never told anyone here about"],
@@ -603,7 +594,6 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
       ["action", "easy", "Imitate how a family member talks — the others guess who"],
       ["action", "easy", "Name 5 home-cooked dishes as fast as you can"],
       ["action", "medium", "Tell a childhood memory in 30 seconds without pausing"],
-      ["action", "easy", "Make up a 4-step dance move, then everyone copies it"],
       ["action", "easy", "Draw the face of the person next to you with your eyes closed"],
       ["action", "medium", "Say one thing you admire about each person here"],
       ["action", "easy", "Beat anyone at rock-paper-scissors — the loser picks the next card"],
@@ -625,10 +615,6 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
       ["true_false", 2, "Komodo dragons only live in the wild in Indonesia.", {
         isTrue: true,
         explanation: "Wild Komodo dragons are found only on a few islands in East Nusa Tenggara, such as Komodo, Rinca, and Flores.",
-      }],
-      ["quiz", 2, "What is the bamboo musical instrument from West Java that's played by shaking it?", {
-        answer: "Angklung",
-        explanation: "UNESCO recognized the angklung as Intangible Cultural Heritage in 2010.",
       }],
       ["clue", 3, "What am I?", {
         clues: [
