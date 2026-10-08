@@ -252,7 +252,7 @@ function saveFailed(step: string, error: unknown) {
               detail?.code === "42703" ||
               detail?.code === "22P02" ||
               detail?.code === "PGRST205"
-                ? "Ada migration yang belum jalan. Jalankan packages/supabase/migrations/00002_ai_decks.sql, 00004_deck_theme.sql, dan 00006_card_formats.sql di SQL Editor Supabase."
+                ? "Ada migration yang belum jalan. Jalankan packages/supabase/migrations/00002_ai_decks.sql, 00004_deck_theme.sql, 00006_card_formats.sql, 00007_deck_mode.sql, dan 00008_deck_language.sql di SQL Editor Supabase."
                 : detail?.code === "42501"
                   ? "Insert ditolak RLS — pastikan policy di migration 00002 sudah terpasang, dan cek sisa jatah: has_ai_access() ikut menolak kalau kuota generate habis."
                   : undefined,
