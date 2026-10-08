@@ -38,7 +38,7 @@ export const id = {
     switchTo: "Ganti bahasa",
     settingTitle: "Bahasa aplikasi",
     settingHint:
-      "Mengubah teks aplikasi. Isi deck bawaan tetap berbahasa Indonesia.",
+      "Mengubah teks aplikasi, dan deck berbahasa ini tampil lebih dulu di beranda.",
   },
 
   common: {
@@ -429,6 +429,7 @@ export const id = {
   home: {
     title: "Mau main apa hari ini?",
     subtitle: "Lanjutkan yang tadi, cari deck, atau bikin sendiri.",
+    deckLanguage: { id: "Deck berbahasa Indonesia", en: "Deck berbahasa Inggris" },
     recent: "Terakhir dimainkan",
     browse: "Jelajahi deck",
     modeTabs: "Jenis deck",

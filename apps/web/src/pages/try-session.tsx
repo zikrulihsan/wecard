@@ -15,7 +15,7 @@ import { useSignedIn } from "@/lib/supabase/use-signed-in";
 import { findTrialDeck, type TrialDeck } from "@/lib/trial/decks";
 import { freeCardCount, useTrialProgress } from "@/lib/trial/progress";
 import { cn } from "@/lib/utils";
-import { useI18n, useT } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import NotFound from "@/pages/not-found";
 
 // direction: 1 = maju, -1 = mundur — sama seperti layar main yang asli.
@@ -55,7 +55,7 @@ function startIndex(value: string | null, total: number): number {
 }
 
 function TrialSession({ deck }: { deck: TrialDeck }) {
-  const t = useT();
+  const { t, language } = useI18n();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const signedIn = useSignedIn();
@@ -214,6 +214,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 onFlip={() => setRevealed(true)}
                 isAnswerRevealed={answerRevealed}
                 onRevealAnswer={() => setAnswerRevealed(true)}
+                language={language}
                 result={results[card.id]}
                 onResult={(correct) =>
                   setResults((value) => ({ ...value, [card.id]: correct }))

@@ -4,6 +4,7 @@ import { History, Lock, Play, Search, Sparkles, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { deckThemeStyle } from "@/lib/deck-theme";
 import { DECK_MODE_META, resolveDeckMode } from "@/lib/deck-mode";
+import { resolveDeckLanguage } from "@/lib/deck-language";
 import { useRecentDeckIds } from "@/lib/recent-decks";
 import { useGameStore } from "@/stores/game-store";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import { CardLoader } from "@/components/ui/card-loader";
 import { Input } from "@/components/ui/input";
 import { LoadError } from "@/components/ui/load-error";
 import { cn } from "@/lib/utils";
-import { DECK_MODES, type DeckMode } from "@flipcard/types";
+import { DECK_MODES, type DeckLanguage, type DeckMode } from "@flipcard/types";
 import { AiDeckCta } from "@/components/app/ai-deck-cta";
 import { HomeHeader } from "@/components/app/home-header";
 import { LOCALES, useI18n, useT } from "@/lib/i18n";
@@ -26,9 +27,14 @@ type CategoryRow = {
   is_ai_generated: boolean;
   theme: string | null;
   mode: string | null;
+  language?: string | null;
 };
 
-type Deck = Omit<CategoryRow, "mode"> & { mode: DeckMode; isUnlocked: boolean };
+type Deck = Omit<CategoryRow, "mode" | "language"> & {
+  mode: DeckMode;
+  language: DeckLanguage;
+  isUnlocked: boolean;
+};
 
 type Filter = "all" | "free" | "mine" | "locked";
 
@@ -58,7 +64,10 @@ export default function HomePage() {
     const supabase = createClient();
     Promise.all([
       supabase.from("categories")
-        .select("id, slug, name, description, is_free, price_idr, is_ai_generated, theme, mode")
+        // `*`, bukan daftar kolom: kolom yang lebih baru (mis. `language`)
+        // boleh belum ada kalau migration-nya belum dijalankan — beranda
+        // tetap tampil, deck-nya dianggap berbahasa Indonesia.
+        .select("*")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .order("sort_order", { ascending: true }),
@@ -86,13 +95,19 @@ export default function HomePage() {
     return () => { active = false; };
   }, [retry]);
 
+  // Deck yang bahasanya sama dengan bahasa aplikasi naik ke atas; urutan
+  // lainnya tetap (sort-nya stabil). Deck berbahasa lain tetap ada, ditandai
+  // badge bahasa di ubinnya.
   const decks = useMemo<Deck[]>(
-    () => state.categories.map((category) => ({
-      ...category,
-      mode: resolveDeckMode(category.mode),
-      isUnlocked: category.is_free || state.unlockedIds.has(category.id),
-    })),
-    [state.categories, state.unlockedIds],
+    () => state.categories
+      .map((category) => ({
+        ...category,
+        mode: resolveDeckMode(category.mode),
+        language: resolveDeckLanguage(category.language),
+        isUnlocked: category.is_free || state.unlockedIds.has(category.id),
+      }))
+      .sort((a, b) => Number(b.language === language) - Number(a.language === language)),
+    [state.categories, state.unlockedIds, language],
   );
 
   const recentIds = useRecentDeckIds();
@@ -299,6 +314,7 @@ function DeckTile({ deck, showMode }: { deck: Deck; showMode: boolean }) {
     >
       <div className="mb-3 flex flex-wrap gap-1.5">
         {deck.is_ai_generated && <Badge variant="secondary" className={cn(badge, "gap-1")}><Sparkles className="size-3" />AI</Badge>}
+        {deck.language !== language && <Badge variant="secondary" className={badge} title={t.home.deckLanguage[deck.language]}>{deck.language.toUpperCase()}</Badge>}
         {deck.is_free ? <Badge variant="secondary" className={badge}>{t.home.free}</Badge> :
           deck.isUnlocked ? <Badge variant="secondary" className={badge}>{t.home.unlocked}</Badge> :
           <Badge variant="secondary" className={cn(badge, "gap-1")}><Lock className="size-3" />{t.home.locked}</Badge>}

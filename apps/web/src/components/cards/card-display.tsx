@@ -11,7 +11,7 @@ import {
 } from "@/lib/cards/formats";
 import { shuffle } from "@/lib/game/shuffle";
 import { cn } from "@/lib/utils";
-import { LOCALES, guessTextLanguage, useT } from "@/lib/i18n";
+import { LOCALES, guessTextLanguage, useT, type Language } from "@/lib/i18n";
 
 interface CardDisplayProps {
   card: GameCard;
@@ -26,6 +26,11 @@ interface CardDisplayProps {
   /** Hasil yang sudah tercatat untuk kartu ini (true = benar). */
   result?: boolean;
   onResult?: (correct: boolean) => void;
+  /**
+   * Bahasa isi kartu, untuk suara "Bacakan". Kalau tidak diketahui (sesi lama
+   * yang tersimpan sebelum bahasa deck dicatat), ditebak dari teksnya.
+   */
+  language?: Language;
 }
 
 const difficultyStyles: Record<
@@ -60,6 +65,7 @@ export function CardDisplay({
   onRevealAnswer,
   result,
   onResult,
+  language,
 }: CardDisplayProps) {
   const t = useT();
   const [localAnswer, setLocalAnswer] = useState(false);
@@ -198,6 +204,7 @@ export function CardDisplay({
               details={details}
               active={isRevealed && !answerShown}
               onPick={pick}
+              language={language}
             />
           </div>
           <div className="text-xs text-neutral-400 text-center pt-3 mt-3 border-t border-neutral-100">
@@ -250,11 +257,13 @@ function QuestionBody({
   details,
   active,
   onPick,
+  language,
 }: {
   card: GameCard;
   details: CardDetails;
   active: boolean;
   onPick: (index: number, correct: boolean) => void;
+  language?: Language;
 }) {
   const t = useT();
   const prompt = (
@@ -335,6 +344,7 @@ function QuestionBody({
           passage={card.content}
           questions={details.questions ?? []}
           active={active}
+          language={language}
         />
       );
 
@@ -427,14 +437,16 @@ function ListeningQuestion({
   passage,
   questions,
   active,
+  language,
 }: {
   passage: string;
   questions: { question: string }[];
   active: boolean;
+  language?: Language;
 }) {
   const t = useT();
   const [hidden, setHidden] = useState(false);
-  const speech = useSpeech(passage);
+  const speech = useSpeech(passage, language);
   const stopSpeech = speech.stop;
 
   // Jawaban dibuka → hentikan suara. Pindah kartu ditangani unmount.
@@ -676,7 +688,7 @@ function SelfGrade({
 }
 
 /** Bacakan teks dengan suara bawaan perangkat (Web Speech API). */
-function useSpeech(text: string) {
+function useSpeech(text: string, language?: Language) {
   const supported =
     typeof window !== "undefined" && "speechSynthesis" in window;
   const [speaking, setSpeaking] = useState(false);
@@ -702,9 +714,9 @@ function useSpeech(text: string) {
         return;
       }
       const utterance = new SpeechSynthesisUtterance(text);
-      // Suara mengikuti bahasa teksnya, bukan bahasa aplikasi: deck bawaan
-      // berbahasa Indonesia, deck AI bisa berbahasa Inggris.
-      utterance.lang = LOCALES[guessTextLanguage(text)];
+      // Suara mengikuti bahasa deck-nya, bukan bahasa aplikasi — suara
+      // Inggris yang membacakan teks Indonesia nyaris tidak bisa dipahami.
+      utterance.lang = LOCALES[language ?? guessTextLanguage(text)];
       utterance.rate = 0.9;
       utterance.onend = () => setSpeaking(false);
       utterance.onerror = () => setSpeaking(false);

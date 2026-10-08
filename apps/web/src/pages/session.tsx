@@ -20,7 +20,7 @@ import { hasAnswerSide } from "@/lib/cards/formats";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
-import type { DeckTheme, GameCard } from "@flipcard/types";
+import type { DeckLanguage, DeckTheme, GameCard } from "@flipcard/types";
 
 // Gerbang hidrasi: false saat SSR/hidrasi, true setelahnya — store zustand
 // baru terisi dari localStorage di client, jadi render pertama harus netral.
@@ -85,6 +85,7 @@ export default function SessionPage() {
     isActive,
     deckId: storedDeckId,
     deckTheme,
+    deckLanguage,
     timer,
     revealCard,
     revealAnswer,
@@ -207,6 +208,7 @@ export default function SessionPage() {
             onResult={(correct) => recordResult(currentCard.id, correct)}
             onNext={goNext}
             onPrevious={goPrevious}
+            language={deckLanguage}
           />
         </AnimatePresence>
       </div>
@@ -288,6 +290,7 @@ function SwipeableCard({
   onResult,
   onNext,
   onPrevious,
+  language,
 }: {
   card: GameCard;
   direction: number;
@@ -300,6 +303,7 @@ function SwipeableCard({
   onResult: (correct: boolean) => void;
   onNext: () => void;
   onPrevious: () => void;
+  language: DeckLanguage;
 }) {
   // Drag menulis langsung ke motion value — tidak ada setState per frame,
   // React tidak re-render selama jari bergerak.
@@ -339,6 +343,7 @@ function SwipeableCard({
         onRevealAnswer={onRevealAnswer}
         result={result}
         onResult={onResult}
+        language={language}
       />
     </m.div>
   );

@@ -122,6 +122,7 @@ export default async function handler(request: Request): Promise<Response> {
       description: deck.description,
       theme: deck.theme,
       mode: modeForCardMix(input.cardMix),
+      language: input.language,
       is_free: true,
       price_idr: null,
       sort_order: 100,

@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { m } from "framer-motion";
 import { CardDisplay } from "@/components/cards/card-display";
 import { hasAnswerSide } from "@/lib/cards/formats";
-import { useT } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 
 // Satu kartu per keluarga format, supaya pengunjung merasakan alur ngobrol
 // dan alur kuis (balik dua kali) dari satu demo. Isinya (di kamus i18n,
@@ -11,7 +11,8 @@ import { useT } from "@/lib/i18n";
 const swipeThreshold = 60;
 
 export function LandingCardDemo() {
-  const demo = useT().landing.demo;
+  const { t, language } = useI18n();
+  const demo = t.landing.demo;
   const demoCards = demo.cards;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -103,6 +104,7 @@ export function LandingCardDemo() {
         >
           <CardDisplay
             card={currentCard}
+            language={language}
             isRevealed={isRevealed}
             isAnswerRevealed={isAnswerRevealed}
             onRevealAnswer={() => setIsAnswerRevealed(true)}

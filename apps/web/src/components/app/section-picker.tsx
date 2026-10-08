@@ -22,6 +22,7 @@ import type {
   CardTimerSettings,
   GameCard,
   CardDifficulty,
+  DeckLanguage,
   DeckTheme,
   SpecialCardKind,
 } from "@flipcard/types";
@@ -92,11 +93,13 @@ export function SectionPicker({
   deckId,
   deckName,
   deckTheme,
+  deckLanguage,
   sections,
 }: {
   deckId: string;
   deckName: string;
   deckTheme: DeckTheme;
+  deckLanguage: DeckLanguage;
   sections: Section[];
 }) {
   const t = useT();
@@ -218,7 +221,7 @@ export function SectionPicker({
     const shuffled = shuffle(gameCards);
 
     saveTimerSettings(timer);
-    startSession(deckId, deckName, deckTheme, selectedSlugs, shuffled, timer);
+    startSession(deckId, deckName, deckTheme, deckLanguage, selectedSlugs, shuffled, timer);
     markDeckPlayed(deckId);
     navigate(`/play/${deckId}/session`);
   }

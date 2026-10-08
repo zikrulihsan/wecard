@@ -40,11 +40,12 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar).
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Terakhir `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris).
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
    - `packages/supabase/seed_kuis_mendengar.sql` — deck **Latihan Mendengar** dan **Uji Diri: AI Engineering** (butuh migration `00006` dan `00007`)
+   - `packages/supabase/seed_english.sql` — versi English keempat deck di atas: **Couples**, **Kids & Parents**, **Listening Practice**, **Self-Test: AI Engineering** (butuh migration `00006`–`00008`)
 5. Salin `.env.example` ke `apps/web/.env.local`, lalu isi URL dan anon key:
 
 ```bash

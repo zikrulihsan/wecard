@@ -13,7 +13,7 @@ export const en: Messages = {
     switchTo: "Change language",
     settingTitle: "App language",
     settingHint:
-      "Changes the app's text. Built-in decks stay in Indonesian.",
+      "Changes the app's text, and shows decks in this language first on your home screen.",
   },
 
   common: {
@@ -399,6 +399,7 @@ export const en: Messages = {
   home: {
     title: "What are we playing today?",
     subtitle: "Pick up where you left off, find a deck, or make your own.",
+    deckLanguage: { id: "Deck in Indonesian", en: "Deck in English" },
     recent: "Recently played",
     browse: "Browse decks",
     modeTabs: "Deck type",
