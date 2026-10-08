@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, RotateCcw, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 function formatTime(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
@@ -26,6 +27,7 @@ export function CardTimer({
   running: boolean;
   onExpire: () => void;
 }) {
+  const t = useT();
   const [remainingMs, setRemainingMs] = useState(seconds * 1000);
   const [paused, setPaused] = useState(false);
   // Naik setiap kali timer di-reset, supaya interval menghitung tenggat baru
@@ -82,10 +84,10 @@ export function CardTimer({
         disabled={!running || expired}
         aria-label={
           expired
-            ? "Waktu habis"
+            ? t.game.timeUp
             : paused
-              ? `Timer dijeda, sisa ${remainingSeconds} detik. Ketuk untuk lanjut`
-              : `Sisa ${remainingSeconds} detik. Ketuk untuk jeda`
+              ? t.game.timerPaused(remainingSeconds)
+              : t.game.timerRunning(remainingSeconds)
         }
         className={cn(
           "shrink-0 h-8 min-w-[4.5rem] px-2.5 rounded-full flex items-center justify-center gap-1 text-xs font-semibold tabular-nums transition-colors",
@@ -102,13 +104,13 @@ export function CardTimer({
         ) : (
           <Timer className="size-3.5" />
         )}
-        {expired ? "Habis!" : formatTime(remainingSeconds)}
+        {expired ? t.game.timeUpShort : formatTime(remainingSeconds)}
       </button>
       <button
         type="button"
         onClick={reset}
         disabled={!canReset}
-        aria-label="Ulangi timer"
+        aria-label={t.game.resetTimer}
         className="size-8 rounded-full flex items-center justify-center bg-white/70 text-foreground transition-opacity disabled:opacity-40"
       >
         <RotateCcw className="size-3.5" />

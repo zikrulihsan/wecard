@@ -7,19 +7,23 @@ import { CardLoader } from "@/components/ui/card-loader";
 import { LoadError } from "@/components/ui/load-error";
 import { SectionPicker } from "@/components/app/section-picker";
 import NotFound from "@/pages/not-found";
-import type { DeckTheme } from "@flipcard/types";
+import type { DeckLanguage, DeckTheme } from "@flipcard/types";
+import { resolveDeckLanguage } from "@/lib/deck-language";
+import { useT } from "@/lib/i18n";
 
 type Deck = {
   id: string;
   name: string;
   description: string | null;
   theme: DeckTheme;
+  language: DeckLanguage;
   sections: { id: string; slug: string; name: string; icon: string | null; cardCount: number }[];
 };
 
 type State = { status: "loading" | "error" | "not-found" | "ready"; forId?: string; deck?: Deck };
 
 export default function PlayPage() {
+  const t = useT();
   const { deckId } = useParams();
   const [state, setState] = useState<State>({ status: "loading" });
   const [retry, setRetry] = useState(0);
@@ -29,7 +33,8 @@ export default function PlayPage() {
     let active = true;
     const supabase = createClient();
     Promise.all([
-      supabase.from("categories").select("id, name, description, theme").eq("id", deckId).eq("is_active", true).single(),
+      // `*` supaya deck tetap bisa dibuka meski migration `language` belum jalan.
+      supabase.from("categories").select("*").eq("id", deckId).eq("is_active", true).single(),
       supabase.from("sections").select("id, slug, name, icon, sort_order, cards:cards(id, card_type, difficulty)").eq("category_id", deckId).order("sort_order", { ascending: true }),
     ]).then(([category, sections]) => {
       if (!active) return;
@@ -45,6 +50,7 @@ export default function PlayPage() {
         name: category.data.name,
         description: category.data.description,
         theme: resolveDeckTheme(category.data.theme),
+        language: resolveDeckLanguage(category.data.language),
         sections: (sections.data ?? []).map((section) => ({
           id: section.id, slug: section.slug, name: section.name,
           icon: section.icon, cardCount: section.cards?.length ?? 0,
@@ -62,11 +68,11 @@ export default function PlayPage() {
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-6">
       <BackLink href="/home" />
-      {status === "loading" ? <CardLoader label="Membuka deck" /> :
-        status === "error" ? <LoadError title="Deck belum bisa dibuka" description="Sambungan ke server bermasalah. Coba lagi sebentar." onRetry={() => { setState({ status: "loading", forId: deckId }); setRetry((value) => value + 1); }} /> :
+      {status === "loading" ? <CardLoader label={t.play.loading} /> :
+        status === "error" ? <LoadError title={t.play.errorTitle} description={t.play.errorDescription} onRetry={() => { setState({ status: "loading", forId: deckId }); setRetry((value) => value + 1); }} /> :
         state.deck && <div style={deckThemeVars(state.deck.theme)}>
           <header className="mb-6"><h1 className="text-3xl font-bold">{state.deck.name}</h1>{state.deck.description && <p className="text-muted-foreground mt-2">{state.deck.description}</p>}</header>
-          <SectionPicker deckId={state.deck.id} deckName={state.deck.name} deckTheme={state.deck.theme} sections={state.deck.sections} />
+          <SectionPicker deckId={state.deck.id} deckName={state.deck.name} deckTheme={state.deck.theme} deckLanguage={state.deck.language} sections={state.deck.sections} />
         </div>}
     </div>
   );

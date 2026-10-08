@@ -3,6 +3,7 @@ import type {
   CardLevel,
   CardType,
   CardDifficulty,
+  DeckLanguage,
   DeckTheme,
   SpecialCardKind,
 } from "./database";
@@ -36,6 +37,8 @@ export interface GameSessionState {
   deckName: string;
   /** Warna deck yang sedang dimainkan, dipakai layar main & layar selesai. */
   deckTheme: DeckTheme;
+  /** Bahasa isi kartu — dipakai suara "Bacakan" untuk memilih suara. */
+  deckLanguage: DeckLanguage;
   selectedSections: string[];
   cards: GameCard[];
   currentIndex: number;
@@ -62,6 +65,7 @@ export interface GameStore extends GameSessionState {
     deckId: string,
     deckName: string,
     deckTheme: DeckTheme,
+    deckLanguage: DeckLanguage,
     sections: string[],
     cards: GameCard[],
     timer: CardTimerSettings

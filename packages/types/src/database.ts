@@ -100,6 +100,14 @@ export const DECK_MODES = ["ngobrol", "tantangan", "kuis", "mendengar"] as const
 
 export type DeckMode = (typeof DECK_MODES)[number];
 
+/**
+ * Bahasa isi kartu sebuah deck (`categories.language`), terpisah dari bahasa
+ * aplikasi. Nilai yang tidak dikenal dibaca sebagai "id".
+ */
+export const DECK_LANGUAGES = ["id", "en"] as const;
+
+export type DeckLanguage = (typeof DECK_LANGUAGES)[number];
+
 export interface Category {
   id: string;
   slug: string;
@@ -108,6 +116,7 @@ export interface Category {
   cover_image: string | null;
   theme: DeckTheme;
   mode: DeckMode;
+  language: DeckLanguage;
   is_free: boolean;
   price_idr: number | null;
   sort_order: number;

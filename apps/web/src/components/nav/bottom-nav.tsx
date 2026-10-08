@@ -3,19 +3,20 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, User, ShoppingBag, Sparkles, Lock, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAiAccessDetails } from "@/lib/ai/access-client";
+import { useT } from "@/lib/i18n";
 
 interface NavEntry {
   href: string;
   icon: LucideIcon;
-  label: string;
+  label: "home" | "create" | "store" | "profile";
   alsoActiveOn?: string[];
 }
 
 const ENTRIES: NavEntry[] = [
-  { href: "/home", icon: Home, label: "Home", alsoActiveOn: ["/play"] },
-  { href: "/create", icon: Sparkles, label: "Bikin" },
-  { href: "/store", icon: ShoppingBag, label: "Toko" },
-  { href: "/profile", icon: User, label: "Profil" },
+  { href: "/home", icon: Home, label: "home", alsoActiveOn: ["/play"] },
+  { href: "/create", icon: Sparkles, label: "create" },
+  { href: "/store", icon: ShoppingBag, label: "store" },
+  { href: "/profile", icon: User, label: "profile" },
 ];
 
 function activeOn(entry: NavEntry, pathname: string) {
@@ -25,6 +26,7 @@ function activeOn(entry: NavEntry, pathname: string) {
 }
 
 export function BottomNav() {
+  const t = useT();
   const { pathname } = useLocation();
   const [canUseAi, setCanUseAi] = useState<boolean | null>(null);
 
@@ -46,11 +48,12 @@ export function BottomNav() {
           const active = activeOn(entry, pathname);
           const locked = entry.href === "/create" && canUseAi === false;
           const Icon = entry.icon;
+          const label = t.nav[entry.label];
           return (
             <Link
               key={entry.href}
               to={entry.href}
-              aria-label={locked ? `${entry.label} (terbatas)` : undefined}
+              aria-label={locked ? t.nav.limited(label) : undefined}
               aria-current={active ? "page" : undefined}
               className="flex flex-col items-center gap-1 px-4 py-2"
             >
@@ -58,7 +61,7 @@ export function BottomNav() {
                 <Icon className="size-5" />
                 {locked && <span className="absolute -top-1 -right-1.5 rounded-full bg-white p-px text-neutral-400"><Lock className="size-2.5" /></span>}
               </span>
-              <span className={cn("text-xs", active ? "text-primary font-medium" : "text-neutral-600")}>{entry.label}</span>
+              <span className={cn("text-xs", active ? "text-primary font-medium" : "text-neutral-600")}>{label}</span>
             </Link>
           );
         })}

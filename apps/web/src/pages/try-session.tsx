@@ -15,6 +15,7 @@ import { useSignedIn } from "@/lib/supabase/use-signed-in";
 import { findTrialDeck, type TrialDeck } from "@/lib/trial/decks";
 import { freeCardCount, useTrialProgress } from "@/lib/trial/progress";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 import NotFound from "@/pages/not-found";
 
 // direction: 1 = maju, -1 = mundur — sama seperti layar main yang asli.
@@ -41,9 +42,11 @@ const cardVariants: Variants = {
  */
 export default function TrySessionPage() {
   const { deckSlug } = useParams();
-  const deck = findTrialDeck(deckSlug);
+  const { language } = useI18n();
+  const deck = findTrialDeck(deckSlug, language);
   if (!deck) return <NotFound />;
-  return <TrialSession key={deck.slug} deck={deck} />;
+  // Ganti bahasa di tengah sesi = deck dimuat ulang dalam bahasa baru.
+  return <TrialSession key={`${deck.slug}-${language}`} deck={deck} />;
 }
 
 function startIndex(value: string | null, total: number): number {
@@ -52,6 +55,7 @@ function startIndex(value: string | null, total: number): number {
 }
 
 function TrialSession({ deck }: { deck: TrialDeck }) {
+  const { t, language } = useI18n();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const signedIn = useSignedIn();
@@ -82,7 +86,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
   if (locked && signedIn === null) {
     return (
       <div className="mx-auto max-w-screen-sm px-4 py-8">
-        <CardLoader label="Memeriksa sesi" />
+        <CardLoader label={t.app.checkingSession} />
       </div>
     );
   }
@@ -100,14 +104,14 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
           className="max-w-md space-y-6 text-center"
         >
           <div className="text-7xl">🎉</div>
-          <h1 className="text-3xl font-bold">Deck {deck.name} selesai!</h1>
+          <h1 className="text-3xl font-bold">{t.trial.deckDone(deck.name)}</h1>
           {answered.length > 0 && (
             <QuizScore correct={answered.filter(Boolean).length} total={answered.length} />
           )}
           <p className="leading-relaxed text-muted-foreground">
             {signedIn
-              ? `Mau deck dengan topik kalian sendiri? Bikin pakai AI — akunmu punya jatah ${AI_GENERATION_LIMIT} deck gratis.`
-              : "Masih banyak deck lain yang bisa kamu coba gratis."}
+              ? t.trial.doneSignedIn(AI_GENERATION_LIMIT)
+              : t.trial.doneGuest}
           </p>
           <div className="space-y-2">
             {signedIn && (
@@ -115,7 +119,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 to="/create"
                 className={buttonVariants({ size: "lg", className: "w-full rounded-full" })}
               >
-                Bikin deck sendiri
+                {t.trial.makeOwn}
               </Link>
             )}
             <Button
@@ -124,7 +128,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
               className="w-full rounded-full"
               onClick={backToTry}
             >
-              Coba deck lain
+              {t.trial.tryAnother}
             </Button>
             <Button
               size="lg"
@@ -137,7 +141,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 setResults({});
               }}
             >
-              Main lagi
+              {t.game.playAgain}
             </Button>
           </div>
         </m.div>
@@ -173,7 +177,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
           size="icon"
           onClick={backToTry}
           className="shrink-0 rounded-full"
-          aria-label="Keluar"
+          aria-label={t.common.exit}
         >
           <X className="size-5" />
         </Button>
@@ -182,7 +186,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
         </div>
         {signedIn === false && freeCards < cards.length && (
           <span className="shrink-0 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-neutral-600">
-            {Math.min(index + 1, freeCards)}/{freeCards} gratis
+            {t.trial.freeBadge(Math.min(index + 1, freeCards), freeCards)}
           </span>
         )}
       </header>
@@ -210,6 +214,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 onFlip={() => setRevealed(true)}
                 isAnswerRevealed={answerRevealed}
                 onRevealAnswer={() => setAnswerRevealed(true)}
+                language={language}
                 result={results[card.id]}
                 onResult={(correct) =>
                   setResults((value) => ({ ...value, [card.id]: correct }))
@@ -228,17 +233,17 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
               variant="outline"
               size="lg"
               className="rounded-full"
-              aria-label="Kartu sebelumnya"
+              aria-label={t.game.previousCard}
             >
               <ChevronLeft className="size-5" />
             </Button>
             <Button onClick={backToTry} variant="outline" size="lg" className="flex-1 rounded-full">
-              Coba deck lain
+              {t.trial.tryAnother}
             </Button>
           </div>
         ) : !revealed ? (
           <Button onClick={() => setRevealed(true)} size="lg" className="w-full rounded-full">
-            Buka Kartu
+            {t.game.openCard}
           </Button>
         ) : (
           <div className="flex items-center gap-3">
@@ -248,7 +253,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
               variant="outline"
               size="lg"
               className="rounded-full"
-              aria-label="Kartu sebelumnya"
+              aria-label={t.game.previousCard}
             >
               <ChevronLeft className="size-5" />
             </Button>
@@ -258,11 +263,11 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 size="lg"
                 className="flex-1 rounded-full"
               >
-                Lihat Jawaban
+                {t.game.showAnswer}
               </Button>
             ) : (
               <Button onClick={goNext} size="lg" className="flex-1 rounded-full">
-                Kartu Berikutnya
+                {t.game.nextCard}
               </Button>
             )}
           </div>

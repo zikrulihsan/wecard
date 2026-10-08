@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { buttonVariants } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 
 /**
  * Halaman 404 bermerek — dipakai untuk URL yang salah ketik maupun untuk
@@ -10,6 +11,7 @@ import { buttonVariants } from "@/components/ui/button";
  * dihapus.
  */
 export default function NotFound() {
+  const t = useT();
   return (
     <main className="flex min-h-[70vh] flex-1 items-center justify-center px-6 py-16">
       <div className="max-w-sm space-y-4 text-center">
@@ -17,19 +19,18 @@ export default function NotFound() {
           🔍
         </div>
 
-        <h1 className="text-2xl font-bold">Halamannya nggak ketemu</h1>
+        <h1 className="text-2xl font-bold">{t.notFound.title}</h1>
 
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Mungkin tautannya sudah berubah, atau decknya sudah dihapus. Deck
-          lainmu tetap ada di beranda.
+          {t.notFound.body}
         </p>
 
         <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-center">
           <Link to="/home" className={buttonVariants()}>
-            Ke beranda
+            {t.notFound.home}
           </Link>
           <Link to="/" className={buttonVariants({ variant: "outline" })}>
-            Halaman depan
+            {t.notFound.landing}
           </Link>
         </div>
       </div>

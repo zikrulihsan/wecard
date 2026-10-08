@@ -1,6 +1,7 @@
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
 import type { DeckTheme } from "@flipcard/types";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * Kartu contoh untuk halaman marketing — bentuknya sengaja mengikuti kartu
@@ -37,6 +38,7 @@ export function DeckCard({
   children: React.ReactNode;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div
       className={cn(
@@ -52,7 +54,7 @@ export function DeckCard({
         {level ? (
           <span
             className="ml-auto shrink-0 tracking-tight text-white"
-            aria-label={`Level ${level} dari 5`}
+            aria-label={t.common.levelOf(level)}
           >
             {"★".repeat(level)}
             <span className="text-white/35">{"★".repeat(5 - level)}</span>
@@ -64,7 +66,7 @@ export function DeckCard({
       </p>
       {answer ? (
         <p className="text-[11px] font-medium text-white/80">
-          ↻ Jawabannya di balik kartu
+          {t.deckCard.answerBehind}
         </p>
       ) : null}
     </div>

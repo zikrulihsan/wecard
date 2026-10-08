@@ -7,6 +7,7 @@ import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
 import type { TrialDeck } from "@/lib/trial/decks";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * Kartu terkunci yang muncul menggantikan kartu berikutnya setelah jatah
@@ -26,6 +27,7 @@ export function TrialLock({
   freeCards: number;
   results: Record<string, boolean>;
 }) {
+  const t = useT().trial;
   const [error, setError] = useState("");
   const remaining = deck.cards.length - freeCards;
   const nextCard = freeCards + 1;
@@ -62,25 +64,23 @@ export function TrialLock({
         </div>
         <div className="space-y-1.5">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-            {remaining} kartu lagi terkunci
+            {t.lockRemaining(remaining)}
           </p>
           <h2 id="trial-lock-title" className="text-xl font-bold leading-snug">
-            Seru, kan? Lanjut dari kartu ke-{nextCard}
+            {t.lockTitle(nextCard)}
           </h2>
           <p className="text-sm leading-relaxed text-neutral-600">
-            Masuk gratis untuk membuka sisa deck {deck.name} — plus semua deck
-            lain tanpa batas, dan {AI_GENERATION_LIMIT} deck buatanmu sendiri
-            pakai AI.
+            {t.lockBody(deck.name, AI_GENERATION_LIMIT)}
           </p>
         </div>
 
         {answered.length > 0 && (
           <p className="rounded-xl bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
-            Sejauh ini{" "}
+            {t.lockScoreLead}{" "}
             <strong className="font-semibold">
               {answered.filter(Boolean).length}/{answered.length}
             </strong>{" "}
-            jawaban benar
+            {t.lockScoreRest}
           </p>
         )}
 
@@ -96,14 +96,14 @@ export function TrialLock({
               to={`/login?redirect=${encodeURIComponent(redirect)}`}
               className="font-semibold text-primary hover:underline"
             >
-              Masuk pakai email
+              {t.lockEmail}
             </Link>
             {" · "}
             <Link
               to={`/register?redirect=${encodeURIComponent(redirect)}`}
               className="font-semibold text-primary hover:underline"
             >
-              Daftar
+              {t.lockRegister}
             </Link>
           </p>
         </div>

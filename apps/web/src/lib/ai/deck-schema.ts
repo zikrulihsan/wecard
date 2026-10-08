@@ -5,139 +5,34 @@ import { CARD_TYPES, DECK_THEMES, type DeckMode } from "@flipcard/types";
 // INPUT — field yang diisi user di form generate
 // ============================================================
 
-// Placeholder contoh per audience — dipakai form generate supaya contohnya
-// nyambung sama pilihan "mau dimainkan sama siapa".
-export type AudiencePlaceholders = {
-  deckName: string;
-  context: string;
-  avoid: string;
-};
-
+// Label di sini dipakai prompt generate (selalu bahasa Indonesia, di server).
+// Teks yang tampil di form — label, contoh placeholder, petunjuk — ada di
+// kamus i18n (`create.*`), dicocokkan lewat `value`.
 export const AUDIENCES = [
-  {
-    value: "pasangan",
-    modes: ["ngobrol", "tantangan"],
-    label: "Pasangan",
-    placeholders: {
-      deckName: "Misal: Malam Jumat Berdua",
-      context: "Misal: kami LDR sudah 2 tahun dan baru ketemu sebulan sekali",
-      avoid: "Misal: mantan, kerjaan, politik",
-    },
-  },
-  {
-    value: "sahabat",
-    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
-    modeLabels: { kuis: "Bareng teman", mendengar: "Bareng teman" },
-    label: "Sahabat / teman dekat",
-    placeholders: {
-      deckName: "Misal: Nongkrong Sampai Pagi",
-      context:
-        "Misal: kami sahabat dari SMA, sekarang beda kota dan jarang ketemu",
-      avoid: "Misal: berat badan, gaji, drama grup",
-    },
-  },
-  {
-    value: "keluarga",
-    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
-    label: "Keluarga",
-    placeholders: {
-      deckName: "Misal: Kumpul Keluarga Besar",
-      context:
-        "Misal: dimainkan pas lebaran, ada om, tante, dan sepupu dari anak-anak sampai dewasa",
-      avoid: "Misal: politik, warisan, kapan nikah",
-    },
-  },
-  {
-    value: "anak-orang-tua",
-    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
-    modeLabels: { mendengar: "Anak — dibacakan orang tua" },
-    label: "Anak & orang tua",
-    placeholders: {
-      deckName: "Misal: Ngobrol Sebelum Tidur",
-      context: "Misal: anak umur 9 tahun, biasanya main sebelum tidur",
-      avoid: "Misal: nilai sekolah, dibanding-bandingkan sama saudara",
-    },
-  },
-  {
-    value: "rekan-kerja",
-    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
-    modeLabels: { kuis: "Tim / kelas", mendengar: "Tim / kelas" },
-    label: "Rekan kerja / tim",
-    placeholders: {
-      deckName: "Misal: Icebreaker Senin Pagi",
-      context:
-        "Misal: tim 6 orang, setengahnya remote dan belum pernah ketemu langsung",
-      avoid: "Misal: gaji, promosi, gosip kantor",
-    },
-  },
-  {
-    value: "kenalan-baru",
-    modes: ["ngobrol", "tantangan"],
-    label: "Kenalan baru",
-    placeholders: {
-      deckName: "Misal: Kenalan Tanpa Canggung",
-      context:
-        "Misal: acara komunitas, kebanyakan baru pertama kali ketemu hari itu",
-      avoid: "Misal: agama, politik, status hubungan",
-    },
-  },
-  {
-    value: "belajar-sendiri",
-    modes: ["kuis"],
-    modeLabels: { kuis: "Sendiri — belajar & uji kemampuan" },
-    label: "Diri sendiri — belajar & uji kemampuan",
-    placeholders: {
-      deckName: "Misal: Uji Diri AI Engineering",
-      context:
-        "Misal: aku software engineer, sudah paham dasar LLM, mau menguji RAG dan agents",
-      avoid: "Misal: soal hafalan angka, nama produk tertentu",
-    },
-  },
-  {
-    value: "lainnya",
-    modes: ["ngobrol", "tantangan", "kuis", "mendengar"],
-    label: "Lainnya (jelaskan di konteks)",
-    placeholders: {
-      deckName: "Misal: Malam Seru Bareng",
-      context: "Misal: dimainkan sama tetangga kompleks pas arisan bulanan",
-      avoid: "Misal: politik, agama, uang",
-    },
-  },
+  { value: "pasangan", modes: ["ngobrol", "tantangan"], label: "Pasangan" },
+  { value: "sahabat", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Sahabat / teman dekat" },
+  { value: "keluarga", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Keluarga" },
+  { value: "anak-orang-tua", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Anak & orang tua" },
+  { value: "rekan-kerja", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Rekan kerja / tim" },
+  { value: "kenalan-baru", modes: ["ngobrol", "tantangan"], label: "Kenalan baru" },
+  { value: "belajar-sendiri", modes: ["kuis"], label: "Diri sendiri — belajar & uji kemampuan" },
+  { value: "lainnya", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Lainnya (jelaskan di konteks)" },
 ] as const;
 
 type AudienceOption = {
   value: string;
-  label: string;
   /** Jenis deck yang masuk akal untuk pemain ini. */
   modes: readonly DeckMode[];
-  /** Label pengganti di jenis tertentu, misal "Tim / kelas" untuk kuis. */
-  modeLabels?: Partial<Record<DeckMode, string>>;
-  placeholders: AudiencePlaceholders;
 };
 
 /**
- * Pilihan "dimainkan sama siapa" untuk satu jenis deck — kuis untuk pasangan
- * atau latihan mendengar sendirian tidak ditawarkan.
+ * Nilai pilihan "dimainkan sama siapa" untuk satu jenis deck — kuis untuk
+ * pasangan atau latihan mendengar sendirian tidak ditawarkan.
  */
-export function audiencesForMode(mode: DeckMode) {
+export function audiencesForMode(mode: DeckMode): string[] {
   return (AUDIENCES as readonly AudienceOption[])
     .filter((option) => option.modes.includes(mode))
-    .map((option) => ({
-      value: option.value,
-      label: option.modeLabels?.[mode] ?? option.label,
-    }));
-}
-
-export const DEFAULT_AUDIENCE_PLACEHOLDERS: AudiencePlaceholders =
-  AUDIENCES[0].placeholders;
-
-export function getAudiencePlaceholders(
-  audience: string
-): AudiencePlaceholders {
-  return (
-    AUDIENCES.find((option) => option.value === audience)?.placeholders ??
-    DEFAULT_AUDIENCE_PLACEHOLDERS
-  );
+    .map((option) => option.value);
 }
 
 export const TONES = [
@@ -158,27 +53,22 @@ export const CARD_MIXES = [
   {
     value: "campuran",
     label: "Campuran — pertanyaan & tantangan",
-    hint: "Sekitar sepertiga kartu berupa tantangan.",
   },
   {
     value: "talk",
     label: "Pertanyaan saja",
-    hint: "Semua kartu dijawab dengan cerita. Fokus ngobrol.",
   },
   {
     value: "action",
     label: "Tantangan saja",
-    hint: "Semua kartu berupa tantangan yang langsung dikerjakan — tidak ada yang perlu dijawab.",
   },
   {
     value: "kuis",
     label: "Kuis pengetahuan — ada jawabannya",
-    hint: "Campuran tanya jawab, pilihan ganda, mitos/fakta, tebak clue, dan urutkan. Jawaban ada di balik kartu.",
   },
   {
     value: "mendengar",
     label: "Latihan mendengar & konsentrasi",
-    hint: "Satu orang membacakan teks pendek, yang lain menjawab pertanyaannya. Level naik bertahap.",
   },
 ] as const;
 
@@ -201,16 +91,6 @@ export const KNOWLEDGE_MIXES = ["kuis", "mendengar"] as const;
 export function isKnowledgeMix(mix: string) {
   return (KNOWLEDGE_MIXES as readonly string[]).includes(mix);
 }
-
-/**
- * Di deck kuis, pilihan "kedalaman" dibaca sebagai tingkat kesulitan —
- * labelnya ikut berganti di form, nilainya tetap sama.
- */
-export const KNOWLEDGE_DEPTH_LABELS: Record<string, string> = {
-  ringan: "Mudah — ⭐ sampai ⭐⭐",
-  sedang: "Sedang — ⭐⭐ sampai ⭐⭐⭐⭐",
-  dalam: "Menantang — naik bertahap sampai ⭐⭐⭐⭐⭐",
-};
 
 export const MIN_SECTIONS = 2;
 export const MAX_SECTIONS = 5;
@@ -239,9 +119,7 @@ export const generateDeckInputSchema = z.object({
   avoid: z.string().trim().max(300).optional(),
 }).refine(
   (input) =>
-    audiencesForMode(modeForCardMix(input.cardMix)).some(
-      (option) => option.value === input.audience
-    ),
+    audiencesForMode(modeForCardMix(input.cardMix)).includes(input.audience),
   { path: ["audience"], message: "Pilihan pemain tidak cocok dengan jenis deck ini." }
 );
 

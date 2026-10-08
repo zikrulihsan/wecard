@@ -1,80 +1,19 @@
 import { useRef, useState } from "react";
 import { m } from "framer-motion";
-import type { GameCard } from "@flipcard/types";
 import { CardDisplay } from "@/components/cards/card-display";
 import { hasAnswerSide } from "@/lib/cards/formats";
+import { useI18n } from "@/lib/i18n";
 
 // Satu kartu per keluarga format, supaya pengunjung merasakan alur ngobrol
-// dan alur kuis (balik dua kali) dari satu demo. Isinya dikutip dari deck
-// bawaan dan deck coba.
-const demoCards: GameCard[] = [
-  {
-    id: "landing-demo-appreciation",
-    content:
-      "Hal kecil apa yang aku lakukan dan diam-diam selalu bikin kamu senang?",
-    cardType: "talk",
-    difficulty: "medium",
-    specialKind: null,
-    sectionName: "Apresiasi",
-    sectionSlug: "apresiasi",
-  },
-  {
-    id: "landing-demo-myth",
-    content: "Kelelawar itu buta.",
-    cardType: "true_false",
-    difficulty: "easy",
-    level: 2,
-    details: {
-      isTrue: false,
-      explanation:
-        "Kelelawar bisa melihat. Banyak jenisnya juga memakai ekolokasi untuk berburu dalam gelap.",
-    },
-    specialKind: null,
-    sectionName: "Kuis Pengetahuan",
-    sectionSlug: "kuis-pengetahuan",
-  },
-  {
-    id: "landing-demo-choice",
-    content: "Pulau terbesar di Indonesia adalah…",
-    cardType: "multiple_choice",
-    difficulty: "easy",
-    level: 2,
-    details: {
-      options: ["Sumatra", "Kalimantan", "Papua", "Sulawesi"],
-      correctIndex: 2,
-      explanation:
-        "Papua adalah pulau terbesar kedua di dunia setelah Greenland.",
-    },
-    specialKind: null,
-    sectionName: "Kuis Pengetahuan",
-    sectionSlug: "kuis-pengetahuan",
-  },
-  {
-    id: "landing-demo-listening",
-    content:
-      "Karena ban sepeda kempis, Rara memutuskan untuk naik bus, lalu pergi ke pusat kegiatan anak.",
-    cardType: "listening",
-    difficulty: "hard",
-    level: 4,
-    details: {
-      questions: [
-        { question: "Apa yang terjadi?", answer: "Ban sepeda Rara kempis" },
-        { question: "Apa yang diputuskan Rara?", answer: "Naik bus" },
-        {
-          question: "Mengapa Rara melakukan itu?",
-          answer: "Karena ban sepedanya kempis",
-        },
-      ],
-    },
-    specialKind: null,
-    sectionName: "Latihan Mendengar",
-    sectionSlug: "latihan-mendengar",
-  },
-];
+// dan alur kuis (balik dua kali) dari satu demo. Isinya (di kamus i18n,
+// `landing.demo.cards`) dikutip dari deck bawaan dan deck coba.
 
 const swipeThreshold = 60;
 
 export function LandingCardDemo() {
+  const { t, language } = useI18n();
+  const demo = t.landing.demo;
+  const demoCards = demo.cards;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
@@ -94,10 +33,10 @@ export function LandingCardDemo() {
   }
 
   const flipLabel = !isRevealed
-    ? "Balik kartunya"
+    ? demo.flip
     : withAnswer && !isAnswerRevealed
-      ? "Lihat jawaban"
-      : "Balik lagi";
+      ? demo.showAnswer
+      : demo.flipBack;
   const [direction, setDirection] = useState(1);
   const isDragging = useRef(false);
 
@@ -165,6 +104,7 @@ export function LandingCardDemo() {
         >
           <CardDisplay
             card={currentCard}
+            language={language}
             isRevealed={isRevealed}
             isAnswerRevealed={isAnswerRevealed}
             onRevealAnswer={() => setIsAnswerRevealed(true)}
@@ -180,7 +120,7 @@ export function LandingCardDemo() {
           type="button"
           className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white/90 text-neutral-600 shadow-sm transition hover:border-pink-300 hover:text-pink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2"
           onClick={() => moveCard(-1)}
-          aria-label="Kartu sebelumnya"
+          aria-label={demo.previous}
         >
           <span aria-hidden="true">←</span>
         </button>
@@ -199,7 +139,7 @@ export function LandingCardDemo() {
           type="button"
           className="flex size-10 items-center justify-center rounded-full border border-neutral-200 bg-white/90 text-neutral-600 shadow-sm transition hover:border-pink-300 hover:text-pink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2"
           onClick={() => moveCard(1)}
-          aria-label="Kartu berikutnya"
+          aria-label={demo.next}
         >
           <span aria-hidden="true">→</span>
         </button>
@@ -207,7 +147,7 @@ export function LandingCardDemo() {
 
       <div
         className="relative mt-3 flex items-center justify-center gap-2"
-        aria-label={`Kartu ${currentIndex + 1} dari ${demoCards.length}`}
+        aria-label={demo.position(currentIndex + 1, demoCards.length)}
       >
         {demoCards.map((card, index) => (
           <button
@@ -217,14 +157,14 @@ export function LandingCardDemo() {
               index === currentIndex ? "bg-pink-500" : "bg-neutral-300"
             }`}
             onClick={() => selectCard(index)}
-            aria-label={`Tampilkan kartu ${index + 1}`}
+            aria-label={demo.show(index + 1)}
             aria-current={index === currentIndex ? "true" : undefined}
           />
         ))}
       </div>
 
       <p className="relative mt-2 text-center text-xs text-neutral-500">
-        Geser kanan atau kiri · {currentIndex + 1}/{demoCards.length}
+        {demo.swipeHint} · {currentIndex + 1}/{demoCards.length}
       </p>
     </div>
   );

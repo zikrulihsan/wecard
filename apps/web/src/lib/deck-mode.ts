@@ -2,32 +2,14 @@ import { DECK_MODES, type DeckMode } from "@flipcard/types";
 
 /**
  * Jenis deck: cara memainkannya, terpisah dari topiknya. Dipakai beranda
- * (tab per jenis) dan form generate (langkah pertama).
+ * (tab per jenis) dan form generate (langkah pertama). Label dan petunjuknya
+ * ada di kamus i18n (`modes`), karena ikut bahasa aplikasi.
  */
-export const DECK_MODE_META: Record<
-  DeckMode,
-  { emoji: string; label: string; hint: string }
-> = {
-  ngobrol: {
-    emoji: "💬",
-    label: "Ngobrol",
-    hint: "Pertanyaan yang dijawab dengan cerita.",
-  },
-  tantangan: {
-    emoji: "🎯",
-    label: "Tantangan",
-    hint: "Tantangan yang langsung dikerjakan bareng.",
-  },
-  kuis: {
-    emoji: "🧠",
-    label: "Kuis",
-    hint: "Uji pengetahuan, jawabannya di balik kartu.",
-  },
-  mendengar: {
-    emoji: "👂",
-    label: "Mendengar",
-    hint: "Satu membacakan, yang lain menjawab.",
-  },
+export const DECK_MODE_META: Record<DeckMode, { emoji: string }> = {
+  ngobrol: { emoji: "💬" },
+  tantangan: { emoji: "🎯" },
+  kuis: { emoji: "🧠" },
+  mendengar: { emoji: "👂" },
 };
 
 export const DEFAULT_DECK_MODE: DeckMode = "ngobrol";

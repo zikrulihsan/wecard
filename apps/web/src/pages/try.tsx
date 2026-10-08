@@ -8,11 +8,15 @@ import { DECK_MODE_META, isDeckMode } from "@/lib/deck-mode";
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
 import { AI_TOPUP_PACK, formatIdr } from "@/lib/pricing";
 import { useSignedIn } from "@/lib/supabase/use-signed-in";
-import { TRIAL_DECKS, type TrialDeck } from "@/lib/trial/decks";
+import { trialDecks, type TrialDeck } from "@/lib/trial/decks";
+import { useI18n, useT } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { TRIAL_FREE_CARDS, freeCardCount, useTrialProgress } from "@/lib/trial/progress";
 import { cn } from "@/lib/utils";
 
-const MODES = DECK_MODES.filter((mode) => TRIAL_DECKS.some((deck) => deck.mode === mode));
+// Jenis deck sama di semua bahasa (slug & mode-nya identik), jadi cukup
+// dihitung dari salah satunya.
+const MODES = DECK_MODES.filter((mode) => trialDecks("id").some((deck) => deck.mode === mode));
 
 /**
  * Pintu masuk "Coba gratis". Semua deck coba bisa dibuka tanpa akun, tapi
@@ -24,6 +28,7 @@ const MODES = DECK_MODES.filter((mode) => TRIAL_DECKS.some((deck) => deck.mode =
  * top-up, supaya tamu tahu apa yang didapat di tiap langkah.
  */
 export default function TryPage() {
+  const { t, language } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const signedIn = useSignedIn();
   const { seen } = useTrialProgress();
@@ -31,27 +36,30 @@ export default function TryPage() {
   const requested = searchParams.get("jenis");
   const activeMode: DeckMode =
     isDeckMode(requested) && MODES.includes(requested) ? requested : MODES[0];
-  const decks = TRIAL_DECKS.filter((deck) => deck.mode === activeMode);
+  const decks = trialDecks(language).filter((deck) => deck.mode === activeMode);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50">
       <div className="mx-auto max-w-screen-sm px-4 py-6">
-        <BackLink href={signedIn ? "/home" : "/"}>Beranda</BackLink>
+        <div className="flex items-start justify-between gap-3">
+          <BackLink href={signedIn ? "/home" : "/"}>{t.trial.backHome}</BackLink>
+          <LanguageSwitcher />
+        </div>
 
         <header className="mb-5 space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">
-            {signedIn ? "Deck coba, terbuka penuh" : "Coba semua deck, gratis"}
+            {signedIn ? t.trial.titleSignedIn : t.trial.titleGuest}
           </h1>
           <p className="text-neutral-600">
             {signedIn ? (
-              "Kamu sudah masuk, jadi semua kartu di sini bisa dimainkan sampai habis."
+              t.trial.introSignedIn
             ) : (
               <>
-                Pilih jenisnya, lalu mainkan{" "}
+                {t.trial.introLead}{" "}
                 <strong className="font-semibold text-neutral-800">
-                  {TRIAL_FREE_CARDS} kartu pertama
+                  {t.trial.introStrong(TRIAL_FREE_CARDS)}
                 </strong>{" "}
-                tiap deck tanpa daftar. Suka? Masuk untuk lanjut sampai habis.
+                {t.trial.introRest}
               </>
             )}
           </p>
@@ -59,7 +67,7 @@ export default function TryPage() {
 
         <div
           role="tablist"
-          aria-label="Jenis deck"
+          aria-label={t.trial.modeTabs}
           className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]"
         >
           {MODES.map((mode) => {
@@ -80,12 +88,12 @@ export default function TryPage() {
                 )}
               >
                 <span aria-hidden>{meta.emoji}</span>
-                {meta.label}
+                {t.modes[mode].label}
               </button>
             );
           })}
         </div>
-        <p className="mb-4 text-sm text-neutral-500">{DECK_MODE_META[activeMode].hint}</p>
+        <p className="mb-4 text-sm text-neutral-500">{t.modes[activeMode].hint}</p>
 
         <ul className="space-y-3" role="tabpanel">
           {decks.map((deck) => (
@@ -99,7 +107,7 @@ export default function TryPage() {
         {signedIn === true && (
           <div className="mt-8 text-center">
             <Link to="/create" className={buttonVariants({ size: "lg", className: "rounded-full" })}>
-              Bikin deck sendiri pakai AI
+              {t.trial.makeWithAi}
             </Link>
           </div>
         )}
@@ -109,6 +117,7 @@ export default function TryPage() {
 }
 
 function TrialDeckTile({ deck, seen, guest }: { deck: TrialDeck; seen: number; guest: boolean }) {
+  const t = useT();
   const free = freeCardCount(deck.cards.length);
   const lockedCount = deck.cards.length - free;
   const played = Math.min(seen, free);
@@ -130,20 +139,20 @@ function TrialDeckTile({ deck, seen, guest }: { deck: TrialDeck; seen: number; g
           <span className="flex items-center gap-2 pt-0.5 text-xs text-white/80">
             <FreeMeter used={played} free={free} />
             <span>
-              {usedUp ? "Gratisnya habis" : `${free} kartu gratis`}
+              {usedUp ? t.trial.freeUsedUp : t.trial.freeCount(free)}
               {" · "}
-              <Lock className="inline size-3 -translate-y-px" aria-hidden /> {lockedCount} lagi
+              <Lock className="inline size-3 -translate-y-px" aria-hidden /> {t.trial.lockedMore(lockedCount)}
             </span>
           </span>
         ) : (
-          <span className="block text-xs text-white/70">{deck.cards.length} kartu</span>
+          <span className="block text-xs text-white/70">{t.common.cards(deck.cards.length)}</span>
         )}
       </span>
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/20">
         {played > 0 ? (
-          <RotateCcw className="size-4" aria-label="Main lagi" />
+          <RotateCcw className="size-4" aria-label={t.trial.playAgain} />
         ) : (
-          <Play className="size-4" aria-label="Main" />
+          <Play className="size-4" aria-label={t.trial.play} />
         )}
       </span>
     </Link>
@@ -151,8 +160,9 @@ function TrialDeckTile({ deck, seen, guest }: { deck: TrialDeck; seen: number; g
 }
 
 function FreeMeter({ used, free }: { used: number; free: number }) {
+  const t = useT();
   return (
-    <span className="flex w-14 shrink-0 gap-0.5" aria-label={`${used} dari ${free} kartu gratis dimainkan`}>
+    <span className="flex w-14 shrink-0 gap-0.5" aria-label={t.trial.freeMeter(used, free)}>
       {Array.from({ length: free }, (_, index) => (
         <span
           key={index}
@@ -165,34 +175,30 @@ function FreeMeter({ used, free }: { used: number; free: number }) {
 
 /** Tiga langkah dari coba sampai beli, dengan langkah sekarang ditandai. */
 function UpgradeLadder() {
+  const t = useT().trial;
+  const price = formatIdr(AI_TOPUP_PACK.priceIdr);
   const steps = [
     {
-      title: "Coba tanpa akun",
-      tag: "Kamu di sini",
-      points: [`${TRIAL_FREE_CARDS} kartu pertama tiap deck`, "Semua jenis: ngobrol, tantangan, kuis, mendengar"],
+      title: t.ladderTryTitle,
+      tag: t.ladderTryTag,
+      points: t.ladderTryPoints(TRIAL_FREE_CARDS),
     },
     {
-      title: "Akun gratis",
-      tag: "Gratis",
-      points: [
-        "Semua kartu terbuka, lanjut dari kartu terakhir",
-        `${AI_GENERATION_LIMIT} deck buatanmu sendiri pakai AI`,
-      ],
+      title: t.ladderFreeTitle,
+      tag: t.ladderFreeTag,
+      points: t.ladderFreePoints(AI_GENERATION_LIMIT),
     },
     {
-      title: "Top-up deck AI",
-      tag: AI_TOPUP_PACK.available ? `Rp${formatIdr(AI_TOPUP_PACK.priceIdr)}` : "Segera hadir",
-      points: [
-        `+${AI_TOPUP_PACK.generations} deck AI seharga Rp${formatIdr(AI_TOPUP_PACK.priceIdr)}`,
-        "Topik apa saja, untuk siapa saja",
-      ],
+      title: t.ladderTopupTitle,
+      tag: AI_TOPUP_PACK.available ? t.ladderPrice(price) : t.ladderTopupSoon,
+      points: t.ladderTopupPoints(AI_TOPUP_PACK.generations, price),
     },
   ];
 
   return (
     <section className="mt-10 space-y-4" aria-labelledby="ladder-title">
       <h2 id="ladder-title" className="text-lg font-semibold">
-        Dari coba sampai punya deck sendiri
+        {t.ladderTitle}
       </h2>
       <ol className="space-y-2">
         {steps.map((step, index) => (
@@ -233,13 +239,13 @@ function UpgradeLadder() {
                     className: "flex-1 rounded-full bg-pink-600 text-white [a]:hover:bg-pink-700",
                   })}
                 >
-                  Buat akun gratis
+                  {t.createAccount}
                 </Link>
                 <Link
                   to="/login"
                   className={buttonVariants({ variant: "outline", className: "flex-1 rounded-full border-pink-200 bg-white" })}
                 >
-                  Masuk
+                  {t.signIn}
                 </Link>
               </div>
             )}

@@ -1,0 +1,718 @@
+import type { Messages } from "./id";
+
+/** English UI copy. Must mirror every key in `id.ts` — typecheck enforces it. */
+export const en: Messages = {
+  meta: {
+    title: "FlipCard — Play, Learn & Have Fun Together",
+    description:
+      "Never let free time go awkwardly quiet again: play, learn, and have fun together with conversation cards, quizzes, and listening practice. Make your own deck with AI from any topic.",
+  },
+
+  language: {
+    label: "Language",
+    switchTo: "Change language",
+    settingTitle: "App language",
+    settingHint:
+      "Changes the app's text, and shows decks in this language first on your home screen.",
+  },
+
+  common: {
+    back: "Back",
+    retry: "Try again",
+    retrying: "Retrying…",
+    loading: "Loading",
+    or: "or",
+    cards: (count: number) => `${count} ${count === 1 ? "card" : "cards"}`,
+    levelOf: (level: number) => `Level ${level} of 5`,
+    exit: "Exit",
+  },
+
+  nav: {
+    home: "Home",
+    create: "Create",
+    store: "Store",
+    profile: "Profile",
+    limited: (label: string) => `${label} (limited)`,
+  },
+
+  loadError: {
+    title: "Couldn't load",
+    description: "Trouble reaching the server. It's usually brief.",
+  },
+
+  app: {
+    loginUnavailableTitle: "Sign-in isn't available yet",
+    loginUnavailableDescription:
+      "The sign-in service isn't configured yet. Please try again later.",
+    checkingSession: "Checking your session",
+    openingPage: "Opening page",
+  },
+
+  landing: {
+    hero: {
+      pillars: "Play · Learn · Have fun together",
+      titleLead: "Free Time Together,",
+      titleAccent: "Never Awkward Again",
+      bodyLead:
+        "Draw a card: chat, a quiz showdown, or listening practice. Can't find the right one?",
+      bodyStrong: "Make your own with AI",
+      bodyEnd: ".",
+      tryFree: "Try free — no sign-up",
+      haveAccount: "I have an account",
+      footnote: (limit: number) =>
+        `Sign up free and get ${limit} AI decks`,
+    },
+    heroStack: {
+      animate: (name: string) =>
+        `Animate the ${name} card; tap again to open the demo`,
+      open: (name: string) => `Open the demo from the ${name} card`,
+      left: {
+        kind: "Listening",
+        deck: "Listening Practice",
+        content: "Ben is eating a red apple.",
+      },
+      center: {
+        kind: "Talk",
+        deck: "Couples",
+        content: "What's one little habit of mine that you love?",
+      },
+      right: {
+        kind: "Quiz",
+        deck: "Made by AI",
+        content: "What does “context window” mean?",
+      },
+    },
+    how: {
+      eyebrow: "Make it with AI",
+      title: "No deck that fits? Make your own.",
+      body: "Name the topic and your cards are ready in about 30 seconds.",
+      steps: [
+        "Name the topic & who's playing",
+        "AI writes the cards & answers",
+        "Start playing",
+      ],
+      footnote: (limit: number) => `Your first ${limit} AI decks are free.`,
+      demoTopicLabel: "Topic",
+      demoTopic: "The solar system for 3rd graders",
+      demoChips: ["Quiz", "Kids", "10 cards"],
+      demoCards: [
+        { kind: "Multiple choice", content: "Which planet is closest to the Sun?" },
+        { kind: "Myth / fact", content: "The Sun is also a star." },
+      ],
+      demoDeck: "Made by AI",
+    },
+    samples: {
+      eyebrow: "Three ways to play",
+      title: "One card, one turn.",
+      groups: [
+        {
+          emoji: "💬",
+          pillar: "Fun",
+          title: "Conversation",
+          description: "Questions and little challenges. No right or wrong.",
+          formats: ["Talk", "Action"],
+        },
+        {
+          emoji: "🧠",
+          pillar: "Play",
+          title: "Quiz",
+          description: "Answer, flip the card, score at the end.",
+          formats: ["Q&A", "Multiple choice", "Myth / fact", "Guess the clue", "Put in order"],
+        },
+        {
+          emoji: "👂",
+          pillar: "Learn",
+          title: "Listening",
+          description: "The phone reads aloud, kids answer. Builds focus.",
+          formats: ["Level ⭐ – ⭐⭐⭐⭐⭐"],
+        },
+      ],
+      tryEyebrow: "Try it now",
+      tryTitle: "Tap the card.",
+      tryBody:
+        "Tap to open, flip again to see the answer. Swipe for more cards.",
+      moreTitle: "More sample cards",
+      carouselLabel: "Carousel of more sample cards",
+      carouselPrev: "Scroll sample cards left",
+      carouselNext: "Scroll sample cards right",
+      cards: [
+        { theme: "pink", kind: "Talk", deck: "Couples", content: "What do I do that makes you feel loved?" },
+        { theme: "indigo", kind: "Quiz", deck: "Self-Test: AI Engineering", content: "What is an embedding?", level: 2 },
+        { theme: "sky", kind: "Talk", deck: "Kids & Parents", content: "What's the activity together you look forward to most?" },
+        { theme: "teal", kind: "Myth / fact", deck: "Trivia Quiz", content: "Bats are blind.", level: 2 },
+        { theme: "pink", kind: "Action", deck: "Couples", content: "Tell one funny thing from today in the most dramatic way possible 😄" },
+        { theme: "sky", kind: "Listening", deck: "Listening Practice", content: "This morning Sarah watered the flowers in the front yard.", level: 2 },
+        { theme: "teal", kind: "Guess the clue", deck: "Trivia Quiz", content: "You can find me in the kitchen and in the sea. What am I?", level: 3 },
+        { theme: "indigo", kind: "Myth / fact", deck: "Self-Test: AI Engineering", content: "Raising the temperature makes a model's answers more accurate.", level: 2 },
+      ],
+    },
+    demo: {
+      flip: "Flip the card",
+      showAnswer: "See the answer",
+      flipBack: "Flip back",
+      previous: "Previous card",
+      next: "Next card",
+      position: (current: number, total: number) =>
+        `Card ${current} of ${total}`,
+      show: (index: number) => `Show card ${index}`,
+      swipeHint: "Swipe left or right",
+      cards: [
+        {
+          id: "landing-demo-appreciation",
+          content:
+            "What's a small thing I do that quietly always makes you happy?",
+          cardType: "talk",
+          difficulty: "medium",
+          specialKind: null,
+          sectionName: "Appreciation",
+          sectionSlug: "apresiasi",
+        },
+        {
+          id: "landing-demo-myth",
+          content: "Bats are blind.",
+          cardType: "true_false",
+          difficulty: "easy",
+          level: 2,
+          details: {
+            isTrue: false,
+            explanation:
+              "Bats can see. Many species also use echolocation to hunt in the dark.",
+          },
+          specialKind: null,
+          sectionName: "Trivia Quiz",
+          sectionSlug: "kuis-pengetahuan",
+        },
+        {
+          id: "landing-demo-choice",
+          content: "The largest island in Indonesia is…",
+          cardType: "multiple_choice",
+          difficulty: "easy",
+          level: 2,
+          details: {
+            options: ["Sumatra", "Borneo", "New Guinea", "Sulawesi"],
+            correctIndex: 2,
+            explanation:
+              "New Guinea is the second-largest island in the world, after Greenland.",
+          },
+          specialKind: null,
+          sectionName: "Trivia Quiz",
+          sectionSlug: "kuis-pengetahuan",
+        },
+        {
+          id: "landing-demo-listening",
+          content:
+            "Because her bike tire was flat, Rachel decided to take the bus, and then went to the kids' activity center.",
+          cardType: "listening",
+          difficulty: "hard",
+          level: 4,
+          details: {
+            questions: [
+              { question: "What happened?", answer: "Rachel's bike tire was flat" },
+              { question: "What did Rachel decide?", answer: "To take the bus" },
+              { question: "Why did Rachel do that?", answer: "Because her bike tire was flat" },
+            ],
+          },
+          specialKind: null,
+          sectionName: "Listening Practice",
+          sectionSlug: "latihan-mendengar",
+        },
+      ],
+    },
+    pricing: {
+      title: "Start free",
+      body: "Built-in decks are free forever. The only paid part is credits for making AI decks.",
+      freeTitle: "Free",
+      freePrice: "Rp 0",
+      freeSubtitle: "Every account, no credit card",
+      freeAiStrong: (limit: number) => `${limit} AI decks`,
+      freeAiRest: "made by you",
+      freeDecks: "Every built-in deck",
+      freePlay: "Play as much as you like",
+      freeCta: "Create a free account",
+      topupTitle: (count: number) => `Add ${count} AI decks`,
+      comingSoon: "Coming soon",
+      price: (amount: string) => `Rp ${amount}`,
+      perDeck: (amount: string) => `≈Rp ${amount} per deck · one-time payment`,
+      topupStrong: (count: number) => `${count} extra`,
+      topupRest: "AI decks",
+      topupNoExpiry: "Not a subscription, never expires",
+      topupFailed: "Failed generations aren't charged",
+      buy: "Buy pack",
+      closedTitle: "Purchases aren't open yet",
+    },
+    faq: {
+      eyebrow: "FAQ",
+      title: "Still unsure?",
+      items: (limit: number, packCount: number, packPrice: string) => [
+        {
+          question: "Do I need to install an app?",
+          answer:
+            "No. Open it in your phone's browser and pass the phone around. Nobody else needs to sign up.",
+        },
+        {
+          question: "Can I use it to study, not just to chat?",
+          answer:
+            "Yes. There are quiz cards on any topic, from the solar system to AI Engineering, plus listening practice for kids.",
+        },
+        {
+          question: "Are the AI's quiz answers always right?",
+          answer:
+            "Quizzes without a complete answer are thrown out automatically, but AI can still be wrong. For exam prep, double-check the answers.",
+        },
+        {
+          question: `Are the ${limit} decks for playing or creating?`,
+          answer:
+            "For creating. Decks you've made can be played without limit. Decks that fail to generate don't use a credit.",
+        },
+        {
+          question: "Can other people see the decks I make?",
+          answer: "No. AI decks only live in your account.",
+        },
+        {
+          question: "Can I make decks in English?",
+          answer:
+            "Yes. Pick the card language in the create-deck form — Indonesian or English.",
+        },
+        {
+          question: "What if my free credits run out?",
+          answer: `Decks you've made stay playable. There will be a pack of ${packCount} decks for Rp ${packPrice}, one-time payment.`,
+        },
+      ],
+    },
+    finalCta: {
+      title: "Start with a single card.",
+      body: (limit: number) =>
+        `Play now without signing up, or create an account for ${limit} free AI decks.`,
+      tryButton: "Try free",
+      button: "Create account",
+    },
+    footer: (year: number) => `© ${year} FlipCard. Made with love.`,
+  },
+
+  deckCard: {
+    answerBehind: "↻ Answer on the back",
+  },
+
+  formats: {
+    talk: { label: "TALK", hint: "Answer with a story" },
+    action: { label: "ACTION", hint: "Do the challenge" },
+    special: { label: "SPECIAL", hint: "Game rule card" },
+    quiz: { label: "QUIZ", hint: "Answer, then flip the card" },
+    multiple_choice: {
+      label: "MULTIPLE CHOICE",
+      hint: "Tap the answer you think is right",
+    },
+    true_false: { label: "MYTH / FACT", hint: "Myth or fact?" },
+    clue: {
+      label: "GUESS THE CLUE",
+      hint: "Reveal clues one at a time — the fewer, the better",
+    },
+    ordering: { label: "PUT IN ORDER", hint: "Arrange them in the right order" },
+    listening: {
+      label: "LISTENING",
+      hint: "Read the text aloud, then answer the questions",
+    },
+  },
+
+  card: {
+    talkDifficulty: { easy: "Light", medium: "Deep", hard: "Intimate" },
+    plainDifficulty: { easy: "Easy", medium: "Medium", hard: "Hard" },
+    answerHeader: "✅ ANSWER",
+    tapToOpen: "Tap to open",
+    fact: "Fact",
+    myth: "Myth",
+    factChoice: "✅ Fact",
+    mythChoice: "❌ Myth",
+    factVerdict: "✅ FACT",
+    mythVerdict: "❌ MYTH",
+    clue: (index: number) => `Clue ${index}:`,
+    nextClue: (shown: number, total: number) =>
+      `Reveal next clue (${shown}/${total})`,
+    stopReading: "Stop",
+    readAloud: "Read aloud",
+    showText: "Show text",
+    hideText: "Hide text",
+    questions: "Questions",
+    correct: "Correct! 🎉",
+    wrong: (picked: string) => `Not quite — you picked ${picked}`,
+    selfGradeQuestion: "Did you get it right?",
+    selfGradeRight: "✅ Right",
+    selfGradeWrong: "❌ Not yet",
+  },
+
+  game: {
+    progress: (current: number, total: number) =>
+      `Card ${current} of ${total}`,
+    timeUp: "Time's up",
+    timeUpShort: "Time!",
+    timerPaused: (seconds: number) =>
+      `Timer paused, ${seconds} seconds left. Tap to resume`,
+    timerRunning: (seconds: number) =>
+      `${seconds} seconds left. Tap to pause`,
+    resetTimer: "Restart timer",
+    scoreGreat: "Awesome, you've mastered this deck!",
+    scoreOkay: "Not bad! Go through it once more to make it stick.",
+    scoreLow: "Plenty left to learn — give it another go.",
+    scoreLabel: (percent: number) => `correct answers (${percent}%)`,
+    confirmExit: "Leave the game? Your progress won't be saved.",
+    openCard: "Open Card",
+    previousCard: "Previous card",
+    showAnswer: "See Answer",
+    nextCard: "Next Card",
+    skip: "Skip",
+    swipeHint: "Swipe the card left to continue, right to go back",
+    done: "All done!",
+    doneTalk:
+      "Hope that conversation brought you closer. Want to play another round?",
+    playAgain: "Play Again",
+    backToDeck: "Back to Deck",
+  },
+
+  picker: {
+    timerOff: "Off",
+    seconds: (value: number) => `${value} sec`,
+    minutes: (value: number) => `${value} min`,
+    fetchFailed: "Couldn't fetch the cards. Check your connection and try again.",
+    emptyLevel: "This level has no cards yet. Try picking another level.",
+    unsupported:
+      "The cards in this level can't be played in this version of the app yet.",
+    chooseLevel: "Choose Levels",
+    timerTitle: "Timer per Card",
+    timerGroup: "Timer duration per card",
+    autoAdvance: "Auto-advance",
+    autoAdvanceHint: "Move to the next card as soon as time runs out.",
+    timerOnHint:
+      "The timer starts when a card is opened. Tap the timer to pause.",
+    timerOffHint: "No time limit — talk as long as you like.",
+    preparing: "Preparing cards...",
+    start: (count: number) =>
+      `Start Playing (${count} ${count === 1 ? "card" : "cards"})`,
+  },
+
+  modes: {
+    ngobrol: { label: "Conversation", hint: "Questions answered with stories." },
+    tantangan: { label: "Challenges", hint: "Challenges you do together on the spot." },
+    kuis: { label: "Quiz", hint: "Test your knowledge — answers on the back." },
+    mendengar: { label: "Listening", hint: "One reads aloud, the others answer." },
+  },
+
+  home: {
+    title: "What are we playing today?",
+    subtitle: "Pick up where you left off, find a deck, or make your own.",
+    deckLanguage: { id: "Deck in Indonesian", en: "Deck in English" },
+    recent: "Recently played",
+    browse: "Browse decks",
+    modeTabs: "Deck type",
+    all: "All",
+    search: "Search decks…",
+    searchLabel: "Search decks",
+    clearSearch: "Clear search",
+    filterGroup: "Filter decks",
+    filterAll: "All",
+    filterFree: "Free",
+    filterMine: "Mine",
+    filterLocked: "Locked",
+    collection: "FlipCard collection",
+    continue: "Continue playing",
+    continueProgress: (current: number, total: number) =>
+      `${current}/${total} cards`,
+    noMatch: (query: string) => `No decks match “${query}” yet.`,
+    noneInFilter: "No decks in this selection yet.",
+    showAll: "Show all decks",
+    makeWithAi: "Make your own with AI",
+    loading: "Fetching your decks",
+    errorTitle: "Couldn't load your decks",
+    errorDescription:
+      "Trouble reaching the server, so your decks aren't showing yet. They're safe — try again in a moment.",
+    yourDecks: "Your decks",
+    free: "Free",
+    unlocked: "Unlocked",
+    locked: "Locked",
+    play: (name: string) => `Play ${name}`,
+    buy: (name: string) => `Buy ${name}`,
+    empty: "No categories available yet.",
+    emptyCta: "Make your own deck with AI",
+    aiSpentTitle: "You've used all your AI decks",
+    aiSpentBody: (used: number, limit: number | null) =>
+      `${used} of ${limit} used.`,
+    aiCtaTitle: "Make a deck with AI",
+    aiCtaUnlimited: "Make unlimited AI decks.",
+    aiCtaRemaining: (limit: number | null, remaining: number) =>
+      `${limit} free decks, ${remaining} left.`,
+  },
+
+  play: {
+    loading: "Opening deck",
+    errorTitle: "Couldn't open this deck",
+    errorDescription: "Trouble reaching the server. Try again in a moment.",
+  },
+
+  create: {
+    title: "Make Your Own Deck",
+    subtitle:
+      "Fill in the context and AI writes the cards. This deck is only visible in your account.",
+    quotaError: "Couldn't read your allowance.",
+    preparing: "Preparing the form",
+    spentTitle: "You've used all your deck credits",
+    spentBody: (used: number, limit: number) =>
+      `Each account gets ${limit} AI decks, and you've used them all (${used} of ${limit}). Decks you've made are still on your home screen and playable anytime.`,
+    topupAvailable: (count: number, price: string) =>
+      `Want to make more? There's an add-on pack of ${count} decks for Rp ${price}.`,
+    topupSoon: (count: number, price: string) =>
+      `An add-on pack of ${count} decks (Rp ${price}) is on the way — it can't be bought just yet.`,
+    playExisting: "Play your existing decks",
+    disabledTitle: "Currently unavailable",
+    disabledBody:
+      "Making decks with AI is turned off for your account right now. AI decks you've already made can still be played.",
+    playExistingFirst: "Play the existing decks for now",
+    form: {
+      modeLegend: "What do you want to play?",
+      modeGroup: "Deck type",
+      withChallenges: "Mix in challenges — about a third of the cards.",
+      audience: "Who are you playing with?",
+      audienceHint: "Sets the point of view and style of the questions.",
+      audienceKnowledge: "Who's playing?",
+      audienceKnowledgeHint: "Sets the vocabulary and question level.",
+      cardLanguage: "Card language",
+      cardLanguageHint:
+        "The language of the deck's content. It doesn't have to match the app language.",
+      cardMix: "Card content",
+      storyTheme: "Story theme (optional)",
+      topic: "Topic",
+      storyHint: "Leave empty for everyday stories at home and school.",
+      topicHint: "The subject to test. Leave empty for general knowledge.",
+      storyPlaceholder: "E.g. animals at the zoo",
+      topicPlaceholder: "E.g. AI Engineering, the solar system, Islamic history",
+      tone: "Card mood",
+      difficulty: "Difficulty",
+      depth: "Depth",
+      difficultyHint: "The cards' star level. Each section gets harder.",
+      depthHint: "How personal the questions are allowed to get.",
+      sectionCount: "Number of sections",
+      cardsPerSection: "Cards per section",
+      total: (count: number) => `${count} cards in total.`,
+      specialLead: "Include",
+      specialStrong: "Special",
+      specialRest: "cards — Free Pass, Switch, Double.",
+      deckName: "Deck name",
+      deckNameHint: "Leave empty to let AI name it.",
+      context: "Extra context",
+      contextHint:
+        "Specific details that make the cards fit better. Don't include personal data.",
+      avoid: "Topics to avoid",
+      unlimited: "You can make unlimited AI decks.",
+      remainingLead: "Credits left:",
+      remainingRest: (limit: number | null) => `of ${limit} AI decks.`,
+      lastChance: " This is your last one, so make it count.",
+      generating: "Writing your cards…",
+      generate: "Generate deck",
+      waitHint: "Takes about 20–40 seconds. Don't close this page.",
+      connectionError: "Connection problem. Please try again.",
+      genericError: "Couldn't create the deck. Please try again.",
+    },
+    languages: { id: "Indonesian", en: "English" },
+    audiences: [
+      { value: "pasangan", label: "Partner / spouse" },
+      { value: "sahabat", label: "Best friends / close friends" },
+      { value: "keluarga", label: "Family" },
+      { value: "anak-orang-tua", label: "Kids & parents" },
+      { value: "rekan-kerja", label: "Coworkers / team" },
+      { value: "kenalan-baru", label: "New acquaintances" },
+      { value: "belajar-sendiri", label: "Just me — study & self-test" },
+      { value: "lainnya", label: "Other (explain in the context)" },
+    ],
+    audienceModeLabels: {
+      sahabat: { kuis: "With friends", mendengar: "With friends" },
+      "anak-orang-tua": { mendengar: "Kids — read aloud by a parent" },
+      "rekan-kerja": { kuis: "Team / class", mendengar: "Team / class" },
+      "belajar-sendiri": { kuis: "Just me — study & self-test" },
+    },
+    tones: [
+      { value: "santai", label: "Relaxed & light" },
+      { value: "romantis", label: "Romantic & warm" },
+      { value: "reflektif", label: "Reflective & honest" },
+      { value: "lucu", label: "Fun & silly" },
+      { value: "mendalam", label: "Deep & serious" },
+    ],
+    depths: [
+      { value: "ringan", label: "Light — safe for anyone" },
+      { value: "sedang", label: "Medium — getting personal" },
+      { value: "dalam", label: "Deep — heavy, honest questions" },
+    ],
+    knowledgeDepths: {
+      ringan: "Easy — ⭐ to ⭐⭐",
+      sedang: "Medium — ⭐⭐ to ⭐⭐⭐⭐",
+      dalam: "Challenging — ramps up to ⭐⭐⭐⭐⭐",
+    },
+    placeholders: {
+      pasangan: {
+        deckName: "E.g. Friday Night for Two",
+        context: "E.g. we've been long-distance for 2 years and only meet once a month",
+        avoid: "E.g. exes, work, politics",
+      },
+      sahabat: {
+        deckName: "E.g. Hanging Out Till Dawn",
+        context: "E.g. we've been friends since high school, now live in different cities",
+        avoid: "E.g. weight, salary, group drama",
+      },
+      keluarga: {
+        deckName: "E.g. Big Family Reunion",
+        context:
+          "E.g. played during Eid, with uncles, aunts, and cousins from kids to adults",
+        avoid: "E.g. politics, inheritance, “when are you getting married?”",
+      },
+      "anak-orang-tua": {
+        deckName: "E.g. Bedtime Chats",
+        context: "E.g. a 9-year-old, usually played before bed",
+        avoid: "E.g. school grades, being compared to siblings",
+      },
+      "rekan-kerja": {
+        deckName: "E.g. Monday Morning Icebreaker",
+        context:
+          "E.g. a 6-person team, half remote and never met in person",
+        avoid: "E.g. salary, promotions, office gossip",
+      },
+      "kenalan-baru": {
+        deckName: "E.g. Meeting Without the Awkward",
+        context:
+          "E.g. a community event, most people meeting for the first time that day",
+        avoid: "E.g. religion, politics, relationship status",
+      },
+      "belajar-sendiri": {
+        deckName: "E.g. AI Engineering Self-Test",
+        context:
+          "E.g. I'm a software engineer who knows LLM basics and wants to test RAG and agents",
+        avoid: "E.g. memorizing numbers, specific product names",
+      },
+      lainnya: {
+        deckName: "E.g. Fun Night Together",
+        context: "E.g. played with neighbors at our monthly gathering",
+        avoid: "E.g. politics, religion, money",
+      },
+    },
+    errors: {
+      unauthenticated: "You're not signed in. Sign in, then try again.",
+      ai_disabled: "Making AI decks is turned off for your account.",
+      quota_spent: (limit: number | null) =>
+        `You've used all your AI deck credits (${limit} decks). Decks you've already made can still be played.`,
+      invalid_input: "Some form fields aren't valid. Check them and try again.",
+      safety_blocked:
+        "This request was blocked by the model's safety filter. Try changing the context or topic.",
+      truncated:
+        "The result got cut off. Try fewer sections or cards.",
+      invalid_output: "The model didn't return a valid deck. Please try again.",
+      empty_deck: "The generated deck was empty. Please try again.",
+      busy: "The AI model is at capacity. Try again in a little while.",
+      unreachable: "Couldn't reach the AI service. Try again in a moment.",
+      save_failed: "The deck was created but couldn't be saved.",
+    },
+  },
+
+  auth: {
+    email: "Email",
+    password: "Password",
+    loginTitle: "Welcome Back",
+    loginSubtitle: "Sign in to your FlipCard account",
+    oauthFailed: "Authentication failed. Please try again.",
+    loginUnreachable: "Couldn't reach the sign-in service. Please try again.",
+    signingIn: "Signing in...",
+    signIn: "Sign in",
+    noAccount: "Don't have an account?",
+    registerHere: "Sign up here",
+    registerTitle: "Create an Account",
+    registerSubtitle: "Join and start deeper conversations",
+    name: "Name",
+    namePlaceholder: "What should we call you?",
+    passwordHint: "At least 6 characters",
+    registering: "Signing up...",
+    register: "Sign up",
+    registerUnreachable:
+      "Couldn't reach the sign-up service. Please try again.",
+    haveAccount: "Already have an account?",
+    loginHere: "Sign in here",
+    checkEmailTitle: "Check Your Email",
+    checkEmailLead: "We sent a confirmation link to",
+    checkEmailRest: ". Click it to activate your account.",
+    backToLogin: "Back to Sign in",
+    googleConnecting: "Connecting to Google...",
+    google: "Continue with Google",
+    finishing: "Finishing sign-in",
+  },
+
+  profile: {
+    title: "Profile",
+    errorTitle: "Couldn't load your profile",
+    logout: "Sign out",
+  },
+
+  store: {
+    title: "Store",
+    subtitle: "Buy paid categories to unlock new cards",
+    soon: "Paid categories are coming soon.",
+  },
+
+  notFound: {
+    title: "We couldn't find that page",
+    body: "The link may have changed, or the deck was deleted. Your other decks are still on your home screen.",
+    home: "Go home",
+    landing: "Front page",
+  },
+
+  trial: {
+    backHome: "Home",
+    titleGuest: "Try every deck, free",
+    titleSignedIn: "Trial decks, fully unlocked",
+    introSignedIn:
+      "You're signed in, so every card here can be played to the end.",
+    introLead: "Pick a type, then play the",
+    introStrong: (count: number) => `first ${count} cards`,
+    introRest: "of every deck without signing up. Like it? Sign in to keep going.",
+    modeTabs: "Deck type",
+    freeUsedUp: "Free cards used",
+    freeCount: (count: number) => `${count} free cards`,
+    lockedMore: (count: number) => `${count} more`,
+    freeMeter: (used: number, free: number) =>
+      `${used} of ${free} free cards played`,
+    playAgain: "Play again",
+    play: "Play",
+    makeWithAi: "Make your own deck with AI",
+    ladderTitle: "From trying it to having your own decks",
+    ladderTryTitle: "Try without an account",
+    ladderTryTag: "You're here",
+    ladderTryPoints: (free: number) => [
+      `The first ${free} cards of every deck`,
+      "Every type: conversation, challenges, quiz, listening",
+    ],
+    ladderFreeTitle: "Free account",
+    ladderFreeTag: "Free",
+    ladderFreePoints: (limit: number) => [
+      "Every card unlocked, continue from your last card",
+      `${limit} decks of your own made with AI`,
+    ],
+    ladderTopupTitle: "AI deck top-up",
+    ladderTopupSoon: "Coming soon",
+    ladderPrice: (price: string) => `Rp${price}`,
+    ladderTopupPoints: (count: number, price: string) => [
+      `+${count} AI decks for Rp${price}`,
+      "Any topic, for anyone",
+    ],
+    createAccount: "Create a free account",
+    signIn: "Sign in",
+    deckDone: (name: string) => `${name} deck complete!`,
+    doneSignedIn: (limit: number) =>
+      `Want a deck on your own topic? Make one with AI — your account includes ${limit} free decks.`,
+    doneGuest: "There are plenty more decks you can try for free.",
+    makeOwn: "Make your own deck",
+    tryAnother: "Try another deck",
+    freeBadge: (current: number, free: number) => `${current}/${free} free`,
+    lockTitle: (next: number) => `Fun, right? Continue from card ${next}`,
+    lockRemaining: (count: number) =>
+      `${count} more ${count === 1 ? "card" : "cards"} locked`,
+    lockBody: (deck: string, limit: number) =>
+      `Sign in for free to unlock the rest of ${deck} — plus every other deck with no limit, and ${limit} decks of your own made with AI.`,
+    lockScoreLead: "So far",
+    lockScoreRest: "correct answers",
+    lockEmail: "Sign in with email",
+    lockRegister: "Sign up",
+  },
+};
