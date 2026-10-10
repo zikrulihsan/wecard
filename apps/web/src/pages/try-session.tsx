@@ -5,6 +5,7 @@ import { ChevronLeft, X } from "lucide-react";
 import { CardDisplay } from "@/components/cards/card-display";
 import { GameProgressBar } from "@/components/game/progress-bar";
 import { QuizScore } from "@/components/game/quiz-score";
+import { ShareActions } from "@/components/share/share-actions";
 import { TrialLock } from "@/components/trial/trial-lock";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { CardLoader } from "@/components/ui/card-loader";
@@ -113,6 +114,14 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
               ? t.trial.doneSignedIn(AI_GENERATION_LIMIT)
               : t.trial.doneGuest}
           </p>
+          <ShareActions
+            text={answered.length > 0
+              ? t.share.resultText(answered.filter(Boolean).length, answered.length, deck.name)
+              : t.share.playedText(deck.name)}
+            url={`${window.location.origin}/coba/${deck.slug}`}
+            label={answered.length > 0 ? t.share.shareResult : t.share.inviteFriends}
+            variant="outline"
+          />
           <div className="space-y-2">
             {signedIn && (
               <Link

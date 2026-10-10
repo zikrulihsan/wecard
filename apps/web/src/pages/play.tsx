@@ -6,6 +6,7 @@ import { BackLink } from "@/components/nav/back-link";
 import { CardLoader } from "@/components/ui/card-loader";
 import { LoadError } from "@/components/ui/load-error";
 import { SectionPicker } from "@/components/app/section-picker";
+import { DeckSharePanel } from "@/components/share/deck-share-panel";
 import NotFound from "@/pages/not-found";
 import type { DeckLanguage, DeckTheme } from "@flipcard/types";
 import { resolveDeckLanguage } from "@/lib/deck-language";
@@ -17,6 +18,8 @@ type Deck = {
   description: string | null;
   theme: DeckTheme;
   language: DeckLanguage;
+  /** Deck custom milik pemain yang sedang masuk — boleh dibagikan lewat link. */
+  isOwn: boolean;
   sections: { id: string; slug: string; name: string; icon: string | null; cardCount: number }[];
 };
 
@@ -36,7 +39,8 @@ export default function PlayPage() {
       // `*` supaya deck tetap bisa dibuka meski migration `language` belum jalan.
       supabase.from("categories").select("*").eq("id", deckId).eq("is_active", true).single(),
       supabase.from("sections").select("id, slug, name, icon, sort_order, cards:cards(id, card_type, difficulty)").eq("category_id", deckId).order("sort_order", { ascending: true }),
-    ]).then(([category, sections]) => {
+      supabase.auth.getSession(),
+    ]).then(([category, sections, session]) => {
       if (!active) return;
       if (category.error?.code === "PGRST116") { setState({ status: "not-found", forId: deckId }); return; }
       if (category.error || sections.error) {
@@ -51,6 +55,7 @@ export default function PlayPage() {
         description: category.data.description,
         theme: resolveDeckTheme(category.data.theme),
         language: resolveDeckLanguage(category.data.language),
+        isOwn: Boolean(category.data.created_by) && category.data.created_by === session.data.session?.user.id,
         sections: (sections.data ?? []).map((section) => ({
           id: section.id, slug: section.slug, name: section.name,
           icon: section.icon, cardCount: section.cards?.length ?? 0,
@@ -72,6 +77,7 @@ export default function PlayPage() {
         status === "error" ? <LoadError title={t.play.errorTitle} description={t.play.errorDescription} onRetry={() => { setState({ status: "loading", forId: deckId }); setRetry((value) => value + 1); }} /> :
         state.deck && <div style={deckThemeVars(state.deck.theme)}>
           <header className="mb-6"><h1 className="text-3xl font-bold">{state.deck.name}</h1>{state.deck.description && <p className="text-muted-foreground mt-2">{state.deck.description}</p>}</header>
+          {state.deck.isOwn && <DeckSharePanel deckId={state.deck.id} deckName={state.deck.name} />}
           <SectionPicker deckId={state.deck.id} deckName={state.deck.name} deckTheme={state.deck.theme} deckLanguage={state.deck.language} sections={state.deck.sections} />
         </div>}
     </div>

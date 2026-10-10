@@ -749,6 +749,62 @@ export const id = {
     lockEmail: "Masuk pakai email",
     lockRegister: "Daftar",
   },
+
+  /** Link main (`/main/<token>`), papan skor grup, dan ajakan bikin deck. */
+  share: {
+    loading: "Membuka deck",
+    errorTitle: "Deck belum bisa dibuka",
+    errorDescription: "Sambungan ke server bermasalah. Coba lagi sebentar.",
+    offTitle: "Link ini sudah tidak aktif",
+    offBody:
+      "Pemilik deck sudah mematikan link ini, atau tautannya terpotong. Minta link baru ke yang membagikannya.",
+    sharedVia: "Main bareng lewat FlipCard",
+    nameLabel: "Namamu",
+    namePlaceholder: "Mis. Budi",
+    nameHintQuiz: "Tanpa daftar. Namamu tampil di papan skor grup.",
+    nameHintTalk: "Tanpa daftar, langsung main.",
+    start: (count: number) => `Mulai Main (${count} kartu)`,
+    emptyDeck: "Deck ini belum punya kartu yang bisa dimainkan.",
+    doneTitle: (name: string) => `Selesai, ${name}!`,
+    scoreboard: "Papan skor grup",
+    scoreboardLoading: "Mengambil skor",
+    scoreboardEmpty: "Belum ada skor lain. Ajak temanmu main!",
+    scoreboardError: "Papan skor belum bisa dimuat.",
+    you: "kamu",
+    shareResult: "Bagikan hasil",
+    inviteFriends: "Ajak teman main",
+    copied: "Tersalin! Tinggal tempel di chat.",
+    copiedShort: "Tersalin",
+    whatsApp: "Kirim ke WhatsApp",
+    resultText: (correct: number, total: number, deck: string) =>
+      `Saya dapat ${correct}/${total} di ${deck} 🎯 Bisa kalahkan skorku?`,
+    playedText: (deck: string) =>
+      `Barusan main deck “${deck}” di FlipCard, seru! Coba juga 👇`,
+    ctaTitle: "Mau deck dengan topikmu sendiri?",
+    ctaBody: (credits: number) =>
+      `Tulis topiknya, AI yang menyusun kartunya. Daftar gratis dan dapat ${credits} kredit — 1 kredit = 1 deck jadi.`,
+    ctaButton: (credits: number) =>
+      `Bikin deck sendiri, dapat ${credits} kredit gratis`,
+    ctaSignedIn: "Bikin deck sendiri",
+    ctaSignIn: "Sudah punya akun? Masuk",
+    playAgain: "Main lagi",
+    panelTitle: "Main bareng lewat link",
+    panelBodyNew:
+      "Bagikan deck ini ke grup. Teman bisa main tanpa daftar — cukup isi nama.",
+    panelBodyOn:
+      "Siapa pun yang punya link ini bisa main tanpa daftar. Matikan kapan saja.",
+    panelBodyOff:
+      "Link sedang mati — yang membukanya tidak bisa main. Nyalakan lagi untuk memakai link yang sama.",
+    turnOn: "Buat link main",
+    turnOnAgain: "Nyalakan lagi",
+    turnOff: "Matikan link",
+    copyLink: "Salin link",
+    linkLabel: "Link main",
+    plays: (count: number) => `Dimainkan ${count}× lewat link`,
+    inviteText: (deck: string) =>
+      `Main “${deck}” bareng yuk! Nggak perlu daftar, cukup isi nama 👇`,
+    saveFailed: "Link belum bisa diubah. Coba lagi sebentar.",
+  },
 };
 
 export type Messages = typeof id;

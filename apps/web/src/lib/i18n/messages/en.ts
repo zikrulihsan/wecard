@@ -715,4 +715,59 @@ export const en: Messages = {
     lockEmail: "Sign in with email",
     lockRegister: "Sign up",
   },
+
+  share: {
+    loading: "Opening deck",
+    errorTitle: "This deck can't be opened yet",
+    errorDescription: "We couldn't reach the server. Try again in a moment.",
+    offTitle: "This link is no longer active",
+    offBody:
+      "The deck owner turned this link off, or the link got cut off. Ask whoever shared it for a new one.",
+    sharedVia: "Play together on FlipCard",
+    nameLabel: "Your name",
+    namePlaceholder: "e.g. Sam",
+    nameHintQuiz: "No sign-up. Your name shows on the group scoreboard.",
+    nameHintTalk: "No sign-up, just play.",
+    start: (count: number) => `Start (${count} cards)`,
+    emptyDeck: "This deck has no playable cards yet.",
+    doneTitle: (name: string) => `Done, ${name}!`,
+    scoreboard: "Group scoreboard",
+    scoreboardLoading: "Loading scores",
+    scoreboardEmpty: "No other scores yet. Invite your friends!",
+    scoreboardError: "The scoreboard couldn't be loaded.",
+    you: "you",
+    shareResult: "Share result",
+    inviteFriends: "Invite friends",
+    copied: "Copied! Paste it in your chat.",
+    copiedShort: "Copied",
+    whatsApp: "Send on WhatsApp",
+    resultText: (correct: number, total: number, deck: string) =>
+      `I scored ${correct}/${total} on ${deck} 🎯 Can you beat me?`,
+    playedText: (deck: string) =>
+      `Just played “${deck}” on FlipCard, so fun! Try it 👇`,
+    ctaTitle: "Want a deck on your own topic?",
+    ctaBody: (credits: number) =>
+      `Write the topic, AI builds the cards. Sign up free and get ${credits} credits — 1 credit = 1 finished deck.`,
+    ctaButton: (credits: number) =>
+      `Make your own deck, get ${credits} free credits`,
+    ctaSignedIn: "Make your own deck",
+    ctaSignIn: "Already have an account? Sign in",
+    playAgain: "Play again",
+    panelTitle: "Play together via link",
+    panelBodyNew:
+      "Share this deck with your group. Friends can play without signing up — just a name.",
+    panelBodyOn:
+      "Anyone with this link can play without signing up. Turn it off anytime.",
+    panelBodyOff:
+      "The link is off — people who open it can't play. Turn it back on to reuse the same link.",
+    turnOn: "Create play link",
+    turnOnAgain: "Turn back on",
+    turnOff: "Turn link off",
+    copyLink: "Copy link",
+    linkLabel: "Play link",
+    plays: (count: number) => `Played ${count}× via link`,
+    inviteText: (deck: string) =>
+      `Let's play “${deck}” together! No sign-up, just enter your name 👇`,
+    saveFailed: "The link couldn't be changed. Try again in a moment.",
+  },
 };

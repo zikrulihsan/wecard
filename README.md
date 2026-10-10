@@ -40,7 +40,7 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Terakhir `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris).
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Lalu `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris). Terakhir `00009_share_links.sql` (link main tanpa akun, papan skor grup, atribusi pendaftaran — lihat [Link Main](#link-main)).
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
@@ -300,8 +300,24 @@ from auth.users u left join public.profiles p on p.id = u.id
 where u.email = 'email@anda.com';
 ```
 
+## Link Main
+
+Pemilik deck custom bisa membuat **link main** dari halaman deck-nya
+(`/play/:deckId`). Siapa pun yang membuka link `/main/<token>` bisa main tanpa
+akun — cukup isi nama. Di akhir sesi pemain melihat skornya, **papan skor
+grup** (deck kuis), tombol bagikan hasil (lembar bagikan HP, salin, WhatsApp),
+dan ajakan "Bikin deck sendiri, dapat 2 kredit gratis". Pemilik bisa
+mematikan link kapan saja; menyalakannya lagi memakai link yang sama.
+
+Semua akses pemain tanpa akun lewat fungsi `SECURITY DEFINER` di migration
+`00009` — kartu deck custom tetap tidak terbaca lewat RLS biasa. Rencana
+lengkap (kredit, premium, Plan Host, cetak) dan query metriknya ada di
+[`docs/monetisasi.md`](docs/monetisasi.md).
+
 ## Roadmap
 
 - **Phase 2**: PWA, SEO landing polish, OG image
 - **Phase 3**: Midtrans payment, unlock flow, kategori berbayar
-- **Phase 4**: Analytics, share/invite, more categories, admin panel
+- **Phase 4**: Analytics, more categories, admin panel
+
+Rencana monetisasi & viral loop yang lebih baru ada di [`docs/monetisasi.md`](docs/monetisasi.md).

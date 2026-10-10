@@ -7,6 +7,8 @@ import { LoadError } from "@/components/ui/load-error";
 import { createClient } from "@/lib/supabase/client";
 import { useDocumentLanguage, useT } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { claimShareReferral } from "@/lib/share/api";
+import { takeReferral } from "@/lib/share/local";
 import LandingPage from "@/pages/landing";
 
 const LoginPage = lazy(() => import("@/pages/login"));
@@ -21,6 +23,7 @@ const NotFound = lazy(() => import("@/pages/not-found"));
 const CallbackPage = lazy(() => import("@/pages/callback"));
 const TryPage = lazy(() => import("@/pages/try"));
 const TrySessionPage = lazy(() => import("@/pages/try-session"));
+const SharedPlayPage = lazy(() => import("@/pages/shared-play"));
 
 function LandingOrCallback() {
   const { search } = useLocation();
@@ -64,7 +67,20 @@ function RequireAuth() {
   return <Outlet />;
 }
 
+/**
+ * Pemain yang daftar dari ajakan di akhir link main membawa token link-nya.
+ * Begitu masuk, catat sekali (metrik pemain → pembuat). Tidak memblokir apa
+ * pun: gagal dicatat ya sudah.
+ */
+function useClaimReferral() {
+  useEffect(() => {
+    const token = takeReferral();
+    if (token) claimShareReferral(token).catch((error) => console.error("[share] gagal mencatat referral", error));
+  }, []);
+}
+
 function AppLayout() {
+  useClaimReferral();
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 pb-bottom-nav"><Outlet /></main>
@@ -97,6 +113,7 @@ export default function App() {
         <Route path="/callback" element={<CallbackPage />} />
         <Route path="/coba" element={<TryPage />} />
         <Route path="/coba/:deckSlug" element={<TrySessionPage />} />
+        <Route path="/main/:token" element={<SharedPlayPage />} />
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<HomePage />} />

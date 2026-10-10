@@ -6,12 +6,7 @@ import { useGameStore } from "@/stores/game-store";
 import { shuffle } from "@/lib/game/shuffle";
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
 import { cn } from "@/lib/utils";
-import {
-  hasAnswerSide,
-  isCardType,
-  parseCardDetails,
-  toCardLevel,
-} from "@/lib/cards/formats";
+import { toGameCards } from "@/lib/cards/to-game-cards";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
@@ -20,11 +15,8 @@ import { useT } from "@/lib/i18n";
 import type { Messages } from "@/lib/i18n/messages/id";
 import type {
   CardTimerSettings,
-  GameCard,
-  CardDifficulty,
   DeckLanguage,
   DeckTheme,
-  SpecialCardKind,
 } from "@flipcard/types";
 
 // Pilihan durasi timer per kartu, dalam detik. 0 = tanpa timer.
@@ -189,28 +181,10 @@ export function SectionPicker({
       return;
     }
 
-    const gameCards: GameCard[] = cards.flatMap((c) => {
+    const gameCards = toGameCards(cards.map((c) => {
       const section = Array.isArray(c.section) ? c.section[0] : c.section;
-      // Format yang belum dikenal versi aplikasi ini dilewati, begitu juga
-      // kartu kuis yang isinya tidak lengkap — keduanya tidak bisa dimainkan.
-      if (!isCardType(c.card_type)) return [];
-      const cardType = c.card_type;
-      const details = parseCardDetails(cardType, c.details);
-      if (hasAnswerSide(cardType) && !details) return [];
-      return [
-        {
-          id: c.id,
-          content: c.content_text,
-          cardType,
-          difficulty: c.difficulty as CardDifficulty,
-          specialKind: c.special_kind as SpecialCardKind | null,
-          details,
-          level: toCardLevel(c.level),
-          sectionName: section?.name ?? "",
-          sectionSlug: section?.slug ?? "",
-        },
-      ];
-    });
+      return { ...c, section_name: section?.name ?? "", section_slug: section?.slug ?? "" };
+    }));
 
     if (gameCards.length === 0) {
       setError(t.picker.unsupported);
