@@ -224,49 +224,50 @@ export const en: Messages = {
       freeTitle: "Free",
       freePrice: "Rp 0",
       freeSubtitle: "Every account, no credit card",
-      freeAiStrong: (limit: number) => `${limit} AI decks`,
-      freeAiRest: "made by you",
+      freeAiStrong: (limit: number) => `${limit} credits`,
+      freeAiRest: "to make your own AI decks (1 credit = 1 deck)",
       freeDecks: "Every built-in deck",
       freePlay: "Play as much as you like",
       freeCta: "Create a free account",
-      topupTitle: (count: number) => `Add ${count} AI decks`,
-      comingSoon: "Coming soon",
+      topupTitle: "Credit packs",
       price: (amount: string) => `Rp ${amount}`,
-      perDeck: (amount: string) => `≈Rp ${amount} per deck · one-time payment`,
-      topupStrong: (count: number) => `${count} extra`,
-      topupRest: "AI decks",
+      perDeck: (amount: string) => `from ≈Rp ${amount} per deck · one-time payment`,
       topupNoExpiry: "Not a subscription, never expires",
       topupFailed: "Failed generations aren't charged",
-      buy: "Buy pack",
+      buy: "Buy credits",
       closedTitle: "Purchases aren't open yet",
+      packLine: (credits: number, price: string) => `${credits} credits — Rp ${price}`,
+      topupRevisions: (regens: number, swaps: number) =>
+        `Per deck: ${regens} free regenerations + ${swaps} card swaps`,
+      comingSoon: "Coming soon",
     },
     faq: {
       eyebrow: "FAQ",
       title: "Still unsure?",
-      items: (limit: number, packCount: number, packPrice: string) => [
+      items: (limit: number, packs: string) => [
         {
           question: "Do I need to install an app?",
           answer:
-            "No. Open it in your phone's browser and pass the phone around. Nobody else needs to sign up.",
+            "No. Open it in your phone's browser and pass the phone around. Nobody else needs an account.",
         },
         {
-          question: "Can I use it to study, not just to chat?",
+          question: "Can it be for learning, not just talking?",
           answer:
             "Yes. There are quiz cards on any topic, from the solar system to AI Engineering, plus listening practice for kids.",
         },
         {
-          question: "Are the AI's quiz answers always right?",
+          question: "Are AI quiz answers always right?",
           answer:
-            "Quizzes without a complete answer are thrown out automatically, but AI can still be wrong. For exam prep, double-check the answers.",
+            "Quiz cards without a complete answer are dropped automatically, but AI can still be wrong. For exam material, double-check the answers.",
         },
         {
-          question: `Are the ${limit} decks for playing or creating?`,
+          question: `Are the ${limit} free credits for playing or creating?`,
           answer:
-            "For creating. Decks you've made can be played without limit. Decks that fail to generate don't use a credit.",
+            "For creating. 1 credit = 1 finished deck, used only when you save it — before that you can regenerate and swap cards. Finished decks can be played without limit.",
         },
         {
           question: "Can other people see the decks I make?",
-          answer: "No. AI decks only live in your account.",
+          answer: "No, unless you create a play link for your group. You can turn that link off anytime.",
         },
         {
           question: "Can I make decks in English?",
@@ -274,10 +275,12 @@ export const en: Messages = {
             "Yes. Pick the card language in the create-deck form — Indonesian or English.",
         },
         {
-          question: "What if my free credits run out?",
-          answer: `Decks you've made stay playable. There will be a pack of ${packCount} decks for Rp ${packPrice}, one-time payment.`,
+          question: "What if I run out of credits?",
+          answer: `Decks you've made stay playable. Top up with a ${packs} pack — one-time payment, never expires.`,
         },
       ],
+      pack: (credits: number, price: string) => `${credits}-credit (Rp ${price})`,
+      packJoin: " or ",
     },
     finalCta: {
       title: "Start with a single card.",
@@ -432,34 +435,29 @@ export const en: Messages = {
     buy: (name: string) => `Buy ${name}`,
     empty: "No categories available yet.",
     emptyCta: "Make your own deck with AI",
-    aiSpentTitle: "You've used all your AI decks",
-    aiSpentBody: (used: number, limit: number | null) =>
-      `${used} of ${limit} used.`,
+    aiSpentTitle: "You're out of credits",
+    aiSpentBody: "Buy a credit pack to make more decks.",
     aiCtaTitle: "Make a deck with AI",
     aiCtaUnlimited: "Make unlimited AI decks.",
-    aiCtaRemaining: (limit: number | null, remaining: number) =>
-      `${limit} free decks, ${remaining} left.`,
+    aiCtaBalance: (balance: number) => `${balance} credits · 1 credit = 1 deck`,
+    draftTitle: "Continue your draft",
+    draftBody: "Revise it, then save to start playing.",
+    draft: "Draft",
   },
 
   play: {
     loading: "Opening deck",
     errorTitle: "Couldn't open this deck",
     errorDescription: "Trouble reaching the server. Try again in a moment.",
+    editDeck: "Revise cards",
   },
 
   create: {
     title: "Make Your Own Deck",
     subtitle:
       "Fill in the context and AI writes the cards. This deck is only visible in your account.",
-    quotaError: "Couldn't read your allowance.",
+    quotaError: "Couldn't read your credit balance.",
     preparing: "Preparing the form",
-    spentTitle: "You've used all your deck credits",
-    spentBody: (used: number, limit: number) =>
-      `Each account gets ${limit} AI decks, and you've used them all (${used} of ${limit}). Decks you've made are still on your home screen and playable anytime.`,
-    topupAvailable: (count: number, price: string) =>
-      `Want to make more? There's an add-on pack of ${count} decks for Rp ${price}.`,
-    topupSoon: (count: number, price: string) =>
-      `An add-on pack of ${count} decks (Rp ${price}) is on the way — it can't be bought just yet.`,
     playExisting: "Play your existing decks",
     disabledTitle: "Currently unavailable",
     disabledBody:
@@ -500,15 +498,14 @@ export const en: Messages = {
       contextHint:
         "Specific details that make the cards fit better. Don't include personal data.",
       avoid: "Topics to avoid",
-      unlimited: "You can make unlimited AI decks.",
-      remainingLead: "Credits left:",
-      remainingRest: (limit: number | null) => `of ${limit} AI decks.`,
-      lastChance: " This is your last one, so make it count.",
       generating: "Writing your cards…",
-      generate: "Generate deck",
+      generate: "Generate draft",
       waitHint: "Takes about 20–40 seconds. Don't close this page.",
       connectionError: "Connection problem. Please try again.",
       genericError: "Couldn't create the deck. Please try again.",
+      balanceUnlimited: "Your account can make unlimited decks.",
+      balance: (balance: number) => `Balance: ${balance} credits.`,
+      balanceHint: "A credit is only used when you save the deck — you can revise the draft first.",
     },
     languages: { id: "Indonesian", en: "English" },
     audiences: [
@@ -593,8 +590,6 @@ export const en: Messages = {
     errors: {
       unauthenticated: "You're not signed in. Sign in, then try again.",
       ai_disabled: "Making AI decks is turned off for your account.",
-      quota_spent: (limit: number | null) =>
-        `You've used all your AI deck credits (${limit} decks). Decks you've already made can still be played.`,
       invalid_input: "Some form fields aren't valid. Check them and try again.",
       safety_blocked:
         "This request was blocked by the model's safety filter. Try changing the context or topic.",
@@ -605,7 +600,20 @@ export const en: Messages = {
       busy: "The AI model is at capacity. Try again in a little while.",
       unreachable: "Couldn't reach the AI service. Try again in a moment.",
       save_failed: "The deck was created but couldn't be saved.",
+      no_credits: "You're out of credits. Buy a credit pack to make more decks.",
+      draft_open: "You still have an unsaved draft. Save or discard it first.",
+      daily_limit: (limit: number | null) =>
+        `You've reached the limit of ${limit} drafts per day. Try again tomorrow.`,
+      no_source: "This deck was made before revisions existed, so it can't be revised.",
+      not_found: "The deck or card wasn't found.",
     },
+    noCreditsTitle: "You're out of credits",
+    noCreditsBody: "A new deck needs a credit. Decks you've made stay playable anytime.",
+    buyCredits: "Buy credits",
+    draftOpenTitle: "You have an unsaved draft",
+    draftOpenBody: "Save or discard that draft before making a new deck.",
+    continueDraft: "Continue draft",
+    discardDraft: "Discard draft",
   },
 
   auth: {
@@ -647,8 +655,39 @@ export const en: Messages = {
 
   store: {
     title: "Store",
-    subtitle: "Buy paid categories to unlock new cards",
-    soon: "Paid categories are coming soon.",
+    subtitle: "Credits for making your own decks with AI.",
+    soon: "Credit purchases open soon.",
+    balanceLabel: "Your credit balance",
+    balanceUnlimited: "Unlimited",
+    rules: (regens: number, swaps: number) => [
+      "1 credit = 1 finished deck, used when you save it",
+      `Per deck: ${regens} free regenerations + ${swaps} card swaps`,
+      "Past the revision limit: 1 credit opens a new allowance",
+      "One-time payment, never expires",
+    ],
+    packsTitle: "Credit packs",
+    packName: (credits: number) => `${credits} credits`,
+    packPerDeck: (price: string) => `≈Rp ${price} per deck`,
+    bestValue: "Best value",
+    buy: (price: string) => `Buy · Rp ${price}`,
+    buying: "Opening payment…",
+    buyError: "Payment couldn't be opened. Try again in a moment.",
+    orderChecking: "Checking your payment…",
+    orderPending: "Waiting for the payment to finish. This page updates itself.",
+    orderPaid: (credits: number) => `Payment received — +${credits} credits!`,
+    orderFailed: "The payment failed or expired. Your balance didn't change.",
+    historyTitle: "Credit history",
+    historyEmpty: "No history yet.",
+    reasons: {
+      signup_bonus: "Sign-up bonus",
+      legacy_quota: "Starting allowance",
+      purchase: "Pack purchase",
+      deck_save: "Deck saved",
+      revision: "Extra revisions",
+      admin: "Adjustment",
+    } as Record<string, string>,
+    premiumSoon: "Premium decks (curated series) are coming soon.",
+    loadError: "Your balance couldn't be loaded.",
   },
 
   notFound: {
@@ -686,21 +725,21 @@ export const en: Messages = {
     ladderFreeTitle: "Free account",
     ladderFreeTag: "Free",
     ladderFreePoints: (limit: number) => [
-      "Every card unlocked, continue from your last card",
-      `${limit} decks of your own made with AI`,
+      "Every card unlocked, continue where you left off",
+      `${limit} credits to make your own AI decks`,
     ],
-    ladderTopupTitle: "AI deck top-up",
+    ladderTopupTitle: "Credit packs",
     ladderTopupSoon: "Coming soon",
     ladderPrice: (price: string) => `Rp${price}`,
     ladderTopupPoints: (count: number, price: string) => [
-      `+${count} AI decks for Rp${price}`,
-      "Any topic, for anyone",
+      `+${count} credits for Rp${price}`,
+      "1 credit = 1 finished deck, free revisions",
     ],
     createAccount: "Create a free account",
     signIn: "Sign in",
     deckDone: (name: string) => `${name} deck complete!`,
     doneSignedIn: (limit: number) =>
-      `Want a deck on your own topic? Make one with AI — your account includes ${limit} free decks.`,
+      `Want a deck on your own topic? Make one with AI — new accounts get ${limit} free credits, 1 credit = 1 deck.`,
     doneGuest: "There are plenty more decks you can try for free.",
     makeOwn: "Make your own deck",
     tryAnother: "Try another deck",
@@ -709,7 +748,7 @@ export const en: Messages = {
     lockRemaining: (count: number) =>
       `${count} more ${count === 1 ? "card" : "cards"} locked`,
     lockBody: (deck: string, limit: number) =>
-      `Sign in for free to unlock the rest of ${deck} — plus every other deck with no limit, and ${limit} decks of your own made with AI.`,
+      `Sign in free to unlock the rest of ${deck} — plus every other deck without limits, and ${limit} credits to make your own decks with AI.`,
     lockScoreLead: "So far",
     lockScoreRest: "correct answers",
     lockEmail: "Sign in with email",
@@ -769,5 +808,39 @@ export const en: Messages = {
     inviteText: (deck: string) =>
       `Let's play “${deck}” together! No sign-up, just enter your name 👇`,
     saveFailed: "The link couldn't be changed. Try again in a moment.",
+  },
+
+  review: {
+    titleDraft: "Review your draft",
+    titleSaved: "Revise deck",
+    draftBadge: "Draft · not saved",
+    introDraft:
+      "Not quite right? Regenerate everything or swap cards one by one. A credit is only used when you save.",
+    introSaved: "Swap cards that don't fit, or regenerate the whole deck.",
+    loading: "Opening draft",
+    errorTitle: "This deck can't be opened yet",
+    freeRegens: (left: number, total: number) => `Free regenerations: ${left}/${total}`,
+    freeSwaps: (left: number, total: number) => `Free card swaps: ${left}/${total}`,
+    overLimit: "Past the limit, 1 credit opens a new revision allowance.",
+    regenerate: "Regenerate all",
+    regenerating: "Rewriting the deck… about 20–40 seconds",
+    regenerateConfirm: "Every card will be replaced with new ones. Continue?",
+    chargeConfirm: "This deck's free revisions are used up — this revision costs 1 credit. Continue?",
+    swap: "Swap",
+    swapping: "Swapping…",
+    swapLabel: (index: number) => `Swap card ${index}`,
+    save: "Save & play · 1 credit",
+    saveUnlimited: "Save & play",
+    saving: "Saving…",
+    balance: (balance: number) => `${balance} credits`,
+    noCredits:
+      "You're out of credits. Buy some to save this deck — the draft stays safe here.",
+    buy: "Buy credits",
+    discard: "Discard draft",
+    discardConfirm: "Discard this draft? Its cards will be gone for good.",
+    backToDeck: "Done, back to the deck",
+    reviseFailed: "The revision failed. Try again.",
+    saveFailed: "The deck couldn't be saved. Try again.",
+    answer: "Answer",
   },
 };

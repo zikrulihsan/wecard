@@ -1,11 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import { CARD_TYPES, DECK_THEMES } from "@flipcard/types";
 import { generatedDeckSchema, type GenerateDeckInput } from "../deck-schema";
-import { SYSTEM_PROMPT, buildUserPrompt } from "../prompt";
+import { SYSTEM_PROMPT, buildPrompt } from "../prompt";
 import {
   GenerationFailed,
   GenerationRefused,
   type DeckProvider,
+  type GenerateOptions,
   type ProviderResult,
 } from "../provider";
 
@@ -150,10 +151,10 @@ export function createGeminiProvider(): DeckProvider {
   return {
     name: "gemini",
     model,
-    async generate(input: GenerateDeckInput): Promise<ProviderResult> {
+    async generate(input: GenerateDeckInput, options?: GenerateOptions): Promise<ProviderResult> {
       const request = {
         model,
-        contents: buildUserPrompt(input),
+        contents: buildPrompt(input, options?.instruction),
         config: {
           systemInstruction: SYSTEM_PROMPT,
           responseMimeType: "application/json",

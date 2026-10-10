@@ -269,3 +269,9 @@ function buildKnowledgePrompt(
 
   return lines.join("\n");
 }
+
+/** Prompt user lengkap, plus tugas tambahan kalau ada. */
+export function buildPrompt(input: GenerateDeckInput, instruction?: string): string {
+  const base = buildUserPrompt(input);
+  return instruction ? `${base}\n\n${instruction}` : base;
+}

@@ -17,6 +17,21 @@
   status = 200
 
 [[redirects]]
+  from = "/api/decks/revise"
+  to = "/.netlify/functions/decks-revise"
+  status = 200
+
+[[redirects]]
+  from = "/api/credits/checkout"
+  to = "/.netlify/functions/credits-checkout"
+  status = 200
+
+[[redirects]]
+  from = "/api/payments/midtrans"
+  to = "/.netlify/functions/payments-midtrans"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

@@ -1,11 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { generatedDeckSchema, type GenerateDeckInput } from "../deck-schema";
-import { SYSTEM_PROMPT, buildUserPrompt } from "../prompt";
+import { SYSTEM_PROMPT, buildPrompt } from "../prompt";
 import {
   GenerationFailed,
   GenerationRefused,
   type DeckProvider,
+  type GenerateOptions,
   type ProviderResult,
 } from "../provider";
 
@@ -26,7 +27,7 @@ export function createAnthropicProvider(): DeckProvider {
   return {
     name: "anthropic",
     model,
-    async generate(input: GenerateDeckInput): Promise<ProviderResult> {
+    async generate(input: GenerateDeckInput, options?: GenerateOptions): Promise<ProviderResult> {
       const message = await getClient().messages.parse({
         model,
         max_tokens: 16000,
@@ -35,7 +36,7 @@ export function createAnthropicProvider(): DeckProvider {
           format: zodOutputFormat(generatedDeckSchema),
           effort: "medium",
         },
-        messages: [{ role: "user", content: buildUserPrompt(input) }],
+        messages: [{ role: "user", content: buildPrompt(input, options?.instruction) }],
       });
 
       if (message.stop_reason === "refusal") {

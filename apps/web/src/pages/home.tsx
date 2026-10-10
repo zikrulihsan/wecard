@@ -28,6 +28,7 @@ type CategoryRow = {
   theme: string | null;
   mode: string | null;
   language?: string | null;
+  status?: string | null;
 };
 
 type Deck = Omit<CategoryRow, "mode" | "language"> & {
@@ -305,7 +306,7 @@ function DeckTile({ deck, showMode }: { deck: Deck; showMode: boolean }) {
   const badge = "bg-white/20 text-white border-0";
   return (
     <Link
-      to={deck.isUnlocked ? `/play/${deck.id}` : "/store"}
+      to={deck.status === "draft" ? `/create/${deck.id}` : deck.isUnlocked ? `/play/${deck.id}` : "/store"}
       aria-label={deck.isUnlocked ? t.home.play(deck.name) : t.home.buy(deck.name)}
       className={cn(
         "relative flex min-h-40 flex-col rounded-2xl bg-gradient-to-br p-4 text-white shadow-md transition-shadow hover:shadow-xl",
@@ -314,6 +315,7 @@ function DeckTile({ deck, showMode }: { deck: Deck; showMode: boolean }) {
     >
       <div className="mb-3 flex flex-wrap gap-1.5">
         {deck.is_ai_generated && <Badge variant="secondary" className={cn(badge, "gap-1")}><Sparkles className="size-3" />AI</Badge>}
+        {deck.status === "draft" && <Badge variant="secondary" className={badge}>{t.home.draft}</Badge>}
         {deck.language !== language && <Badge variant="secondary" className={badge} title={t.home.deckLanguage[deck.language]}>{deck.language.toUpperCase()}</Badge>}
         {deck.is_free ? <Badge variant="secondary" className={badge}>{t.home.free}</Badge> :
           deck.isUnlocked ? <Badge variant="secondary" className={badge}>{t.home.unlocked}</Badge> :

@@ -2,9 +2,11 @@ import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { PrimaryCta } from "./cta";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
+import { FREE_CARD_SWAPS, FREE_REGENERATIONS } from "@/lib/credits";
 import {
-  AI_TOPUP_PACK,
-  AI_TOPUP_PRICE_PER_DECK,
+  CHEAPEST_PER_CREDIT,
+  CREDITS_ON_SALE,
+  CREDIT_PACKS,
   formatIdr,
 } from "@/lib/pricing";
 import { useT } from "@/lib/i18n";
@@ -13,14 +15,14 @@ import { useT } from "@/lib/i18n";
  * Harga, disebut terbuka.
  *
  * Dua kolom, bukan tabel bertingkat: yang gratis benar-benar bisa dipakai
- * (deck bawaan lengkap + {AI_GENERATION_LIMIT} deck AI), dan yang berbayar
- * cuma menambah jatah bikin deck. Menyembunyikan harga sampai orang mendaftar
- * cuma menunda kekecewaan yang sama.
+ * (deck bawaan lengkap + {AI_GENERATION_LIMIT} kredit), dan yang berbayar
+ * cuma menambah kredit untuk bikin deck. Menyembunyikan harga sampai orang
+ * mendaftar cuma menunda kekecewaan yang sama.
  *
- * Selama `AI_TOPUP_PACK.available` masih false, paketnya ditandai "segera
- * hadir" dan area aksinya berubah menjadi penjelasan status — halaman tidak
- * boleh menawarkan tombol beli yang belum punya checkout atau mengulang CTA
- * paket Gratis.
+ * Selama `CREDITS_ON_SALE` masih false, paketnya ditandai "segera hadir" dan
+ * area aksinya berubah menjadi penjelasan status — halaman tidak boleh
+ * menawarkan tombol beli yang belum punya checkout atau mengulang CTA paket
+ * Gratis.
  */
 export function Pricing() {
   const p = useT().landing.pricing;
@@ -72,10 +74,8 @@ export function Pricing() {
           {/* Top-up */}
           <div className="relative flex min-w-0 flex-col rounded-3xl bg-white p-6 shadow-xl shadow-pink-500/10 ring-2 ring-pink-300 sm:p-8">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="font-semibold">
-                {p.topupTitle(AI_TOPUP_PACK.generations)}
-              </h3>
-              {!AI_TOPUP_PACK.available && (
+              <h3 className="font-semibold">{p.topupTitle}</h3>
+              {!CREDITS_ON_SALE && (
                 <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-pink-700 ring-1 ring-pink-200">
                   {p.comingSoon}
                 </span>
@@ -83,25 +83,27 @@ export function Pricing() {
             </div>
 
             <p className="mt-3 text-4xl font-bold tracking-tight">
-              {p.price(formatIdr(AI_TOPUP_PACK.priceIdr))}
+              {p.price(formatIdr(CREDIT_PACKS[0].priceIdr))}
             </p>
             <p className="mt-1 text-sm text-neutral-500">
-              {p.perDeck(formatIdr(AI_TOPUP_PRICE_PER_DECK))}
+              {p.perDeck(formatIdr(CHEAPEST_PER_CREDIT))}
             </p>
 
             <ul className="mt-6 space-y-3 text-sm">
-              <Item>
-                <strong className="font-semibold">
-                  {p.topupStrong(AI_TOPUP_PACK.generations)}
-                </strong>{" "}
-                {p.topupRest}
-              </Item>
+              {CREDIT_PACKS.map((pack) => (
+                <Item key={pack.id}>
+                  <strong className="font-semibold">
+                    {p.packLine(pack.credits, formatIdr(pack.priceIdr))}
+                  </strong>
+                </Item>
+              ))}
+              <Item>{p.topupRevisions(FREE_REGENERATIONS, FREE_CARD_SWAPS)}</Item>
               <Item>{p.topupNoExpiry}</Item>
               <Item>{p.topupFailed}</Item>
             </ul>
 
             <div className="mt-8 pt-2">
-              {AI_TOPUP_PACK.available ? (
+              {CREDITS_ON_SALE ? (
                 <PrimaryCta href="/store" className="h-11 w-full">
                   {p.buy}
                 </PrimaryCta>

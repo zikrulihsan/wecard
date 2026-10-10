@@ -55,7 +55,7 @@ repo ini. Angka harga masih contoh — diuji dulu sebelum dikunci.
 | Fase | Fokus | Isi | Status |
 | --- | --- | --- | --- |
 | 1 | Viral loop | Link main tanpa login, papan skor, CTA akhir sesi | **Diterapkan** — lihat di bawah |
-| 2 | Monetisasi dasar | Paket kredit (minimal top-up), aturan revisi | Belum |
+| 2 | Monetisasi dasar | Paket kredit (minimal top-up), aturan revisi | **Diterapkan** — lihat di bawah |
 | 3 | Seri premium pertama | English Speaking Practice, 3 volume siap sebelum rilis, uji di sesimu sendiri | Belum |
 | 4 | Plan Host + sesi live | Untuk tutor dan fasilitator | Belum |
 | 5 | Cetak | Uji manual dulu lewat percetakan lokal sebelum dibangun sistemnya | Belum (manual) |
@@ -65,8 +65,8 @@ repo ini. Angka harga masih contoh — diuji dulu sebelum dikunci.
 | Metrik | Pertanyaan yang dijawab | Bisa diukur sejak |
 | --- | --- | --- |
 | Pemain → pembuat | Berapa persen pemain yang akhirnya bikin deck sendiri | Fase 1 |
-| Pembuat → pembayar | Berapa persen pembuat yang beli kredit atau premium | Fase 2 |
-| Pembelian ulang | Berapa yang beli lebih dari sekali | Fase 2 |
+| Pembuat → pembayar | Berapa persen pembuat yang beli kredit atau premium | Fase 2 (`credit_orders`) |
+| Pembelian ulang | Berapa yang beli lebih dari sekali | Fase 2 (`credit_orders`) |
 | Biaya AI per deck | Rata-rata total generate + revisi per deck, harus jauh di bawah harga kredit | Sekarang (`ai_generations`) |
 
 ---
@@ -91,10 +91,33 @@ Batas yang disengaja di fase ini:
   kartu ikut fase 3.
 - Sesi live (banyak HP, satu sesi) belum ada; link main adalah permainan
   sendiri-sendiri yang skornya digabung. Sesi live ikut fase 4.
-- "Kredit" di teks CTA masih setara jatah 2 deck AI yang sudah ada
-  (1 kredit = 1 deck). Saldo kredit sungguhan dibangun di fase 2.
+- "Kredit" di teks CTA kini saldo kredit sungguhan (fase 2).
 - Anti-spam papan skor masih kasar: maksimal 300 permainan per deck per jam,
   nama 1–40 karakter, skor harus masuk akal.
+
+## Fase 2 — yang sudah ada
+
+Migration: `packages/supabase/migrations/00010_credits.sql`. Detail teknis dan
+penjagaannya ada di README, bagian "Kredit, draf & revisi".
+
+| Bagian | Letak | Catatan |
+| --- | --- | --- |
+| Saldo kredit | `credit_ledger`, `credit_balance()` | Akun baru +2 (trigger). Akun lama: sisa jatah lama jadi kredit. Saldo = jumlah semua baris. |
+| Kredit terpotong saat disimpan | `categories.status` (`draft`/`saved`), `save_deck()`, halaman `/create/:deckId` | Generate menghasilkan draf. Tombol "Simpan & main · 1 kredit" memotong kredit dan langsung membuka deck. Draf tidak bisa dimainkan atau dibagikan. |
+| Revisi gratis | `/api/decks/revise`, `use_revision()` | 3x generate ulang + 5x ganti kartu per deck. Lewat batas: 1 kredit membuka jatah baru. Bisa juga dari deck yang sudah tersimpan ("Revisi kartu" di halaman deck). |
+| Paket kredit | `/store`, `/api/credits/checkout`, `/api/payments/midtrans`, `credit_orders` | 5 kredit Rp 15.000 · 10 kredit Rp 25.000 lewat Midtrans Snap. Tertutup ("segera hadir") sampai kunci Midtrans diset. |
+| Riwayat kredit | `/store` | 10 perubahan saldo terakhir. |
+
+Keputusan yang diambil saat menerapkan (silakan diubah):
+
+- **Satu draf terbuka per akun, maksimal 5 draf baru per 24 jam.** Draf
+  belum memotong kredit, jadi tanpa batas ini orang bisa generate terus
+  lalu membuang drafnya — biaya AI tanpa pembayaran.
+- **Generate butuh saldo ≥ 1** walau kreditnya baru dipotong saat simpan.
+- **1 kredit lewat batas membuka jatah revisi penuh yang baru** (bukan cuma
+  satu revisi).
+- **Midtrans** dipilih karena sudah ada di roadmap repo. Selama belum aktif,
+  admin bisa menambah kredit manual lewat SQL (lihat README).
 
 ## Query metrik
 
@@ -135,4 +158,29 @@ select
 from ai_generations
 where created_at > now() - interval '30 days'
 group by provider, model;
+```
+
+**Pembuat → pembayar & pembelian ulang**
+
+```sql
+with pembuat as (
+  select distinct user_id from credit_ledger where reason = 'deck_save'
+), pembeli as (
+  select user_id, count(*) as kali from credit_orders where status = 'paid' group by user_id
+)
+select
+  (select count(*) from pembuat)                                         as pembuat,
+  (select count(*) from pembeli where user_id in (select user_id from pembuat)) as pembuat_yang_bayar,
+  (select count(*) from pembeli where kali > 1)                          as beli_ulang,
+  (select coalesce(sum(amount_idr), 0) from credit_orders where status = 'paid') as pendapatan_idr;
+```
+
+**Biaya AI per deck termasuk revisi** (`kind`: `deck`, `regenerate`, `swap`)
+
+```sql
+select kind, count(*) as panggilan,
+       round(avg(input_tokens)) as input_rata2, round(avg(output_tokens)) as output_rata2
+from ai_generations
+where status = 'success' and created_at > now() - interval '30 days'
+group by kind;
 ```

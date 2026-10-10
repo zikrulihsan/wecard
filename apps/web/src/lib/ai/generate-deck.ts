@@ -23,6 +23,7 @@ import { createGeminiProvider } from "./providers/gemini";
 import {
   GenerationFailed,
   type DeckProvider,
+  type GenerateOptions,
   type ProviderName,
 } from "./provider";
 
@@ -81,10 +82,11 @@ export type GenerateResult = {
 };
 
 export async function generateDeck(
-  input: GenerateDeckInput
+  input: GenerateDeckInput,
+  options?: GenerateOptions
 ): Promise<GenerateResult> {
   const provider = resolveProvider();
-  const { deck, usage } = await provider.generate(input);
+  const { deck, usage } = await provider.generate(input, options);
 
   return {
     deck: normalizeDeck(deck, input),
@@ -148,4 +150,39 @@ export function normalizeDeck(
       : themeForAudience(input.audience),
     sections: usable,
   };
+}
+
+/**
+ * Satu kartu pengganti untuk sebuah section. Memakai skema deck yang sama
+ * (1 section × 1 kartu) supaya provider dan validasinya tidak perlu jalur
+ * baru — yang berbeda hanya tugas tambahan di akhir prompt.
+ */
+export async function generateReplacementCard(
+  input: GenerateDeckInput,
+  target: {
+    sectionName: string;
+    sectionDescription: string | null;
+    cardType: CardType;
+    level: CardLevel | null;
+    /** Isi kartu yang sudah ada di deck — penggantinya tidak boleh mirip. */
+    existing: string[];
+  }
+): Promise<{ card: NormalizedCard; provider: ProviderName; model: string; usage: GenerateResult["usage"] }> {
+  const single = { ...input, sectionCount: 1, cardsPerSection: 1, includeSpecial: target.cardType === "special" };
+  const instruction = [
+    `TUGAS KHUSUS — abaikan jumlah section dan kartu di atas:`,
+    `Buat TEPAT 1 section berisi TEPAT 1 kartu, untuk mengganti satu kartu di section "${target.sectionName}"${target.sectionDescription ? ` (${target.sectionDescription})` : ""}.`,
+    `- cardType kartu pengganti: ${target.cardType}.`,
+    target.level ? `- Level: ${target.level}.` : ``,
+    `- Nama section di keluaran: "${target.sectionName}".`,
+    `- Ide kartunya harus baru — jangan mengulang atau memparafrase kartu-kartu yang sudah ada berikut:`,
+    ...target.existing.slice(0, 40).map((content) => `  • ${content.slice(0, 160)}`),
+  ].filter(Boolean).join("\n");
+
+  const { deck, usage, provider, model } = await generateDeck(single, { instruction });
+  const card =
+    deck.sections.flatMap((section) => section.cards).find((c) => c.cardType === target.cardType) ??
+    deck.sections[0]?.cards[0];
+  if (!card) throw new GenerationFailed("Kartu pengganti kosong. Coba lagi.", "empty_deck");
+  return { card, usage, provider, model };
 }

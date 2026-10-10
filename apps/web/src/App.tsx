@@ -15,6 +15,7 @@ const LoginPage = lazy(() => import("@/pages/login"));
 const RegisterPage = lazy(() => import("@/pages/register"));
 const HomePage = lazy(() => import("@/pages/home"));
 const CreatePage = lazy(() => import("@/pages/create"));
+const DeckReviewPage = lazy(() => import("@/pages/deck-review"));
 const PlayPage = lazy(() => import("@/pages/play"));
 const SessionPage = lazy(() => import("@/pages/session"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
@@ -118,6 +119,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/home" element={<HomePage />} />
             <Route path="/create" element={<CreatePage />} />
+            <Route path="/create/:deckId" element={<DeckReviewPage />} />
             <Route path="/store" element={<StorePage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/play/:deckId" element={<PlayPage />} />

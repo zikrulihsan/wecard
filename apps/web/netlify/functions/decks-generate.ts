@@ -1,5 +1,7 @@
 import type { Config } from "@netlify/functions";
 import { authenticatedClient } from "../auth";
+import { buildSlug, insertDeckContent } from "../deck-content";
+import { DAILY_DRAFT_LIMIT } from "../../src/lib/credits";
 import { reportError, supabaseError } from "../../src/lib/observability";
 import { getAiAccess } from "../../src/lib/ai/access";
 import { generateDeckInputSchema, modeForCardMix } from "../../src/lib/ai/deck-schema";
@@ -31,18 +33,41 @@ export default async function handler(request: Request): Promise<Response> {
     );
   }
 
-  // Jatah dihitung dari generate yang berhasil saja — lihat getAiAccess().
-  // Dua permintaan yang benar-benar bersamaan bisa lolos berdua di sini;
-  // yang ketiga tetap ditolak, dan RLS (has_ai_access()) menutup sisanya.
-  if (access.remaining === 0) {
+  // Satu draf terbuka per akun: simpan atau buang dulu yang lama.
+  if (access.openDraftId) {
     return Response.json(
-      {
-        error: `Jatah bikin deck AI kamu sudah habis (${access.limit} deck). Deck yang sudah jadi tetap bisa dimainkan.`,
-        code: "quota_spent",
-        limit: access.limit,
-      },
-      { status: 429 }
+      { error: "Masih ada draf yang belum disimpan.", code: "draft_open", draftId: access.openDraftId },
+      { status: 409 }
     );
+  }
+
+  // Draf belum memotong kredit, tapi tetap butuh saldo — supaya generate
+  // tidak bisa dipakai tanpa pernah membayar. RLS (has_ai_access()) menutup
+  // jalur yang sama di tahap insert.
+  if (!access.unlimited && access.balance < 1) {
+    return Response.json(
+      { error: "Kreditmu habis. Beli paket kredit untuk bikin deck lagi.", code: "no_credits" },
+      { status: 402 }
+    );
+  }
+
+  if (!access.unlimited) {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count, error: countError } = await supabase
+      .from("ai_generations")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("kind", "deck")
+      .eq("status", "success")
+      .gte("created_at", since);
+    if (countError) {
+      reportError("generate.batas-harian-tidak-terbaca", { userId: user.id, ...supabaseError(countError) });
+    } else if ((count ?? 0) >= DAILY_DRAFT_LIMIT) {
+      return Response.json(
+        { error: `Batas ${DAILY_DRAFT_LIMIT} draf per hari tercapai. Coba lagi besok.`, code: "daily_limit", limit: DAILY_DRAFT_LIMIT },
+        { status: 429 }
+      );
+    }
   }
 
   const body = await request.json().catch(() => null);
@@ -88,6 +113,7 @@ export default async function handler(request: Request): Promise<Response> {
         model,
         status: "error",
         error_message: message,
+        kind: "deck",
       });
 
     if (logError) {
@@ -129,6 +155,8 @@ export default async function handler(request: Request): Promise<Response> {
       is_active: true,
       created_by: user.id,
       is_ai_generated: true,
+      // Draf: kreditnya baru terpotong saat disimpan (save_deck).
+      status: "draft",
     })
     .select("id")
     .single();
@@ -137,60 +165,15 @@ export default async function handler(request: Request): Promise<Response> {
     return saveFailed("category", categoryError);
   }
 
-  const { data: sections, error: sectionError } = await supabase
-    .from("sections")
-    .insert(
-      deck.sections.map((section, index) => ({
-        category_id: category.id,
-        slug: `${slugify(section.name) || "section"}-${index + 1}`,
-        name: section.name,
-        description: section.description,
-        icon: section.icon,
-        sort_order: index + 1,
-      }))
-    )
-    .select("id, sort_order");
-
-  if (sectionError || !sections) {
+  const content = await insertDeckContent(supabase, category.id, deck);
+  if (content.step) {
     await supabase.from("categories").delete().eq("id", category.id);
-    return saveFailed("sections", sectionError);
+    return saveFailed(content.step, content.error);
   }
 
-  const sectionIdByOrder = new Map(sections.map((s) => [s.sort_order, s.id]));
-
-  const cardRows = deck.sections.flatMap((section, sectionIndex) => {
-    const sectionId = sectionIdByOrder.get(sectionIndex + 1);
-    if (!sectionId) return [];
-    return section.cards.map((card, cardIndex) => ({
-      section_id: sectionId,
-      card_type: card.cardType,
-      difficulty: card.difficulty,
-      content_text: card.content,
-      special_kind: card.specialKind,
-      details: card.details,
-      level: card.level,
-      // Deck AI milik sendiri — semua kartu terbuka untuk pembuatnya.
-      is_free_preview: true,
-      sort_order: cardIndex + 1,
-      is_ai_generated: true,
-    }));
-  });
-
-  const { error: cardError } = await supabase.from("cards").insert(cardRows);
-
-  if (cardError) {
-    await supabase.from("categories").delete().eq("id", category.id);
-    return saveFailed("cards", cardError);
-  }
-
-  // Baris inilah yang memotong jatah — `ai_generations` berstatus success
-  // adalah satu-satunya hitungan kuota (lihat getAiAccess dan has_ai_access()).
-  // Kalau insert-nya gagal, pengguna dapat deck tanpa jatahnya berkurang;
-  // begitu paket top-up dijual, itu kebocoran pendapatan yang tidak akan
-  // terlihat di mana pun. Deck-nya tidak dibatalkan — pengguna sudah menunggu
-  // dan hasilnya sudah benar — tapi kejadiannya harus terekam supaya bisa
-  // dicocokkan belakangan.
-  const { error: quotaError } = await supabase.from("ai_generations").insert({
+  // Catatan generate: sumber input untuk generate ulang & ganti kartu, dan
+  // bahan metrik biaya AI per deck. Gagal dicatat tidak membatalkan draf.
+  const { error: recordError } = await supabase.from("ai_generations").insert({
     user_id: user.id,
     category_id: category.id,
     input,
@@ -199,17 +182,18 @@ export default async function handler(request: Request): Promise<Response> {
     input_tokens: usage.inputTokens,
     output_tokens: usage.outputTokens,
     status: "success",
+    kind: "deck",
   });
 
-  if (quotaError) {
-    reportError("generate.jatah-tidak-terpotong", {
+  if (recordError) {
+    reportError("generate.log-tidak-tersimpan", {
       userId: user.id,
       categoryId: category.id,
       provider,
       model,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
-      ...supabaseError(quotaError),
+      ...supabaseError(recordError),
     });
   }
 
@@ -218,7 +202,7 @@ export default async function handler(request: Request): Promise<Response> {
     name: deck.name,
     theme: deck.theme,
     sectionCount: deck.sections.length,
-    cardCount: cardRows.length,
+    cardCount: content.cardCount,
   });
 }
 
@@ -252,27 +236,12 @@ function saveFailed(step: string, error: unknown) {
               detail?.code === "42703" ||
               detail?.code === "22P02" ||
               detail?.code === "PGRST205"
-                ? "Ada migration yang belum jalan. Jalankan packages/supabase/migrations/00002_ai_decks.sql, 00004_deck_theme.sql, 00006_card_formats.sql, 00007_deck_mode.sql, dan 00008_deck_language.sql di SQL Editor Supabase."
+                ? "Ada migration yang belum jalan. Jalankan packages/supabase/migrations/00002_ai_decks.sql, 00004_deck_theme.sql, 00006_card_formats.sql, 00007_deck_mode.sql, 00008_deck_language.sql, dan 00010_credits.sql di SQL Editor Supabase."
                 : detail?.code === "42501"
-                  ? "Insert ditolak RLS — pastikan policy di migration 00002 sudah terpasang, dan cek sisa jatah: has_ai_access() ikut menolak kalau kuota generate habis."
+                  ? "Insert ditolak RLS — pastikan policy di migration 00002 sudah terpasang, dan cek saldo kredit: has_ai_access() ikut menolak kalau saldo 0 (migration 00010)."
                   : undefined,
           }),
     },
     { status: 500 }
   );
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-}
-
-function buildSlug(name: string) {
-  const suffix = crypto.randomUUID().slice(0, 8);
-  return `${slugify(name) || "deck"}-${suffix}`;
 }

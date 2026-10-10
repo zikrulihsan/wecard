@@ -7,10 +7,18 @@ export type ProviderResult = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+export type GenerateOptions = {
+  /**
+   * Tugas tambahan di akhir prompt user — dipakai untuk ganti kartu satuan
+   * ("buat satu kartu pengganti, jangan mirip kartu-kartu ini").
+   */
+  instruction?: string;
+};
+
 export interface DeckProvider {
   name: ProviderName;
   model: string;
-  generate(input: GenerateDeckInput): Promise<ProviderResult>;
+  generate(input: GenerateDeckInput, options?: GenerateOptions): Promise<ProviderResult>;
 }
 
 /** Model menolak permintaan karena filter keamanan — input user perlu diubah. */

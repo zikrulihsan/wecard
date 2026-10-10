@@ -34,7 +34,7 @@ function errorMessage(
   data: { error?: string; code?: string; limit?: number | null }
 ): string | undefined {
   const code = data.code as ErrorCode | undefined;
-  if (code === "quota_spent") return t.errors.quota_spent(data.limit ?? null);
+  if (code === "daily_limit") return t.errors.daily_limit(data.limit ?? null);
   if (code && code in t.errors) {
     const message = t.errors[code];
     if (typeof message === "string") return message;
@@ -53,12 +53,11 @@ function cardMixFor(mode: DeckMode, withChallenges: boolean) {
 }
 
 interface CreateFormProps {
-  /** Sisa jatah akun ini; null berarti tanpa batas. */
-  remaining: number | null;
-  limit: number | null;
+  /** Saldo kredit akun ini; null berarti tanpa batas. */
+  balance: number | null;
 }
 
-export function CreateForm({ remaining, limit }: CreateFormProps) {
+export function CreateForm({ balance }: CreateFormProps) {
   const { t: messages, language: appLanguage } = useI18n();
   const t = messages.create;
   const navigate = useNavigate();
@@ -127,6 +126,11 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
 
       const data = await response.json();
 
+      if (response.status === 409 && data.code === "draft_open" && data.draftId) {
+        navigate(`/create/${data.draftId}`);
+        return;
+      }
+
       if (!response.ok) {
         // `hint`/`detail` hanya dikirim server di luar production.
         setError(
@@ -137,9 +141,9 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         return;
       }
 
-      // Jatah baru saja berkurang; status di nav ikut diperbarui.
+      // Ada draf terbuka sekarang; beranda & nav ikut diperbarui.
       invalidateAiAccess();
-      navigate(`/play/${data.categoryId}`);
+      navigate(`/create/${data.categoryId}`);
     } catch {
       setError(t.form.connectionError);
     } finally {
@@ -359,16 +363,12 @@ export function CreateForm({ remaining, limit }: CreateFormProps) {
         </p>
       )}
 
-      {/* Sisa jatah ditaruh tepat di atas tombol — di sinilah keputusan
+      {/* Saldo ditaruh tepat di atas tombol — di sinilah keputusan
           "generate sekarang atau nanti" benar-benar diambil. */}
       <p className="text-sm text-muted-foreground text-center">
-        {remaining === null ? (
-          t.form.unlimited
-        ) : (
+        {balance === null ? t.form.balanceUnlimited : (
           <>
-            {t.form.remainingLead} <strong>{remaining}</strong>{" "}
-            {t.form.remainingRest(limit)}
-            {remaining === 1 && t.form.lastChance}
+            <strong>{t.form.balance(balance)}</strong> {t.form.balanceHint}
           </>
         )}
       </p>

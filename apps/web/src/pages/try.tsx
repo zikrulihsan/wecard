@@ -6,7 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
 import { DECK_MODE_META, isDeckMode } from "@/lib/deck-mode";
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
-import { AI_TOPUP_PACK, formatIdr } from "@/lib/pricing";
+import { CREDITS_ON_SALE, CREDIT_PACKS, formatIdr } from "@/lib/pricing";
 import { useSignedIn } from "@/lib/supabase/use-signed-in";
 import { trialDecks, type TrialDeck } from "@/lib/trial/decks";
 import { useI18n, useT } from "@/lib/i18n";
@@ -176,7 +176,8 @@ function FreeMeter({ used, free }: { used: number; free: number }) {
 /** Tiga langkah dari coba sampai beli, dengan langkah sekarang ditandai. */
 function UpgradeLadder() {
   const t = useT().trial;
-  const price = formatIdr(AI_TOPUP_PACK.priceIdr);
+  const pack = CREDIT_PACKS[0];
+  const price = formatIdr(pack.priceIdr);
   const steps = [
     {
       title: t.ladderTryTitle,
@@ -190,8 +191,8 @@ function UpgradeLadder() {
     },
     {
       title: t.ladderTopupTitle,
-      tag: AI_TOPUP_PACK.available ? t.ladderPrice(price) : t.ladderTopupSoon,
-      points: t.ladderTopupPoints(AI_TOPUP_PACK.generations, price),
+      tag: CREDITS_ON_SALE ? t.ladderPrice(price) : t.ladderTopupSoon,
+      points: t.ladderTopupPoints(pack.credits, price),
     },
   ];
 

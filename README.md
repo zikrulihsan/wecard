@@ -40,7 +40,7 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Lalu `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris). Terakhir `00009_share_links.sql` (link main tanpa akun, papan skor grup, atribusi pendaftaran — lihat [Link Main](#link-main)).
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Lalu `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris). Lalu `00009_share_links.sql` (link main tanpa akun, papan skor grup, atribusi pendaftaran — lihat [Link Main](#link-main)). Terakhir `00010_credits.sql` (saldo kredit, draf deck, revisi, pesanan paket kredit — lihat [Kredit, draf & revisi](#kredit-draf--revisi)). **Jalankan `00010` sebelum mendeploy versi web yang memakainya** — generate menyimpan draf berstatus `draft`, kolom yang baru ada setelah migration ini.
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
@@ -175,72 +175,74 @@ packages/
   - Completion screen
 - [x] Profile + logout
 - [x] Store placeholder
-- [x] Generate deck pakai AI (`/create`) — kartu ditulis Claude berdasarkan input user, tersimpan sebagai deck privat milik akun tersebut
+- [x] Generate deck pakai AI (`/create`) — kartu ditulis AI berdasarkan input user, jadi draf yang bisa direvisi lalu disimpan dengan 1 kredit
 
 ## Generate Deck dengan AI
 
 Halaman `/create` membuat deck baru lewat LLM dengan structured output. Provider bisa Gemini (default `gemini-3.5-flash`) atau Claude (default `claude-opus-5`) — lihat setup di atas. Prompt, validasi, dan penyimpanan sama persis untuk keduanya; yang berbeda hanya file di `apps/web/src/lib/ai/providers/`.
 
-### Akses & kuota
+### Kredit, draf & revisi
 
-Fitur ini **terbuka untuk semua akun**, dengan jatah **2 deck AI per akun** —
-sekali seumur akun, bukan per jam. Jatah dihitung dari baris `ai_generations`
-berstatus `success`, jadi generate yang gagal (LLM error, output ditolak
-validasi) tidak memakan jatah.
+Sejak migration `00010`, jatah "2 deck AI per akun" diganti **saldo kredit**.
+Rencana bisnisnya ada di [`docs/monetisasi.md`](docs/monetisasi.md).
 
-`profiles.ai_enabled` masih ada, tapi fungsinya berubah: dari gerbang masuk
-jadi **sakelar pemutus** untuk mencabut akses satu akun yang menyalahgunakan
-fitur.
+| Aturan | Detail |
+| --- | --- |
+| Kredit awal | Akun baru dapat 2 kredit (trigger `on_auth_user_created_credits`). Akun lama dapat sisa jatah lamanya sebagai kredit. |
+| 1 kredit = 1 deck jadi | Generate menghasilkan **draf** (`categories.status = 'draft'`). Kredit baru terpotong saat draf disimpan lewat tombol "Simpan & main" (`save_deck()`). |
+| Syarat generate | Akses aktif, saldo ≥ 1 (atau `ai_unlimited`), tidak ada draf lain yang masih terbuka, maksimal 5 draf per 24 jam. |
+| Revisi gratis | Per deck: 3x generate ulang penuh + 5x ganti kartu satuan (`/api/decks/revise`). Jatah dicatat setelah revisinya berhasil (`use_revision()`), jadi revisi gagal tidak memakan jatah. |
+| Lewat batas | 1 kredit membuka jatah revisi baru (hitungan mulai dari revisi itu). |
+| Paket kredit | 5 kredit Rp 15.000, 10 kredit Rp 25.000, dibayar lewat Midtrans Snap. |
+
+Angka aturannya ada di dua tempat dan harus diubah bersamaan:
+fungsi `signup_credits()`, `free_regenerations()`, `free_card_swaps()` di
+migration `00010`, dan `apps/web/src/lib/credits.ts` (yang juga berisi daftar
+paket dan batas draf harian).
+
+**Penjagaan:**
+
+| Lapis | Yang dicegah |
+| --- | --- |
+| `credit_ledger` hanya bisa dibaca user; ditulis lewat fungsi `SECURITY DEFINER` atau service_role | user menambah saldonya sendiri |
+| Policy insert kategori: `status = 'draft'`, jatah revisi 0, `has_ai_access()` (saldo ≥ 1) | deck tersimpan tanpa membayar |
+| Privilege kolom: user hanya boleh mengubah `name`, `description`, `theme` kategori | user mengubah status atau mereset jatah revisi |
+| Unique index `deck_save` per kategori dan `purchase` per pesanan, plus kunci per akun di `spend_credit()` | potongan/penambahan ganda saat dua permintaan datang bersamaan |
+| `credit_orders` hanya ditulis Function memakai service_role; harga diambil dari daftar paket di server | user mengubah harga atau menandai pesanan lunas |
+
+**Admin — tambah atau koreksi kredit manual** (mis. transfer bank):
 
 ```sql
--- cabut akses satu akun
-UPDATE profiles SET ai_enabled = false WHERE id = '<user-id>';
+insert into credit_ledger (user_id, delta, reason, note)
+values ('<user-id>', 5, 'admin', 'transfer manual 10 Okt');
 
--- kembalikan
-UPDATE profiles SET ai_enabled = true WHERE id = '<user-id>';
-
--- beri jatah tambahan: hapus catatan generate akun tersebut (service_role /
--- SQL Editor — user tidak bisa melakukannya sendiri)
-DELETE FROM ai_generations WHERE user_id = '<user-id>' AND status = 'success';
+-- saldo satu akun
+select coalesce(sum(delta), 0) from credit_ledger where user_id = '<user-id>';
 ```
 
-Angka kuotanya ada di dua tempat dan harus diubah bersamaan:
-`public.ai_generation_limit()` (migration `00005`) dan `AI_GENERATION_LIMIT` di
-`apps/web/src/lib/ai/quota.ts`. Seluruh teks yang menyebut angka ini — landing
-page, kartu di halaman utama, halaman `/create` — membacanya dari konstanta itu,
-jadi tidak ada angka yang ditulis tangan di salinan teks.
+`profiles.ai_enabled = false` tetap jadi sakelar pemutus untuk akun yang
+menyalahgunakan fitur, dan `profiles.ai_unlimited = true` membebaskan satu
+akun dari potongan kredit.
 
-Migration `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` memberi
-`profiles.ai_unlimited = true` hanya kepada akun
-`zikrulihsanmd@gmail.com`. Akun tersebut tetap memiliki riwayat generate,
-tetapi jumlahnya tidak membatasi pembuatan deck baru. Kolom ini tidak bisa
-diubah oleh pengguna; `ai_enabled = false` tetap mematikan aksesnya.
+### Setup pembayaran (Midtrans)
 
-Gerbangnya berlapis, dan urutannya penting:
+Selama kunci Midtrans belum diset, paket kredit tampil "segera hadir" dan
+checkout menolak. Untuk membukanya:
 
-| Lapis | Letak | Yang dicegah |
-| --- | --- | --- |
-| Netlify Function | `api/decks/generate`, sebelum `generateDeck()` | biaya token AI — panggilan LLM terjadi sebelum insert apa pun |
-| RLS | policy `Insert own AI categories` + `has_ai_access()` (akses **dan** kuota) | insert langsung ke Supabase pakai anon key, melewati API route |
-| Privilege tabel | `REVOKE UPDATE, DELETE ON ai_generations` | user mereset jatahnya sendiri dengan menghapus riwayat generate |
-| Privilege kolom | `REVOKE UPDATE ON profiles` + `GRANT UPDATE (display_name, …)` | user menyalakan kembali `ai_enabled` yang dicabut |
-| UI | sisa jatah tampil di `/home` dan `/create`, nav "Bikin" bergembok saat habis | menu yang menggoda tapi selalu gagal |
+1. Di env Netlify, set `SUPABASE_SERVICE_ROLE_KEY` (dari Supabase → Project
+   Settings → API) dan `MIDTRANS_SERVER_KEY` (dari dashboard Midtrans). Pakai
+   kunci sandbox dulu; `MIDTRANS_PRODUCTION=true` hanya untuk transaksi
+   sungguhan. Jangan beri prefix `VITE_`.
+2. Di dashboard Midtrans, isi **Payment Notification URL** dengan
+   `https://flipcard.id/api/payments/midtrans`.
+3. Set `VITE_CREDITS_ON_SALE=true` supaya landing dan `/coba` ikut menyebut
+   paketnya bisa dibeli, lalu redeploy.
 
-**Di mana batasnya disebut ke pemain:**
-
-| Tempat | Yang ditampilkan |
-| --- | --- |
-| Landing page `/` | bagian "Bikin Deck dengan AI": cara kerjanya dalam tiga langkah, plus kotak "Batasnya: 2 deck per akun" — jatah sekali seumur akun, generate gagal tidak memotong jatah, deck-nya privat |
-| `/home` | kartu ajakan berisi sisa jatah (`2 deck gratis, sisamu 2`), berubah jadi catatan abu-abu begitu habis |
-| `/create` | sisa jatah tepat di atas tombol generate (atau keterangan tanpa batas untuk akun khusus), dan catatan tersendiri kalau jatahnya habis |
-| Nav bawah | gembok di tab "Bikin" begitu tidak bisa generate lagi |
-
-Dua lapis privilege itu perlu karena RLS tidak mengenal batasan per kolom dan
-policy lama `Manage own generations` (`FOR ALL`) mengizinkan user menghapus
-barisnya sendiri — artinya jatah 2 deck bisa direset lewat satu `delete()`
-dengan anon key. Setelah migration `00005`, `ai_generations` hanya bisa dibaca
-dan ditambah dari sisi user, dan `profiles.ai_enabled` hanya bisa diubah lewat
-`service_role` / SQL Editor.
+Alurnya: `/store` → `/api/credits/checkout` (pesanan dicatat, harga dari
+server) → halaman bayar Midtrans → kembali ke `/store?order=<id>` →
+Midtrans memanggil webhook → tanda tangan diperiksa, status diambil ulang dari
+API Midtrans, nominal dicocokkan → `fulfill_credit_order()` menambah saldo
+sekali saja per pesanan.
 
 **Field input:**
 
@@ -257,12 +259,12 @@ dan ditambah dari sisi user, dan `profiles.ai_enabled` hanya bisa diubah lewat
 | Konteks tambahan | — | maks 500 karakter, situasi spesifik pemain |
 | Topik yang dihindari | — | maks 300 karakter |
 
-**Yang dihasilkan:** satu row `categories` (`is_ai_generated = true`, `created_by = user`), N row `sections`, dan N×M row `cards` — langsung bisa dimainkan lewat flow `/play/[deckId]` yang sudah ada.
+**Yang dihasilkan:** satu row `categories` berstatus `draft` (`is_ai_generated = true`, `created_by = user`), N row `sections`, dan N×M row `cards`. Pemain diarahkan ke `/create/[deckId]` untuk memeriksa dan merevisi drafnya; setelah disimpan, deck bisa dimainkan lewat `/play/[deckId]`.
 
 **Batasan:**
 
-- 2 deck AI per akun, dihitung dari generate yang berhasil (lihat "Akses & kuota" di atas). Generate yang gagal tidak memakan jatah.
-- Akun yang aksesnya dicabut (`profiles.ai_enabled = false`) ditolak lebih dulu, sebelum kuota dicek.
+- Butuh saldo kredit (lihat "Kredit, draf & revisi" di atas). Generate atau revisi yang gagal tidak memotong apa pun.
+- Akun yang aksesnya dicabut (`profiles.ai_enabled = false`) ditolak lebih dulu, sebelum saldo dicek.
 - Output model divalidasi ulang dengan zod sebelum masuk DB; kartu `special` tanpa `special_kind` dan kartu kelebihan dibuang di server.
 - Deck AI hanya terlihat oleh pembuatnya; kategori kurasi (`created_by IS NULL`) tetap publik. Dijaga di level RLS, bukan di query.
 - Input user disisipkan ke prompt sebagai data, bukan instruksi, dan setiap generate dicatat di `ai_generations` (input, provider, model, token, status).
@@ -277,16 +279,15 @@ penyebabnya, bukan sekadar gagal diam-diam:
 | Baris log | Artinya |
 | --- | --- |
 | `[ai-access] gagal membaca profiles` dengan `code: 42703` | kolom `ai_enabled` tidak ada — migration `00003` belum jalan di project itu |
-| `[ai-access] gagal menghitung ai_generations` | tabel `ai_generations` tidak ada (migration `00002`) atau RLS menyembunyikannya — sisa jatah tidak terbaca, jadi ditolak |
-| `[ai-access] baris profil tidak terlihat untuk sesi ini` | tidak ada baris `profiles` untuk `userId` tersebut. Ini **tidak** menutup akses (kuota tetap dijaga hitungan `ai_generations`), tapi tandanya trigger pendaftaran bermasalah |
-| tidak ada log sama sekali, tapi halamannya menolak | jatahnya memang habis, atau `ai_enabled` di-set `false` |
+| `[ai-access] gagal membaca saldo kredit` | fungsi `credit_balance()` gagal dipanggil — saldo tidak terbaca, jadi ditolak. Kalau fungsinya belum ada (migration `00010` belum jalan), aplikasi memakai hitungan jatah lama |
+| `[ai-access] profil tidak terlihat` | tidak ada baris `profiles` untuk `userId` tersebut. Ini **tidak** menutup akses (saldo tetap dijaga `credit_ledger`), tapi tandanya trigger pendaftaran bermasalah |
+| tidak ada log sama sekali, tapi halamannya menolak | saldonya memang habis, masih ada draf terbuka, atau `ai_enabled` di-set `false` |
 
-Sisa jatah satu akun bisa dicek langsung:
+Saldo dan draf terbuka satu akun bisa dicek langsung:
 
 ```sql
-select count(*) as terpakai
-from ai_generations
-where user_id = '<user-id>' and status = 'success';
+select coalesce(sum(delta), 0) as saldo from credit_ledger where user_id = '<user-id>';
+select id, name from categories where created_by = '<user-id>' and status = 'draft';
 ```
 
 Setiap baris log menyertakan `supabaseHost` dan `userId`. Dua hal itu yang paling sering jadi biang masalah:
@@ -317,7 +318,7 @@ lengkap (kredit, premium, Plan Host, cetak) dan query metriknya ada di
 ## Roadmap
 
 - **Phase 2**: PWA, SEO landing polish, OG image
-- **Phase 3**: Midtrans payment, unlock flow, kategori berbayar
+- **Phase 3**: unlock flow, kategori berbayar (pembayaran Midtrans untuk paket kredit sudah ada)
 - **Phase 4**: Analytics, more categories, admin panel
 
 Rencana monetisasi & viral loop yang lebih baru ada di [`docs/monetisasi.md`](docs/monetisasi.md).

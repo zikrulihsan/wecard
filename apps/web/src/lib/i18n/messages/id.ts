@@ -250,30 +250,31 @@ export const id = {
     },
     pricing: {
       title: "Mulai gratis",
-      body: "Deck bawaan gratis selamanya. Yang berbayar cuma jatah bikin deck AI.",
+      body: "Deck bawaan gratis selamanya. Yang berbayar cuma kredit untuk bikin deck AI.",
       freeTitle: "Gratis",
       freePrice: "Rp 0",
       freeSubtitle: "Semua akun, tanpa kartu kredit",
-      freeAiStrong: (limit: number) => `${limit} deck AI`,
-      freeAiRest: "buatanmu sendiri",
+      freeAiStrong: (limit: number) => `${limit} kredit`,
+      freeAiRest: "untuk bikin deck AI sendiri (1 kredit = 1 deck)",
       freeDecks: "Semua deck bawaan",
       freePlay: "Main sepuasnya, tanpa batas",
       freeCta: "Buat akun gratis",
-      topupTitle: (count: number) => `Tambah ${count} deck AI`,
-      comingSoon: "Segera hadir",
+      topupTitle: "Paket kredit",
       price: (amount: string) => `Rp ${amount}`,
-      perDeck: (amount: string) => `±Rp ${amount} per deck · sekali bayar`,
-      topupStrong: (count: number) => `${count} deck AI`,
-      topupRest: "tambahan",
+      perDeck: (amount: string) => `mulai ±Rp ${amount} per deck · sekali bayar`,
       topupNoExpiry: "Bukan langganan, tidak hangus",
       topupFailed: "Gagal dibuat = tidak terpotong",
-      buy: "Beli paket",
+      buy: "Beli kredit",
       closedTitle: "Pembelian belum dibuka",
+      packLine: (credits: number, price: string) => `${credits} kredit — Rp ${price}`,
+      topupRevisions: (regens: number, swaps: number) =>
+        `Tiap deck: ${regens}x generate ulang + ganti ${swaps} kartu gratis`,
+      comingSoon: "Segera hadir",
     },
     faq: {
       eyebrow: "FAQ",
       title: "Masih ragu?",
-      items: (limit: number, packCount: number, packPrice: string) => [
+      items: (limit: number, packs: string) => [
         {
           question: "Harus install aplikasi?",
           answer:
@@ -290,13 +291,13 @@ export const id = {
             "Kuis tanpa jawaban lengkap otomatis dibuang, tapi AI tetap bisa keliru. Untuk bahan ujian, cek ulang jawabannya.",
         },
         {
-          question: `Jatah ${limit} deck itu untuk main atau bikin?`,
+          question: `${limit} kredit gratis itu untuk main atau bikin?`,
           answer:
-            "Untuk bikin. Deck yang sudah jadi bisa dimainkan tanpa batas. Deck yang gagal dibuat tidak memotong jatah.",
+            "Untuk bikin. 1 kredit = 1 deck jadi, dan baru terpotong saat deck disimpan — sebelumnya kamu bisa generate ulang dan ganti kartu dulu. Deck yang sudah jadi bisa dimainkan tanpa batas.",
         },
         {
           question: "Deck buatanku bisa dilihat orang lain?",
-          answer: "Tidak. Deck AI cuma ada di akunmu.",
+          answer: "Tidak, kecuali kamu membuat link main untuk grupmu. Link itu bisa dimatikan kapan saja.",
         },
         {
           question: "Bisa bikin deck bahasa Inggris?",
@@ -304,10 +305,12 @@ export const id = {
             "Bisa. Pilih bahasa kartunya di formulir bikin deck — Indonesia atau Inggris.",
         },
         {
-          question: "Kalau jatah gratisnya habis?",
-          answer: `Deck yang sudah jadi tetap bisa dimainkan. Nanti ada paket ${packCount} deck seharga Rp ${packPrice}, sekali bayar.`,
+          question: "Kalau kreditnya habis?",
+          answer: `Deck yang sudah jadi tetap bisa dimainkan. Tambah kredit lewat paket ${packs} — sekali bayar, tidak hangus.`,
         },
       ],
+      pack: (credits: number, price: string) => `${credits} kredit Rp ${price}`,
+      packJoin: " atau ",
     },
     finalCta: {
       title: "Mulai dari satu kartu.",
@@ -462,34 +465,29 @@ export const id = {
     buy: (name: string) => `Beli ${name}`,
     empty: "Belum ada kategori yang tersedia.",
     emptyCta: "Bikin deck sendiri pakai AI",
-    aiSpentTitle: "Jatah deck AI sudah habis",
-    aiSpentBody: (used: number, limit: number | null) =>
-      `${used} dari ${limit} terpakai.`,
+    aiSpentTitle: "Kreditmu habis",
+    aiSpentBody: "Beli paket kredit untuk bikin deck lagi.",
     aiCtaTitle: "Bikin deck pakai AI",
     aiCtaUnlimited: "Bikin deck AI tanpa batas.",
-    aiCtaRemaining: (limit: number | null, remaining: number) =>
-      `${limit} deck gratis, sisamu ${remaining}.`,
+    aiCtaBalance: (balance: number) => `Saldo ${balance} kredit · 1 kredit = 1 deck`,
+    draftTitle: "Lanjutkan drafmu",
+    draftBody: "Revisi dulu, lalu simpan untuk mulai main.",
+    draft: "Draf",
   },
 
   play: {
     loading: "Membuka deck",
     errorTitle: "Deck belum bisa dibuka",
     errorDescription: "Sambungan ke server bermasalah. Coba lagi sebentar.",
+    editDeck: "Revisi kartu",
   },
 
   create: {
     title: "Bikin Deck Sendiri",
     subtitle:
       "Isi konteksnya, AI yang nulis kartunya. Deck ini cuma kelihatan di akunmu.",
-    quotaError: "Jatah belum bisa dibaca.",
+    quotaError: "Saldo kredit belum bisa dibaca.",
     preparing: "Menyiapkan formulir",
-    spentTitle: "Jatah bikin deck sudah habis",
-    spentBody: (used: number, limit: number) =>
-      `Tiap akun dapat ${limit} deck AI, dan punyamu sudah terpakai semua (${used} dari ${limit}). Deck yang sudah jadi tetap ada di beranda dan bisa dimainkan kapan saja.`,
-    topupAvailable: (count: number, price: string) =>
-      `Mau bikin lagi? Ada paket tambahan ${count} deck seharga Rp ${price}.`,
-    topupSoon: (count: number, price: string) =>
-      `Paket tambahan ${count} deck (Rp ${price}) lagi disiapkan — belum bisa dibeli sekarang.`,
     playExisting: "Main deck yang sudah ada",
     disabledTitle: "Sedang tidak aktif",
     disabledBody:
@@ -530,15 +528,14 @@ export const id = {
       contextHint:
         "Situasi spesifik yang bikin kartunya lebih pas. Jangan isi data pribadi.",
       avoid: "Topik yang dihindari",
-      unlimited: "Kamu bisa membuat deck AI tanpa batas.",
-      remainingLead: "Sisa jatah:",
-      remainingRest: (limit: number | null) => `dari ${limit} deck AI.`,
-      lastChance: " Ini kesempatan terakhirmu, pikirkan baik-baik.",
       generating: "Lagi bikin kartunya…",
-      generate: "Generate deck",
+      generate: "Generate draf",
       waitHint: "Butuh sekitar 20–40 detik. Jangan tutup halaman ini.",
       connectionError: "Koneksi bermasalah. Coba lagi.",
       genericError: "Gagal membuat deck. Coba lagi.",
+      balanceUnlimited: "Akunmu bisa membuat deck tanpa batas.",
+      balance: (balance: number) => `Saldo: ${balance} kredit.`,
+      balanceHint: "Kredit baru terpotong saat deck disimpan — drafnya bisa kamu revisi dulu.",
     },
     languages: { id: "Indonesia", en: "Inggris" },
     audiences: [
@@ -628,8 +625,6 @@ export const id = {
     errors: {
       unauthenticated: "Kamu belum login. Masuk dulu, lalu coba lagi.",
       ai_disabled: "Fitur bikin deck AI sedang tidak aktif untuk akunmu.",
-      quota_spent: (limit: number | null) =>
-        `Jatah bikin deck AI kamu sudah habis (${limit} deck). Deck yang sudah jadi tetap bisa dimainkan.`,
       invalid_input: "Isian formulir belum valid. Cek lagi, lalu coba lagi.",
       safety_blocked:
         "Permintaan ini ditolak oleh filter keamanan model. Coba ubah konteks atau topiknya.",
@@ -640,7 +635,20 @@ export const id = {
       busy: "Model AI sedang penuh. Coba lagi beberapa saat lagi.",
       unreachable: "Gagal menghubungi layanan AI. Coba lagi sebentar.",
       save_failed: "Deck berhasil dibuat tapi gagal disimpan.",
+      no_credits: "Kreditmu habis. Beli paket kredit untuk bikin deck lagi.",
+      draft_open: "Masih ada draf yang belum disimpan. Simpan atau buang dulu.",
+      daily_limit: (limit: number | null) =>
+        `Batas ${limit} draf per hari tercapai. Coba lagi besok.`,
+      no_source: "Deck ini dibuat sebelum fitur revisi ada, jadi belum bisa direvisi.",
+      not_found: "Deck atau kartunya tidak ditemukan.",
     },
+    noCreditsTitle: "Kreditmu habis",
+    noCreditsBody: "Bikin deck baru butuh saldo kredit. Deck yang sudah jadi tetap bisa dimainkan kapan saja.",
+    buyCredits: "Beli kredit",
+    draftOpenTitle: "Masih ada draf yang belum disimpan",
+    draftOpenBody: "Simpan atau buang draf itu dulu sebelum bikin deck baru.",
+    continueDraft: "Lanjutkan draf",
+    discardDraft: "Buang draf",
   },
 
   auth: {
@@ -682,8 +690,39 @@ export const id = {
 
   store: {
     title: "Toko",
-    subtitle: "Beli kategori berbayar untuk membuka kartu baru",
-    soon: "Kategori berbayar akan segera hadir.",
+    subtitle: "Kredit untuk bikin deck sendiri pakai AI.",
+    soon: "Pembelian kredit segera dibuka.",
+    balanceLabel: "Saldo kreditmu",
+    balanceUnlimited: "Tanpa batas",
+    rules: (regens: number, swaps: number) => [
+      "1 kredit = 1 deck jadi, terpotong saat deck disimpan",
+      `Tiap deck: ${regens}x generate ulang + ganti ${swaps} kartu gratis`,
+      "Lewat batas revisi: 1 kredit membuka jatah baru",
+      "Sekali bayar, tidak hangus",
+    ],
+    packsTitle: "Paket kredit",
+    packName: (credits: number) => `${credits} kredit`,
+    packPerDeck: (price: string) => `±Rp ${price} per deck`,
+    bestValue: "Paling hemat",
+    buy: (price: string) => `Beli · Rp ${price}`,
+    buying: "Membuka pembayaran…",
+    buyError: "Pembayaran belum bisa dibuka. Coba lagi sebentar.",
+    orderChecking: "Mengecek pembayaran…",
+    orderPending: "Menunggu pembayaran selesai. Halaman ini diperbarui sendiri.",
+    orderPaid: (credits: number) => `Pembayaran diterima — +${credits} kredit!`,
+    orderFailed: "Pembayaran gagal atau kedaluwarsa. Saldo tidak berubah.",
+    historyTitle: "Riwayat kredit",
+    historyEmpty: "Belum ada riwayat.",
+    reasons: {
+      signup_bonus: "Bonus daftar",
+      legacy_quota: "Jatah awal",
+      purchase: "Beli paket",
+      deck_save: "Simpan deck",
+      revision: "Revisi tambahan",
+      admin: "Penyesuaian",
+    } as Record<string, string>,
+    premiumSoon: "Deck premium (seri kurasi) segera hadir.",
+    loadError: "Saldo belum bisa dimuat.",
   },
 
   notFound: {
@@ -722,20 +761,20 @@ export const id = {
     ladderFreeTag: "Gratis",
     ladderFreePoints: (limit: number) => [
       "Semua kartu terbuka, lanjut dari kartu terakhir",
-      `${limit} deck buatanmu sendiri pakai AI`,
+      `${limit} kredit untuk bikin deck AI sendiri`,
     ],
-    ladderTopupTitle: "Top-up deck AI",
+    ladderTopupTitle: "Paket kredit",
     ladderTopupSoon: "Segera hadir",
     ladderPrice: (price: string) => `Rp${price}`,
     ladderTopupPoints: (count: number, price: string) => [
-      `+${count} deck AI seharga Rp${price}`,
-      "Topik apa saja, untuk siapa saja",
+      `+${count} kredit seharga Rp${price}`,
+      "1 kredit = 1 deck jadi, revisi gratis",
     ],
     createAccount: "Buat akun gratis",
     signIn: "Masuk",
     deckDone: (name: string) => `Deck ${name} selesai!`,
     doneSignedIn: (limit: number) =>
-      `Mau deck dengan topik kalian sendiri? Bikin pakai AI — akunmu punya jatah ${limit} deck gratis.`,
+      `Mau deck dengan topik kalian sendiri? Bikin pakai AI — akun baru dapat ${limit} kredit gratis, 1 kredit = 1 deck.`,
     doneGuest: "Masih banyak deck lain yang bisa kamu coba gratis.",
     makeOwn: "Bikin deck sendiri",
     tryAnother: "Coba deck lain",
@@ -743,7 +782,7 @@ export const id = {
     lockTitle: (next: number) => `Seru, kan? Lanjut dari kartu ke-${next}`,
     lockRemaining: (count: number) => `${count} kartu lagi terkunci`,
     lockBody: (deck: string, limit: number) =>
-      `Masuk gratis untuk membuka sisa deck ${deck} — plus semua deck lain tanpa batas, dan ${limit} deck buatanmu sendiri pakai AI.`,
+      `Masuk gratis untuk membuka sisa deck ${deck} — plus semua deck lain tanpa batas, dan ${limit} kredit untuk bikin deck sendiri pakai AI.`,
     lockScoreLead: "Sejauh ini",
     lockScoreRest: "jawaban benar",
     lockEmail: "Masuk pakai email",
@@ -804,6 +843,40 @@ export const id = {
     inviteText: (deck: string) =>
       `Main “${deck}” bareng yuk! Nggak perlu daftar, cukup isi nama 👇`,
     saveFailed: "Link belum bisa diubah. Coba lagi sebentar.",
+  },
+
+  review: {
+    titleDraft: "Cek drafmu",
+    titleSaved: "Revisi deck",
+    draftBadge: "Draf · belum disimpan",
+    introDraft:
+      "Belum pas? Generate ulang semuanya atau ganti kartu satu per satu. Kredit baru terpotong saat kamu simpan.",
+    introSaved: "Ganti kartu yang kurang pas, atau generate ulang seluruh deck.",
+    loading: "Membuka draf",
+    errorTitle: "Deck belum bisa dibuka",
+    freeRegens: (left: number, total: number) => `Generate ulang gratis: ${left}/${total}`,
+    freeSwaps: (left: number, total: number) => `Ganti kartu gratis: ${left}/${total}`,
+    overLimit: "Lewat batas, 1 kredit membuka jatah revisi baru.",
+    regenerate: "Generate ulang semua",
+    regenerating: "Menulis ulang deck… sekitar 20–40 detik",
+    regenerateConfirm: "Seluruh kartu akan diganti dengan yang baru. Lanjut?",
+    chargeConfirm: "Jatah revisi gratis untuk deck ini habis — revisi ini memakai 1 kredit. Lanjut?",
+    swap: "Ganti",
+    swapping: "Mengganti…",
+    swapLabel: (index: number) => `Ganti kartu ${index}`,
+    save: "Simpan & main · 1 kredit",
+    saveUnlimited: "Simpan & main",
+    saving: "Menyimpan…",
+    balance: (balance: number) => `Saldo ${balance} kredit`,
+    noCredits:
+      "Kreditmu habis. Beli kredit untuk menyimpan deck ini — drafnya tetap aman di sini.",
+    buy: "Beli kredit",
+    discard: "Buang draf",
+    discardConfirm: "Buang draf ini? Kartunya hilang dan tidak bisa dikembalikan.",
+    backToDeck: "Selesai, kembali ke deck",
+    reviseFailed: "Revisi gagal. Coba lagi.",
+    saveFailed: "Deck belum bisa disimpan. Coba lagi.",
+    answer: "Jawaban",
   },
 };
 
