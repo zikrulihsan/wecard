@@ -11,14 +11,13 @@ export default async function handler(request: Request): Promise<Response> {
   try {
     const auth = await authenticatedClient(request);
     if (!auth) return Response.json({ error: "Belum login" }, { status: 401 });
-    const { canGenerate, enabled, used, limit, remaining, unlimited } =
-      await getAiAccess(auth.supabase, auth.user.id);
+    const access = await getAiAccess(auth.supabase, auth.user.id);
     return Response.json(
-      { canUseAi: canGenerate, enabled, used, limit, remaining, unlimited },
+      access,
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
     console.error("[ai-access] gagal", error);
-    return Response.json({ error: "Gagal membaca jatah" }, { status: 500 });
+    return Response.json({ error: "Gagal membaca saldo kredit" }, { status: 500 });
   }
 }

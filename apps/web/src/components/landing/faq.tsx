@@ -1,5 +1,5 @@
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
-import { AI_TOPUP_PACK, formatIdr } from "@/lib/pricing";
+import { CREDIT_PACKS, formatIdr } from "@/lib/pricing";
 import { useT } from "@/lib/i18n";
 
 /**
@@ -12,11 +12,10 @@ import { useT } from "@/lib/i18n";
  */
 export function Faq() {
   const faq = useT().landing.faq;
-  const items = faq.items(
-    AI_GENERATION_LIMIT,
-    AI_TOPUP_PACK.generations,
-    formatIdr(AI_TOPUP_PACK.priceIdr)
-  );
+  const packs = CREDIT_PACKS
+    .map((pack) => faq.pack(pack.credits, formatIdr(pack.priceIdr)))
+    .join(faq.packJoin);
+  const items = faq.items(AI_GENERATION_LIMIT, packs);
   return (
     <section className="bg-white px-6 py-20">
       <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[1fr_1.6fr] md:gap-16">

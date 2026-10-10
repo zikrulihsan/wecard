@@ -33,7 +33,7 @@ export function BottomNav() {
   useEffect(() => {
     let active = true;
     fetchAiAccessDetails().then((access) => {
-      if (active) setCanUseAi(access.canGenerate);
+      if (active) setCanUseAi(access.canGenerate || Boolean(access.openDraftId));
     }).catch(() => {
       // Jaringan putus tidak mengunci tab; gerbang sebenarnya ada di server.
       if (active) setCanUseAi(null);

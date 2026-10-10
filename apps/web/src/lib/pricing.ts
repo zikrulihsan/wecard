@@ -1,20 +1,16 @@
-/**
- * Paket top-up jatah generate deck AI.
- *
- * Dipakai di halaman marketing untuk menyebut harga. Checkout-nya belum ada
- * (lihat `available`) — selama masih `false`, halaman menandainya "segera
- * hadir" dan tetap mengarahkan orang ke pendaftaran gratis. Begitu pembayaran
- * jalan, ubah satu nilai ini dan tombolnya ikut berubah.
- */
-export const AI_TOPUP_PACK = {
-  generations: 3,
-  priceIdr: 12000,
-  available: false,
-} as const;
+import { CHEAPEST_PER_CREDIT, CREDIT_PACKS } from "@/lib/credits";
 
-/** Harga per deck, dibulatkan — dipakai untuk menunjukkan nilainya. */
-export const AI_TOPUP_PRICE_PER_DECK =
-  AI_TOPUP_PACK.priceIdr / AI_TOPUP_PACK.generations;
+export { CHEAPEST_PER_CREDIT, CREDIT_PACKS };
+
+/**
+ * Apakah halaman marketing (landing, /coba) boleh menyebut paket kredit
+ * "bisa dibeli". Pembelian sebenarnya dijaga server — `/api/credits/checkout`
+ * menolak selama `MIDTRANS_SERVER_KEY` belum diset — tapi halaman publik
+ * tidak bisa menanyakan itu tanpa login, jadi statusnya ditanam saat build
+ * lewat `VITE_CREDITS_ON_SALE=true`. Ubah bersamaan dengan memasang kunci
+ * Midtrans, lalu redeploy.
+ */
+export const CREDITS_ON_SALE = import.meta.env.VITE_CREDITS_ON_SALE === "true";
 
 /** "12.000" — tanpa "Rp", supaya penempatannya bebas di teks. */
 export function formatIdr(value: number): string {
