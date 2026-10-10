@@ -71,19 +71,12 @@ DROP POLICY IF EXISTS "Read own series purchases" ON series_purchases;
 CREATE POLICY "Read own series purchases" ON series_purchases
   FOR SELECT USING (user_id = auth.uid());
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE INSERT, UPDATE, DELETE ON public.series_purchases FROM authenticated;
-    REVOKE INSERT, UPDATE, DELETE ON public.purchases FROM authenticated;
-    REVOKE INSERT, UPDATE, DELETE ON public.series FROM authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON public.series_purchases FROM anon;
-    REVOKE INSERT, UPDATE, DELETE ON public.purchases FROM anon;
-    REVOKE INSERT, UPDATE, DELETE ON public.series FROM anon;
-  END IF;
-END $$;
+REVOKE INSERT, UPDATE, DELETE ON public.series_purchases FROM authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.purchases FROM authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.series FROM authenticated;
+REVOKE ALL ON public.series_purchases FROM anon;
+REVOKE INSERT, UPDATE, DELETE ON public.purchases FROM anon;
+REVOKE INSERT, UPDATE, DELETE ON public.series FROM anon;
 
 -- ------------------------------------------------------------
 -- Kepemilikan
@@ -232,15 +225,8 @@ DROP POLICY IF EXISTS "Read own gift codes" ON gift_codes;
 CREATE POLICY "Read own gift codes" ON gift_codes
   FOR SELECT USING (buyer_id = auth.uid() OR redeemed_by = auth.uid());
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE INSERT, UPDATE, DELETE ON public.gift_codes FROM authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON public.gift_codes FROM anon;
-  END IF;
-END $$;
+REVOKE INSERT, UPDATE, DELETE ON public.gift_codes FROM authenticated;
+REVOKE ALL ON public.gift_codes FROM anon;
 
 -- Berikan produk ke satu akun. Internal — dipanggil fungsi lain.
 CREATE OR REPLACE FUNCTION public.grant_product(
@@ -563,29 +549,20 @@ REVOKE ALL ON FUNCTION public.copy_shared_deck(TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.gift_custom_deck(UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.redeem_gift(TEXT) FROM PUBLIC;
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE EXECUTE ON FUNCTION public.grant_product(UUID, TEXT, UUID, UUID, UUID, INTEGER) FROM anon;
-    REVOKE EXECUTE ON FUNCTION public.fulfill_order(UUID, TEXT, TEXT) FROM anon;
-    REVOKE EXECUTE ON FUNCTION public.clone_deck(UUID, UUID, TEXT, BOOLEAN) FROM anon;
-    GRANT EXECUTE ON FUNCTION public.owns_deck(UUID) TO anon;
-    GRANT EXECUTE ON FUNCTION public.premium_catalog() TO anon;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE EXECUTE ON FUNCTION public.grant_product(UUID, TEXT, UUID, UUID, UUID, INTEGER) FROM authenticated;
-    REVOKE EXECUTE ON FUNCTION public.fulfill_order(UUID, TEXT, TEXT) FROM authenticated;
-    REVOKE EXECUTE ON FUNCTION public.clone_deck(UUID, UUID, TEXT, BOOLEAN) FROM authenticated;
-    GRANT EXECUTE ON FUNCTION public.owns_deck(UUID) TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.owned_category_ids() TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.premium_catalog() TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.personalize_premium(UUID) TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.copy_shared_deck(TEXT) TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.gift_custom_deck(UUID) TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.redeem_gift(TEXT) TO authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
-    GRANT EXECUTE ON FUNCTION public.fulfill_order(UUID, TEXT, TEXT) TO service_role;
-    GRANT EXECUTE ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) TO service_role;
-  END IF;
-END $$;
+REVOKE EXECUTE ON FUNCTION public.grant_product(UUID, TEXT, UUID, UUID, UUID, INTEGER) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.fulfill_order(UUID, TEXT, TEXT) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.clone_deck(UUID, UUID, TEXT, BOOLEAN) FROM anon;
+GRANT EXECUTE ON FUNCTION public.owns_deck(UUID) TO anon;
+GRANT EXECUTE ON FUNCTION public.premium_catalog() TO anon;
+REVOKE EXECUTE ON FUNCTION public.grant_product(UUID, TEXT, UUID, UUID, UUID, INTEGER) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION public.fulfill_order(UUID, TEXT, TEXT) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION public.clone_deck(UUID, UUID, TEXT, BOOLEAN) FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.owns_deck(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.owned_category_ids() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.premium_catalog() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.personalize_premium(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.copy_shared_deck(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.gift_custom_deck(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.redeem_gift(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fulfill_order(UUID, TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) TO service_role;

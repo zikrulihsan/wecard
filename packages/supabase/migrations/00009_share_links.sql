@@ -64,17 +64,10 @@ CREATE POLICY "Toggle own deck shares" ON deck_shares
 -- boleh hanya menyalakan / mematikan link. Sama seperti
 -- profiles.ai_enabled, pembatasan per kolom harus lewat privilege,
 -- bukan RLS.
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE INSERT, UPDATE, DELETE ON public.deck_shares FROM authenticated;
-    GRANT INSERT (category_id, enabled) ON public.deck_shares TO authenticated;
-    GRANT UPDATE (enabled, updated_at) ON public.deck_shares TO authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON public.deck_shares FROM anon;
-  END IF;
-END $$;
+REVOKE INSERT, UPDATE, DELETE ON public.deck_shares FROM authenticated;
+GRANT INSERT (category_id, enabled) ON public.deck_shares TO authenticated;
+GRANT UPDATE (enabled, updated_at) ON public.deck_shares TO authenticated;
+REVOKE ALL ON public.deck_shares FROM anon;
 
 -- ------------------------------------------------------------
 -- Permainan lewat link
@@ -108,15 +101,8 @@ CREATE POLICY "Owners read plays" ON shared_plays
     )
   );
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE INSERT, UPDATE, DELETE ON public.shared_plays FROM authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON public.shared_plays FROM anon;
-  END IF;
-END $$;
+REVOKE INSERT, UPDATE, DELETE ON public.shared_plays FROM authenticated;
+REVOKE ALL ON public.shared_plays FROM anon;
 
 -- ------------------------------------------------------------
 -- Akun yang datang dari link main
@@ -133,15 +119,8 @@ DROP POLICY IF EXISTS "Read own referral" ON share_referrals;
 CREATE POLICY "Read own referral" ON share_referrals
   FOR SELECT USING (user_id = auth.uid());
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE INSERT, UPDATE, DELETE ON public.share_referrals FROM authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON public.share_referrals FROM anon;
-  END IF;
-END $$;
+REVOKE INSERT, UPDATE, DELETE ON public.share_referrals FROM authenticated;
+REVOKE ALL ON public.share_referrals FROM anon;
 
 -- ============================================================
 -- Fungsi untuk pemain lewat link

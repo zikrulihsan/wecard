@@ -70,15 +70,8 @@ DROP POLICY IF EXISTS "Read own credits" ON credit_ledger;
 CREATE POLICY "Read own credits" ON credit_ledger
   FOR SELECT USING (user_id = auth.uid());
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE INSERT, UPDATE, DELETE ON public.credit_ledger FROM authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON public.credit_ledger FROM anon;
-  END IF;
-END $$;
+REVOKE INSERT, UPDATE, DELETE ON public.credit_ledger FROM authenticated;
+REVOKE ALL ON public.credit_ledger FROM anon;
 
 CREATE OR REPLACE FUNCTION public.credit_balance_of(p_user UUID)
 RETURNS INTEGER
@@ -184,20 +177,13 @@ CREATE POLICY "Update cards in own categories" ON cards
     )
   );
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE UPDATE ON public.categories FROM authenticated;
-    GRANT UPDATE (name, description, theme) ON public.categories TO authenticated;
-    REVOKE UPDATE ON public.cards FROM authenticated;
-    GRANT UPDATE (content_text, card_type, difficulty, special_kind, details, level)
-      ON public.cards TO authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE UPDATE ON public.categories FROM anon;
-    REVOKE UPDATE ON public.cards FROM anon;
-  END IF;
-END $$;
+REVOKE UPDATE ON public.categories FROM authenticated;
+GRANT UPDATE (name, description, theme) ON public.categories TO authenticated;
+REVOKE UPDATE ON public.cards FROM authenticated;
+GRANT UPDATE (content_text, card_type, difficulty, special_kind, details, level)
+ON public.cards TO authenticated;
+REVOKE UPDATE ON public.categories FROM anon;
+REVOKE UPDATE ON public.cards FROM anon;
 
 -- ------------------------------------------------------------
 -- Gerbang AI: akses tidak dicabut, dan tanpa batas atau saldo ≥ 1.
@@ -364,15 +350,8 @@ DROP POLICY IF EXISTS "Read own orders" ON credit_orders;
 CREATE POLICY "Read own orders" ON credit_orders
   FOR SELECT USING (user_id = auth.uid());
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE INSERT, UPDATE, DELETE ON public.credit_orders FROM authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON public.credit_orders FROM anon;
-  END IF;
-END $$;
+REVOKE INSERT, UPDATE, DELETE ON public.credit_orders FROM authenticated;
+REVOKE ALL ON public.credit_orders FROM anon;
 
 -- Tandai pesanan lunas dan tambah saldonya, sekali saja per pesanan.
 -- Hanya untuk service_role (webhook pembayaran).
@@ -472,31 +451,22 @@ REVOKE ALL ON FUNCTION public.use_revision(UUID, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.get_shared_deck(TEXT) FROM PUBLIC;
 
-DO $$
-BEGIN
-  -- Supabase memberi EXECUTE ke anon/authenticated secara bawaan untuk
-  -- fungsi baru; cabut eksplisit untuk yang tidak boleh dipanggil user.
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE EXECUTE ON FUNCTION public.credit_balance_of(UUID) FROM anon;
-    REVOKE EXECUTE ON FUNCTION public.spend_credit(TEXT, UUID) FROM anon;
-    REVOKE EXECUTE ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) FROM anon;
-    REVOKE EXECUTE ON FUNCTION public.grant_signup_credits() FROM anon;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE EXECUTE ON FUNCTION public.credit_balance_of(UUID) FROM authenticated;
-    REVOKE EXECUTE ON FUNCTION public.spend_credit(TEXT, UUID) FROM authenticated;
-    REVOKE EXECUTE ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) FROM authenticated;
-    REVOKE EXECUTE ON FUNCTION public.grant_signup_credits() FROM authenticated;
-    GRANT EXECUTE ON FUNCTION public.credit_balance() TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.has_ai_access() TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.is_ai_unlimited() TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.save_deck(UUID) TO authenticated;
-    GRANT EXECUTE ON FUNCTION public.use_revision(UUID, TEXT) TO authenticated;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
-    GRANT EXECUTE ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) TO service_role;
-    GRANT EXECUTE ON FUNCTION public.credit_balance_of(UUID) TO service_role;
-  END IF;
-END $$;
+-- Supabase memberi EXECUTE ke anon/authenticated secara bawaan untuk
+-- fungsi baru; cabut eksplisit untuk yang tidak boleh dipanggil user.
+REVOKE EXECUTE ON FUNCTION public.credit_balance_of(UUID) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.spend_credit(TEXT, UUID) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.grant_signup_credits() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.credit_balance_of(UUID) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION public.spend_credit(TEXT, UUID) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION public.grant_signup_credits() FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.credit_balance() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.has_ai_access() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_ai_unlimited() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.save_deck(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.use_revision(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.fulfill_credit_order(UUID, TEXT, TEXT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.credit_balance_of(UUID) TO service_role;
 
 GRANT EXECUTE ON FUNCTION public.get_shared_deck(TEXT) TO anon, authenticated;
