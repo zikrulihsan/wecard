@@ -56,7 +56,7 @@ repo ini. Angka harga masih contoh — diuji dulu sebelum dikunci.
 | --- | --- | --- | --- |
 | 1 | Viral loop | Link main tanpa login, papan skor, CTA akhir sesi | **Diterapkan** — lihat di bawah |
 | 2 | Monetisasi dasar | Paket kredit (minimal top-up), aturan revisi | **Diterapkan** — lihat di bawah |
-| 3 | Seri premium pertama | English Speaking Practice, 3 volume siap sebelum rilis, uji di sesimu sendiri | Belum |
+| 3 | Seri premium pertama | English Speaking Practice, 3 volume siap sebelum rilis, uji di sesimu sendiri | **Diterapkan** — tinggal diuji di sesimu sendiri |
 | 4 | Plan Host + sesi live | Untuk tutor dan fasilitator | Belum |
 | 5 | Cetak | Uji manual dulu lewat percetakan lokal sebelum dibangun sistemnya | Belum (manual) |
 
@@ -118,6 +118,32 @@ Keputusan yang diambil saat menerapkan (silakan diubah):
   satu revisi).
 - **Midtrans** dipilih karena sudah ada di roadmap repo. Selama belum aktif,
   admin bisa menambah kredit manual lewat SQL (lihat README).
+
+## Fase 3 — yang sudah ada
+
+Migration `00011_premium.sql`, seed `seed_english_speaking.sql`. Detail aturan
+dan cara menguji ada di README, bagian "Deck Premium".
+
+| Bagian | Letak | Catatan |
+| --- | --- | --- |
+| Seri English Speaking Practice | `seed_english_speaking.sql` | Vol. 1 Everyday English · Vol. 2 Stories & Opinions · Vol. 3 Speak with Confidence. 24 kartu per volume, 4 preview. |
+| Halaman seri publik | `/seri/english-speaking-practice` | Bisa dibagikan ke grup; tamu bisa mencoba kartu preview tanpa akun. |
+| Beli volume / seri / hadiah | `/api/credits/checkout`, `fulfill_order()` | Satu jalur Midtrans untuk semua produk. |
+| Tukar hadiah | `/hadiah/<kode>`, Toko | |
+| Versi pribadi premium | halaman deck, `personalize_premium()` | 1 kredit, lalu tambah kartu sendiri. |
+| Duplikat & hadiah deck custom | layar selesai link main, halaman deck | 1 kredit masing-masing. |
+
+Keputusan yang diambil saat menerapkan (silakan diubah):
+
+- **Harga seri Rp 35.000 untuk 3 volume lebih mahal dari 3 × Rp 10.000.**
+  Supaya tetap masuk akal, beli seri membuka **semua volume termasuk yang
+  terbit nanti**. Kalau tidak ingin begitu, turunkan harga seri (mis.
+  Rp 25.000) di `series.price_idr`.
+- **Preview 4 kartu per volume** (kartu pertama tiap section + satu lagi).
+- **Versi pribadi tidak bisa dibagikan/dihadiahkan** — isinya konten
+  berbayar.
+- "Uji di sesimu sendiri": beri akunmu akses lewat SQL di README, mainkan
+  dengan murid/kelasmu, lalu revisi kartunya sebelum membuka penjualan.
 
 ## Query metrik
 
@@ -183,4 +209,13 @@ select kind, count(*) as panggilan,
 from ai_generations
 where status = 'success' and created_at > now() - interval '30 days'
 group by kind;
+```
+
+**Penjualan premium**
+
+```sql
+select product_type, is_gift, count(*) as pesanan, sum(amount_idr) as pendapatan_idr
+from credit_orders
+where status = 'paid' and product_type <> 'credits'
+group by product_type, is_gift;
 ```

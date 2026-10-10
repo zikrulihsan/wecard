@@ -8,6 +8,10 @@ import { CardLoader } from "@/components/ui/card-loader";
 import { LoadError } from "@/components/ui/load-error";
 import { SectionPicker } from "@/components/app/section-picker";
 import { DeckSharePanel } from "@/components/share/deck-share-panel";
+import { AddCardForm } from "@/components/premium/add-card-form";
+import { GiftDeckPanel } from "@/components/premium/gift-deck-panel";
+import { PersonalizePanel, PremiumLockedBanner } from "@/components/premium/premium-banner";
+import { fetchPremiumCatalog } from "@/lib/premium";
 import NotFound from "@/pages/not-found";
 import type { DeckLanguage, DeckTheme } from "@flipcard/types";
 import { resolveDeckLanguage } from "@/lib/deck-language";
@@ -25,6 +29,10 @@ type Deck = {
   isAi: boolean;
   /** Draf belum disimpan: dimainkan setelah disimpan di halaman review. */
   isDraft: boolean;
+  /** Versi pribadi deck premium — tidak boleh dibagikan atau dihadiahkan. */
+  isPremiumCopy: boolean;
+  /** Volume seri premium (kurasi berbayar), dengan status kepemilikannya. */
+  premium: { seriesSlug: string; owned: boolean; cardTotal: number; previewCount: number } | null;
   sections: { id: string; slug: string; name: string; icon: string | null; cardCount: number }[];
 };
 
@@ -45,7 +53,10 @@ export default function PlayPage() {
       supabase.from("categories").select("*").eq("id", deckId).eq("is_active", true).single(),
       supabase.from("sections").select("id, slug, name, icon, sort_order, cards:cards(id, card_type, difficulty)").eq("category_id", deckId).order("sort_order", { ascending: true }),
       supabase.auth.getSession(),
-    ]).then(([category, sections, session]) => {
+      // Katalog premium hanya untuk deck berbayar; gagal dibaca = dianggap
+      // deck biasa (RLS kartu tetap menjaga isi yang terkunci).
+      fetchPremiumCatalog().catch(() => []),
+    ]).then(([category, sections, session, catalog]) => {
       if (!active) return;
       if (category.error?.code === "PGRST116") { setState({ status: "not-found", forId: deckId }); return; }
       if (category.error || sections.error) {
@@ -63,6 +74,14 @@ export default function PlayPage() {
         isOwn: Boolean(category.data.created_by) && category.data.created_by === session.data.session?.user.id,
         isAi: category.data.is_ai_generated === true,
         isDraft: category.data.status === "draft",
+        isPremiumCopy: category.data.premium_copy === true,
+        premium: (() => {
+          for (const series of catalog) {
+            const volume = series.volumes.find((item) => item.id === category.data.id);
+            if (volume) return { seriesSlug: series.slug, owned: volume.owned, cardTotal: volume.cardTotal, previewCount: volume.previewCount };
+          }
+          return null;
+        })(),
         sections: (sections.data ?? []).map((section) => ({
           id: section.id, slug: section.slug, name: section.name,
           icon: section.icon, cardCount: section.cards?.length ?? 0,
@@ -87,7 +106,15 @@ export default function PlayPage() {
           <header className="mb-6"><h1 className="text-3xl font-bold">{state.deck.name}</h1>{state.deck.description && <p className="text-muted-foreground mt-2">{state.deck.description}</p>}
             {state.deck.isOwn && state.deck.isAi && <Link to={`/create/${state.deck.id}`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"><PencilLine className="size-4" />{t.play.editDeck}</Link>}
           </header>
-          {state.deck.isOwn && <DeckSharePanel deckId={state.deck.id} deckName={state.deck.name} />}
+          {state.deck.premium && !state.deck.premium.owned && (
+            <PremiumLockedBanner previewCount={state.deck.premium.previewCount} cardTotal={state.deck.premium.cardTotal} seriesSlug={state.deck.premium.seriesSlug} />
+          )}
+          {state.deck.premium?.owned && <PersonalizePanel categoryId={state.deck.id} />}
+          {state.deck.isOwn && !state.deck.isPremiumCopy && <DeckSharePanel deckId={state.deck.id} deckName={state.deck.name} />}
+          {state.deck.isOwn && !state.deck.isAi && (
+            <AddCardForm sections={state.deck.sections} onAdded={() => setRetry((value) => value + 1)} />
+          )}
+          {state.deck.isOwn && !state.deck.isPremiumCopy && <GiftDeckPanel deckId={state.deck.id} deckName={state.deck.name} />}
           <SectionPicker deckId={state.deck.id} deckName={state.deck.name} deckTheme={state.deck.theme} deckLanguage={state.deck.language} sections={state.deck.sections} />
         </div>}
     </div>

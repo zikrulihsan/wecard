@@ -29,6 +29,8 @@ type CategoryRow = {
   mode: string | null;
   language?: string | null;
   status?: string | null;
+  created_by?: string | null;
+  series_id?: string | null;
 };
 
 type Deck = Omit<CategoryRow, "mode" | "language"> & {
@@ -42,7 +44,7 @@ type Filter = "all" | "free" | "mine" | "locked";
 const FILTERS: { value: Filter; label: "filterAll" | "filterFree" | "filterMine" | "filterLocked"; matches: (deck: Deck) => boolean }[] = [
   { value: "all", label: "filterAll", matches: () => true },
   { value: "free", label: "filterFree", matches: (deck) => deck.is_free },
-  { value: "mine", label: "filterMine", matches: (deck) => deck.is_ai_generated },
+  { value: "mine", label: "filterMine", matches: (deck) => Boolean(deck.created_by) },
   { value: "locked", label: "filterLocked", matches: (deck) => !deck.isUnlocked },
 ];
 
@@ -72,7 +74,12 @@ export default function HomePage() {
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .order("sort_order", { ascending: true }),
-      supabase.from("purchases").select("category_id").eq("status", "completed"),
+      // Volume premium terbuka lewat beli volume atau beli seri (00011);
+      // sebelum migration itu jalan, cukup tabel purchases.
+      supabase.rpc("owned_category_ids").then((result) => result.error
+        ? supabase.from("purchases").select("category_id").eq("status", "completed")
+            .then(({ data, error }) => ({ data: data?.map((row) => row.category_id as string) ?? [], error }))
+        : { data: (result.data ?? []) as string[], error: null }),
     ]).then(([categoryResult, purchaseResult]) => {
       if (!active) return;
       if (categoryResult.error) {
@@ -85,7 +92,7 @@ export default function HomePage() {
         loading: false,
         error: false,
         categories: categoryResult.data ?? [],
-        unlockedIds: new Set(purchaseResult.data?.map((item) => item.category_id) ?? []),
+        unlockedIds: new Set(purchaseResult.data),
       });
     }).catch((error) => {
       if (active) {
@@ -133,8 +140,8 @@ export default function HomePage() {
     (deck.description ?? "").toLocaleLowerCase(locale).includes(needle)
   ));
   const browsing = !needle && activeFilter.value === "all";
-  const mine = results.filter((deck) => deck.is_ai_generated);
-  const curated = results.filter((deck) => !deck.is_ai_generated);
+  const mine = results.filter((deck) => deck.created_by);
+  const curated = results.filter((deck) => !deck.created_by);
 
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-8">
@@ -306,7 +313,9 @@ function DeckTile({ deck, showMode }: { deck: Deck; showMode: boolean }) {
   const badge = "bg-white/20 text-white border-0";
   return (
     <Link
-      to={deck.status === "draft" ? `/create/${deck.id}` : deck.isUnlocked ? `/play/${deck.id}` : "/store"}
+      // Deck berbayar yang belum dibeli tetap dibuka: kartu preview-nya bisa
+      // dimainkan, dan halaman deck menunjukkan cara membelinya.
+      to={deck.status === "draft" ? `/create/${deck.id}` : `/play/${deck.id}`}
       aria-label={deck.isUnlocked ? t.home.play(deck.name) : t.home.buy(deck.name)}
       className={cn(
         "relative flex min-h-40 flex-col rounded-2xl bg-gradient-to-br p-4 text-white shadow-md transition-shadow hover:shadow-xl",

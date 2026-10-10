@@ -25,6 +25,8 @@ const CallbackPage = lazy(() => import("@/pages/callback"));
 const TryPage = lazy(() => import("@/pages/try"));
 const TrySessionPage = lazy(() => import("@/pages/try-session"));
 const SharedPlayPage = lazy(() => import("@/pages/shared-play"));
+const SeriesPage = lazy(() => import("@/pages/series"));
+const RedeemPage = lazy(() => import("@/pages/redeem"));
 
 function LandingOrCallback() {
   const { search } = useLocation();
@@ -115,12 +117,14 @@ export default function App() {
         <Route path="/coba" element={<TryPage />} />
         <Route path="/coba/:deckSlug" element={<TrySessionPage />} />
         <Route path="/main/:token" element={<SharedPlayPage />} />
+        <Route path="/seri/:slug" element={<SeriesPage />} />
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<HomePage />} />
             <Route path="/create" element={<CreatePage />} />
             <Route path="/create/:deckId" element={<DeckReviewPage />} />
             <Route path="/store" element={<StorePage />} />
+            <Route path="/hadiah/:code" element={<RedeemPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/play/:deckId" element={<PlayPage />} />
             <Route path="/play/:deckId/session" element={<SessionPage />} />

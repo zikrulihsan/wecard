@@ -11,7 +11,7 @@ export const config: Config = { path: "/api/payments/midtrans" };
  *
  * Isi notifikasi tidak dipercaya begitu saja: tanda tangannya diperiksa, lalu
  * statusnya diambil ulang dari API Midtrans, dan nominalnya dicocokkan dengan
- * pesanan. Penambahan saldo lewat `fulfill_credit_order`, yang hanya berlaku
+ * pesanan. Pelunasan lewat `fulfill_order`, yang hanya berlaku
  * sekali per pesanan — notifikasi ganda aman.
  */
 export default async function handler(request: Request): Promise<Response> {
@@ -54,11 +54,15 @@ export default async function handler(request: Request): Promise<Response> {
 
   const outcome = orderOutcome(status);
   if (outcome === "paid") {
-    const { error } = await admin.rpc("fulfill_credit_order", {
+    const args = {
       p_order: order.id,
       p_provider_ref: status.transaction_id ?? null,
       p_payment_type: status.payment_type ?? null,
-    });
+    };
+    // fulfill_order (00011) menangani kredit, volume, seri, dan hadiah;
+    // fulfill_credit_order (00010) dipakai kalau 00011 belum dijalankan.
+    let { error } = await admin.rpc("fulfill_order", args);
+    if (error?.code === "PGRST202") ({ error } = await admin.rpc("fulfill_credit_order", args));
     if (error) {
       reportError("midtrans.saldo-gagal-ditambah", { orderId: order.id, ...supabaseError(error) });
       return new Response("Fulfillment failed", { status: 500 });

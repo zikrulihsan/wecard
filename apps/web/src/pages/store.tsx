@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Check, CheckCircle2, Clock, Coins, Loader2, XCircle } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Check, CheckCircle2, ChevronRight, Clock, Coins, Gift, Loader2, XCircle } from "lucide-react";
+import { ShareActions } from "@/components/share/share-actions";
+import { Input } from "@/components/ui/input";
+import { startCheckout } from "@/lib/checkout";
+import { deckThemeStyle } from "@/lib/deck-theme";
+import { fetchPremiumCatalog, giftUrl, type PremiumSeries } from "@/lib/premium";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,7 +40,7 @@ export default function StorePage() {
   const [history, setHistory] = useState<LedgerRow[] | null>(null);
   const [buying, setBuying] = useState<string | null>(null);
   const [buyError, setBuyError] = useState(false);
-  const [order, setOrder] = useState<{ state: OrderState; credits?: number } | null>(
+  const [order, setOrder] = useState<{ state: OrderState; credits?: number; productType?: string; gift?: boolean } | null>(
     orderId ? { state: "checking" } : null
   );
   const [refresh, setRefresh] = useState(0);
@@ -62,11 +67,12 @@ export default function StorePage() {
     let attempts = 0;
     let timer: ReturnType<typeof setTimeout>;
     const check = async () => {
+      // `*`: kolom produk (00011) boleh belum ada.
       const { data } = await createClient().from("credit_orders")
-        .select("status, credits").eq("id", orderId).maybeSingle();
+        .select("*").eq("id", orderId).maybeSingle();
       if (!active) return;
       if (data?.status === "paid") {
-        setOrder({ state: "paid", credits: data.credits });
+        setOrder({ state: "paid", credits: data.credits, productType: data.product_type ?? "credits", gift: data.is_gift === true });
         invalidateAiAccess();
         setRefresh((value) => value + 1);
         return;
@@ -86,19 +92,8 @@ export default function StorePage() {
   async function buy(packId: string) {
     setBuying(packId);
     setBuyError(false);
-    try {
-      const { data: { session } } = await createClient().auth.getSession();
-      if (!session) throw new Error("Belum login");
-      const response = await fetch("/api/credits/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ packId }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.redirectUrl) throw new Error(data.error ?? "checkout gagal");
-      window.location.assign(data.redirectUrl);
-    } catch (cause) {
-      console.error("[store] gagal membuka pembayaran", cause);
+    const result = await startCheckout({ product: "credits", packId });
+    if (result.error) {
       setBuyError(true);
       setBuying(null);
     }
@@ -114,7 +109,7 @@ export default function StorePage() {
         <p className="text-muted-foreground mt-1">{s.subtitle}</p>
       </header>
 
-      {order && <OrderNotice state={order.state} credits={order.credits} />}
+      {order && <OrderNotice {...order} />}
 
       <Card className="p-5">
         <div className="flex items-center gap-4">
@@ -195,17 +190,23 @@ export default function StorePage() {
           )}
       </section>
 
-      <p className="text-center text-sm text-muted-foreground">🛍️ {s.premiumSoon}</p>
+      <PremiumCatalog refresh={refresh} />
+      <RedeemBox />
+      <GiftList refresh={refresh} />
     </div>
   );
 }
 
-function OrderNotice({ state, credits }: { state: OrderState; credits?: number }) {
-  const s = useI18n().t.store;
+function OrderNotice({ state, credits, productType, gift }: { state: OrderState; credits?: number; productType?: string; gift?: boolean }) {
+  const { t } = useI18n();
+  const s = t.store;
+  const paidText = productType && productType !== "credits"
+    ? gift ? t.premium.orderPaidGift : t.premium.orderPaidPremium
+    : s.orderPaid(credits ?? 0);
   const config = {
     checking: { icon: Loader2, text: s.orderChecking, className: "bg-neutral-50 text-neutral-700", spin: true },
     pending: { icon: Clock, text: s.orderPending, className: "bg-amber-50 text-amber-800", spin: false },
-    paid: { icon: CheckCircle2, text: s.orderPaid(credits ?? 0), className: "bg-emerald-50 text-emerald-800", spin: false },
+    paid: { icon: CheckCircle2, text: paidText, className: "bg-emerald-50 text-emerald-800", spin: false },
     failed: { icon: XCircle, text: s.orderFailed, className: "bg-destructive/10 text-destructive", spin: false },
   }[state];
   const Icon = config.icon;
@@ -214,5 +215,104 @@ function OrderNotice({ state, credits }: { state: OrderState; credits?: number }
       <Icon className={cn("size-4 shrink-0", config.spin && "animate-spin")} />
       {config.text}
     </div>
+  );
+}
+
+/** Seri premium yang dijual — detail & pembelian ada di halaman seri. */
+function PremiumCatalog({ refresh }: { refresh: number }) {
+  const { t } = useI18n();
+  const [catalog, setCatalog] = useState<PremiumSeries[] | null>(null);
+  useEffect(() => {
+    let active = true;
+    fetchPremiumCatalog()
+      .then((value) => { if (active) setCatalog(value); })
+      .catch(() => { if (active) setCatalog([]); });
+    return () => { active = false; };
+  }, [refresh]);
+
+  if (catalog === null) return <Skeleton className="h-24 w-full" />;
+  if (catalog.length === 0) return <p className="text-center text-sm text-muted-foreground">🛍️ {t.store.premiumSoon}</p>;
+  return (
+    <section className="space-y-3">
+      <h2 className="font-semibold">{t.premium.catalogTitle}</h2>
+      {catalog.map((series) => {
+        const owned = series.volumes.filter((volume) => volume.owned).length;
+        return (
+          <Link
+            key={series.id}
+            to={`/seri/${series.slug}`}
+            className={cn("flex items-center gap-3 rounded-2xl bg-gradient-to-br p-4 text-white shadow-md transition-shadow hover:shadow-lg", deckThemeStyle(series.theme).card)}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-white/80">{t.premium.eyebrow} · {series.volumes.length} {t.premium.volumes.toLowerCase()}</p>
+              <p className="font-semibold">{series.name}</p>
+              <p className="text-sm text-white/85">
+                {series.owned ? t.premium.seriesOwned : owned > 0 ? `${owned}/${series.volumes.length} ${t.premium.owned.toLowerCase()}` : t.premium.buySeries(formatIdr(series.priceIdr))}
+              </p>
+            </div>
+            <ChevronRight className="size-5 shrink-0 text-white/80" />
+          </Link>
+        );
+      })}
+    </section>
+  );
+}
+
+function RedeemBox() {
+  const t = useI18n().t.premium;
+  const navigate = useNavigate();
+  const [code, setCode] = useState("");
+  return (
+    <form
+      className="space-y-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const value = code.trim();
+        if (value) navigate(`/hadiah/${encodeURIComponent(value)}`);
+      }}
+    >
+      <label htmlFor="gift-code" className="text-sm font-medium">{t.redeemLabel}</label>
+      <div className="flex gap-2">
+        <Input id="gift-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={t.redeemPlaceholder} className="h-10 font-mono uppercase" maxLength={20} />
+        <Button type="submit" variant="outline" className="h-10 rounded-full" disabled={!code.trim()}>{t.redeemSubmit}</Button>
+      </div>
+    </form>
+  );
+}
+
+type GiftRow = { code: string; product_type: string; redeemed_at: string | null; buyer_id: string };
+
+/** Kode hadiah yang dibeli akun ini, siap dikirim ke penerimanya. */
+function GiftList({ refresh }: { refresh: number }) {
+  const t = useI18n().t.premium;
+  const [gifts, setGifts] = useState<GiftRow[]>([]);
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      return supabase.from("gift_codes").select("code, product_type, redeemed_at, buyer_id")
+        .eq("buyer_id", session.user.id).order("created_at", { ascending: false }).limit(10)
+        .then(({ data }) => { if (active) setGifts(data ?? []); });
+    });
+    return () => { active = false; };
+  }, [refresh]);
+
+  if (gifts.length === 0) return null;
+  return (
+    <section className="space-y-3">
+      <h2 className="flex items-center gap-2 font-semibold"><Gift className="size-4" />{t.giftsTitle}</h2>
+      <ul className="space-y-2">
+        {gifts.map((gift) => (
+          <li key={gift.code} className="space-y-2 rounded-xl border border-neutral-200 bg-white p-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-mono font-semibold tracking-widest">{gift.code}</span>
+              <span className="text-xs text-muted-foreground">{gift.redeemed_at ? t.giftRedeemed : t.giftWaiting}</span>
+            </div>
+            {!gift.redeemed_at && <ShareActions text={t.giftShareGeneric} url={giftUrl(gift.code)} label={t.giftShare} variant="outline" />}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

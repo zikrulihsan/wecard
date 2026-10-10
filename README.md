@@ -40,12 +40,13 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Lalu `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris). Lalu `00009_share_links.sql` (link main tanpa akun, papan skor grup, atribusi pendaftaran — lihat [Link Main](#link-main)). Terakhir `00010_credits.sql` (saldo kredit, draf deck, revisi, pesanan paket kredit — lihat [Kredit, draf & revisi](#kredit-draf--revisi)). **Jalankan `00010` sebelum mendeploy versi web yang memakainya** — generate menyimpan draf berstatus `draft`, kolom yang baru ada setelah migration ini.
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Lalu `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris). Lalu `00009_share_links.sql` (link main tanpa akun, papan skor grup, atribusi pendaftaran — lihat [Link Main](#link-main)). Lalu `00010_credits.sql` (saldo kredit, draf deck, revisi, pesanan paket kredit — lihat [Kredit, draf & revisi](#kredit-draf--revisi)). **Jalankan `00010` sebelum mendeploy versi web yang memakainya** — generate menyimpan draf berstatus `draft`, kolom yang baru ada setelah migration ini. Terakhir `00011_premium.sql` (seri premium, pembelian volume/seri, hadiah, versi pribadi, salin deck — lihat [Deck Premium](#deck-premium)).
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
    - `packages/supabase/seed_kuis_mendengar.sql` — deck **Latihan Mendengar** dan **Uji Diri: AI Engineering** (butuh migration `00006` dan `00007`)
    - `packages/supabase/seed_english.sql` — versi English keempat deck di atas: **Couples**, **Kids & Parents**, **Listening Practice**, **Self-Test: AI Engineering** (butuh migration `00006`–`00008`)
+   - `packages/supabase/seed_english_speaking.sql` — seri premium **English Speaking Practice**, 3 volume × 24 kartu (butuh migration `00011`)
 5. Salin `.env.example` ke `apps/web/.env.local`, lalu isi URL dan anon key:
 
 ```bash
@@ -315,10 +316,50 @@ Semua akses pemain tanpa akun lewat fungsi `SECURITY DEFINER` di migration
 lengkap (kredit, premium, Plan Host, cetak) dan query metriknya ada di
 [`docs/monetisasi.md`](docs/monetisasi.md).
 
+## Deck Premium
+
+Seri kurasi berbayar. Seri pertama: **English Speaking Practice**
+(`seed_english_speaking.sql`) — 3 volume, 24 kartu per volume: prompt
+bicara, role-play, dan pola kalimat ("💡 Try: …"), dari pemula sampai
+menengah atas.
+
+| Aturan | Detail |
+| --- | --- |
+| Harga | Rp 10.000 per volume (`categories.price_idr`), Rp 35.000 per seri (`series.price_idr`). Beli seri membuka semua volume, **termasuk volume yang terbit belakangan**. |
+| Preview | Tanpa membeli, hanya kartu `is_free_preview` (4 per volume) yang terbaca — dijaga RLS kartu, termasuk untuk tamu. Halaman publik `/seri/<slug>` menampilkan volume, preview gratis, dan tombol beli. |
+| Hadiah | Tombol hadiah di halaman seri: pembeli membayar, mendapat kode di Toko, penerima menukarnya di `/hadiah/<kode>`. Kode yang ditukar orang yang sudah punya produknya tidak terpakai. |
+| Versi pribadi | Pemilik volume bisa menyalinnya ke akun sendiri seharga 1 kredit (`personalize_premium`) lalu menambah kartu sendiri. Salinan ini ditandai `premium_copy`: tidak bisa dibagikan lewat link, disalin, atau dihadiahkan. |
+| Duplikat | Deck premium tidak bisa diduplikat ke akun lain — harus beli atau dihadiahi. |
+
+Deck custom ikut mendapat dua aturan yang tersisa dari rencana:
+
+| Aturan | Detail |
+| --- | --- |
+| Duplikat ke akun lain | Pemain yang masuk bisa menyimpan deck dari link main ke akunnya, 1 kredit (`copy_shared_deck`). |
+| Hadiah | Pemilik membuat kode hadiah seharga 1 kredit (`gift_custom_deck`); penerima mendapat salinannya. |
+
+Pembelian volume/seri memakai checkout & webhook Midtrans yang sama dengan
+paket kredit (`credit_orders.product_type`), dan `fulfill_order()` memberi
+akses atau kode hadiah sekali saja per pesanan.
+
+**Menguji di sesi sendiri sebelum dijual** — beri akun sendiri akses tanpa
+membayar:
+
+```sql
+insert into series_purchases (user_id, series_id)
+select u.id, s.id from auth.users u, series s
+where u.email = 'email@anda.com' and s.slug = 'english-speaking-practice'
+on conflict do nothing;
+```
+
+Menambah volume baru: insert kategori dengan `series_id` dan `volume`
+berikutnya, `is_free = false`, `price_idr`, lalu tandai 3–5 kartu pertamanya
+`is_free_preview = true`. Pembeli seri otomatis mendapat volume itu.
+
 ## Roadmap
 
 - **Phase 2**: PWA, SEO landing polish, OG image
-- **Phase 3**: unlock flow, kategori berbayar (pembayaran Midtrans untuk paket kredit sudah ada)
+- **Phase 3**: ~~unlock flow, kategori berbayar~~ — sudah ada lewat seri premium
 - **Phase 4**: Analytics, more categories, admin panel
 
 Rencana monetisasi & viral loop yang lebih baru ada di [`docs/monetisasi.md`](docs/monetisasi.md).

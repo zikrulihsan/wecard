@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { AnimatePresence, m, type Variants } from "framer-motion";
-import { ChevronLeft, Link2Off, X } from "lucide-react";
-import { CardDisplay } from "@/components/cards/card-display";
-import { GameProgressBar } from "@/components/game/progress-bar";
+import { m } from "framer-motion";
+import { Link2Off } from "lucide-react";
 import { QuizScore } from "@/components/game/quiz-score";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { LocalPlay } from "@/components/game/local-play";
+import { CopyDeckPanel } from "@/components/share/copy-deck-panel";
 import { MakerCta } from "@/components/share/maker-cta";
 import { Scoreboard } from "@/components/share/scoreboard";
 import { ShareActions } from "@/components/share/share-actions";
@@ -14,7 +14,6 @@ import { CardLoader } from "@/components/ui/card-loader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadError } from "@/components/ui/load-error";
-import { hasAnswerSide } from "@/lib/cards/formats";
 import { DECK_MODE_META } from "@/lib/deck-mode";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { shuffle } from "@/lib/game/shuffle";
@@ -31,18 +30,6 @@ import { useSignedIn } from "@/lib/supabase/use-signed-in";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { GameCard } from "@flipcard/types";
-
-// direction: 1 = maju, -1 = mundur — sama seperti layar main yang asli.
-const cardVariants: Variants = {
-  enter: (direction: number) => ({ opacity: 0, scale: 0.96, x: direction * 56 }),
-  center: { opacity: 1, scale: 1, x: 0, transition: { duration: 0.22, ease: "easeOut" } },
-  exit: (direction: number) => ({
-    opacity: 0,
-    scale: 0.96,
-    x: direction * -300,
-    transition: { duration: 0.2, ease: "easeIn" },
-  }),
-};
 
 type LoadState =
   | { status: "loading"; token: string }
@@ -218,117 +205,17 @@ function PlayRound({
   onAgain: () => void;
   onExit: () => void;
 }) {
-  const t = useT();
-  const [index, setIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const [answerRevealed, setAnswerRevealed] = useState(false);
-  const [results, setResults] = useState<Record<string, boolean>>({});
-  const [direction, setDirection] = useState(1);
-  const theme = deckThemeStyle(deck.theme);
-
-  if (index >= cards.length) {
-    return (
-      <DoneScreen
-        token={token}
-        deck={deck}
-        playerName={playerName}
-        results={results}
-        onAgain={onAgain}
-      />
-    );
-  }
-
-  const card = cards[index];
-  const awaitingAnswer = revealed && hasAnswerSide(card.cardType) && !answerRevealed;
-  const goNext = () => {
-    setDirection(1);
-    setRevealed(false);
-    setAnswerRevealed(false);
-    setIndex((value) => value + 1);
-  };
-  const goPrevious = () => {
-    if (index === 0) return;
-    setDirection(-1);
-    setRevealed(false);
-    setAnswerRevealed(false);
-    setIndex((value) => value - 1);
-  };
-  const exit = () => {
-    if (confirm(t.game.confirmExit)) onExit();
-  };
-
   return (
-    <div
-      style={deckThemeVars(deck.theme)}
-      className={cn("flex h-dvh min-h-[26rem] flex-col overflow-hidden bg-gradient-to-br", theme.play)}
-    >
-      <header className="flex shrink-0 items-center gap-1 px-4 pt-3 pb-2">
-        <Button variant="ghost" size="icon" onClick={exit} className="shrink-0 rounded-full" aria-label={t.common.exit}>
-          <X className="size-5" />
-        </Button>
-        <div className="flex-1 px-2">
-          <GameProgressBar current={index} total={cards.length} />
-        </div>
-        <span className="max-w-[8rem] shrink-0 truncate rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-neutral-600">
-          {playerName}
-        </span>
-      </header>
-
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        <AnimatePresence initial={false} custom={direction}>
-          <m.div
-            key={card.id}
-            custom={direction}
-            variants={cardVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            className="absolute inset-0 flex items-center justify-center px-6 py-2"
-          >
-            <CardDisplay
-              card={card}
-              isRevealed={revealed}
-              onFlip={() => setRevealed(true)}
-              isAnswerRevealed={answerRevealed}
-              onRevealAnswer={() => setAnswerRevealed(true)}
-              language={deck.language}
-              result={results[card.id]}
-              onResult={(correct) => setResults((value) => ({ ...value, [card.id]: correct }))}
-            />
-          </m.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="shrink-0 px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {!revealed ? (
-          <Button onClick={() => setRevealed(true)} size="lg" className="w-full rounded-full">
-            {t.game.openCard}
-          </Button>
-        ) : (
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={goPrevious}
-              disabled={index === 0}
-              variant="outline"
-              size="lg"
-              className="rounded-full"
-              aria-label={t.game.previousCard}
-            >
-              <ChevronLeft className="size-5" />
-            </Button>
-            {awaitingAnswer ? (
-              <Button onClick={() => setAnswerRevealed(true)} size="lg" className="flex-1 rounded-full">
-                {t.game.showAnswer}
-              </Button>
-            ) : (
-              <Button onClick={goNext} size="lg" className="flex-1 rounded-full">
-                {t.game.nextCard}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+    <LocalPlay
+      theme={deck.theme}
+      language={deck.language}
+      cards={cards}
+      badge={playerName}
+      onExit={onExit}
+      renderDone={(results) => (
+        <DoneScreen token={token} deck={deck} playerName={playerName} results={results} onAgain={onAgain} />
+      )}
+    />
   );
 }
 
@@ -403,6 +290,7 @@ function DoneScreen({
           {t.share.playAgain}
         </Button>
 
+        {signedIn && <CopyDeckPanel token={token} />}
         <MakerCta signedIn={signedIn} referralToken={token} />
       </m.div>
     </div>
