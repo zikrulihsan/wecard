@@ -736,45 +736,7 @@ export const id = {
   },
 
   trial: {
-    backHome: "Beranda",
-    titleGuest: "Coba semua deck, gratis",
-    titleSignedIn: "Deck coba, terbuka penuh",
-    introSignedIn:
-      "Kamu sudah masuk, jadi semua kartu di sini bisa dimainkan sampai habis.",
-    introLead: "Pilih jenisnya, lalu mainkan",
-    introStrong: (count: number) => `${count} kartu pertama`,
-    introRest: "tiap deck tanpa daftar. Suka? Masuk untuk lanjut sampai habis.",
-    modeTabs: "Jenis deck",
-    freeUsedUp: "Gratisnya habis",
-    freeCount: (count: number) => `${count} kartu gratis`,
-    lockedMore: (count: number) => `${count} lagi`,
-    freeMeter: (used: number, free: number) =>
-      `${used} dari ${free} kartu gratis dimainkan`,
-    playAgain: "Main lagi",
-    play: "Main",
-    makeWithAi: "Bikin deck sendiri pakai AI",
-    ladderTitle: "Dari coba sampai punya deck sendiri",
-    ladderTryTitle: "Coba tanpa akun",
-    ladderTryTag: "Kamu di sini",
-    ladderTryPoints: (free: number) => [
-      `${free} kartu pertama tiap deck`,
-      "Semua jenis: ngobrol, tantangan, kuis, mendengar",
-    ],
-    ladderFreeTitle: "Akun gratis",
-    ladderFreeTag: "Gratis",
-    ladderFreePoints: (limit: number) => [
-      "Semua kartu terbuka, lanjut dari kartu terakhir",
-      `${limit} kredit untuk bikin deck AI sendiri`,
-    ],
-    ladderTopupTitle: "Paket kredit",
-    ladderTopupSoon: "Segera hadir",
-    ladderPrice: (price: string) => `Rp${price}`,
-    ladderTopupPoints: (count: number, price: string) => [
-      `+${count} kredit seharga Rp${price}`,
-      "1 kredit = 1 deck jadi, revisi gratis",
-    ],
-    createAccount: "Buat akun gratis",
-    signIn: "Masuk",
+    deckPicker: "Pilih deck",
     deckDone: (name: string) => `Deck ${name} selesai!`,
     doneSignedIn: (limit: number) =>
       `Mau deck dengan topik kalian sendiri? Bikin pakai AI — akun baru dapat ${limit} kredit gratis, 1 kredit = 1 deck.`,

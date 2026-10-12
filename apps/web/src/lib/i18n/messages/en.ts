@@ -701,45 +701,7 @@ export const en: Messages = {
   },
 
   trial: {
-    backHome: "Home",
-    titleGuest: "Try every deck, free",
-    titleSignedIn: "Trial decks, fully unlocked",
-    introSignedIn:
-      "You're signed in, so every card here can be played to the end.",
-    introLead: "Pick a type, then play the",
-    introStrong: (count: number) => `first ${count} cards`,
-    introRest: "of every deck without signing up. Like it? Sign in to keep going.",
-    modeTabs: "Deck type",
-    freeUsedUp: "Free cards used",
-    freeCount: (count: number) => `${count} free cards`,
-    lockedMore: (count: number) => `${count} more`,
-    freeMeter: (used: number, free: number) =>
-      `${used} of ${free} free cards played`,
-    playAgain: "Play again",
-    play: "Play",
-    makeWithAi: "Make your own deck with AI",
-    ladderTitle: "From trying it to having your own decks",
-    ladderTryTitle: "Try without an account",
-    ladderTryTag: "You're here",
-    ladderTryPoints: (free: number) => [
-      `The first ${free} cards of every deck`,
-      "Every type: conversation, challenges, quiz, listening",
-    ],
-    ladderFreeTitle: "Free account",
-    ladderFreeTag: "Free",
-    ladderFreePoints: (limit: number) => [
-      "Every card unlocked, continue where you left off",
-      `${limit} credits to make your own AI decks`,
-    ],
-    ladderTopupTitle: "Credit packs",
-    ladderTopupSoon: "Coming soon",
-    ladderPrice: (price: string) => `Rp${price}`,
-    ladderTopupPoints: (count: number, price: string) => [
-      `+${count} credits for Rp${price}`,
-      "1 credit = 1 finished deck, free revisions",
-    ],
-    createAccount: "Create a free account",
-    signIn: "Sign in",
+    deckPicker: "Choose a deck",
     deckDone: (name: string) => `${name} deck complete!`,
     doneSignedIn: (limit: number) =>
       `Want a deck on your own topic? Make one with AI — new accounts get ${limit} free credits, 1 credit = 1 deck.`,

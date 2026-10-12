@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AnimatePresence, m, type Variants } from "framer-motion";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, X } from "lucide-react";
+import { DECK_MODES } from "@flipcard/types";
 import { CardDisplay } from "@/components/cards/card-display";
 import { GameProgressBar } from "@/components/game/progress-bar";
 import { QuizScore } from "@/components/game/quiz-score";
@@ -11,9 +12,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { CardLoader } from "@/components/ui/card-loader";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
 import { hasAnswerSide } from "@/lib/cards/formats";
+import { DECK_MODE_META, isDeckMode } from "@/lib/deck-mode";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { useSignedIn } from "@/lib/supabase/use-signed-in";
-import { findTrialDeck, type TrialDeck } from "@/lib/trial/decks";
+import { findTrialDeck, trialDecks, type TrialDeck } from "@/lib/trial/decks";
 import { freeCardCount, useTrialProgress } from "@/lib/trial/progress";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
@@ -32,9 +34,12 @@ const cardVariants: Variants = {
 };
 
 /**
- * Layar main versi coba. Sengaja tidak memakai `useGameStore`: store itu
- * dipersist dan dipakai sesi pemain yang sudah login, jadi sesi coba cukup
- * hidup di state lokal dan hilang saat halaman ditutup.
+ * Halaman coba = layar main. `/coba` langsung membuka kartu pertama deck
+ * bawaan (deck pertama, atau deck pertama dari `?jenis=`), dan deck lain
+ * dipilih lewat dropdown di atas kartu, jadi tidak ada langkah memilih dulu.
+ * Sengaja tidak memakai `useGameStore`: store itu dipersist dan dipakai sesi
+ * pemain yang sudah login, jadi sesi coba cukup hidup di state lokal dan
+ * hilang saat halaman ditutup.
  *
  * Tamu memainkan beberapa kartu pertama, lalu bertemu kartu terkunci. Pemain
  * yang sudah masuk memainkan deck sampai habis; `?kartu=N` membuka deck
@@ -43,11 +48,18 @@ const cardVariants: Variants = {
  */
 export default function TrySessionPage() {
   const { deckSlug } = useParams();
+  const [searchParams] = useSearchParams();
   const { language } = useI18n();
-  const deck = findTrialDeck(deckSlug, language);
+  const deck = deckSlug
+    ? findTrialDeck(deckSlug, language)
+    : defaultTrialDeck(searchParams.get("jenis"), trialDecks(language));
   if (!deck) return <NotFound />;
   // Ganti bahasa di tengah sesi = deck dimuat ulang dalam bahasa baru.
   return <TrialSession key={`${deck.slug}-${language}`} deck={deck} />;
+}
+
+function defaultTrialDeck(mode: string | null, decks: TrialDeck[]): TrialDeck | undefined {
+  return (isDeckMode(mode) && decks.find((deck) => deck.mode === mode)) || decks[0];
 }
 
 function startIndex(value: string | null, total: number): number {
@@ -80,7 +92,11 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
   }, [signedIn, index, freeCards, deck.slug, markSeen]);
 
   const theme = deckThemeStyle(deck.theme);
-  const backToTry = () => navigate(`/coba?jenis=${deck.mode}`);
+  const allDecks = trialDecks(language);
+  const nextDeck = allDecks[(allDecks.findIndex((item) => item.slug === deck.slug) + 1) % allDecks.length];
+  const openDeck = (slug: string) => navigate(`/coba/${slug}`);
+  const tryAnother = () => openDeck(nextDeck.slug);
+  const exit = () => navigate(signedIn ? "/home" : "/");
 
   // Sesi belum diketahui: jangan sampai pemain yang baru kembali dari login
   // sempat melihat kartu terkunci.
@@ -135,7 +151,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
               size="lg"
               variant={signedIn ? "outline" : "default"}
               className="w-full rounded-full"
-              onClick={backToTry}
+              onClick={tryAnother}
             >
               {t.trial.tryAnother}
             </Button>
@@ -180,24 +196,27 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
       style={deckThemeVars(deck.theme)}
       className={cn("flex h-dvh min-h-[26rem] flex-col overflow-hidden bg-gradient-to-br", theme.play)}
     >
-      <header className="flex shrink-0 items-center gap-1 px-4 pt-3 pb-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={backToTry}
-          className="shrink-0 rounded-full"
-          aria-label={t.common.exit}
-        >
-          <X className="size-5" />
-        </Button>
-        <div className="flex-1 px-2">
+      <header className="shrink-0 space-y-2 px-4 pt-3 pb-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={exit}
+            className="shrink-0 rounded-full"
+            aria-label={t.common.exit}
+          >
+            <X className="size-5" />
+          </Button>
+          <DeckPicker decks={allDecks} current={deck.slug} onChange={openDeck} />
+          {signedIn === false && freeCards < cards.length && (
+            <span className="shrink-0 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-neutral-600">
+              {t.trial.freeBadge(Math.min(index + 1, freeCards), freeCards)}
+            </span>
+          )}
+        </div>
+        <div className="px-2">
           <GameProgressBar current={index} total={cards.length} />
         </div>
-        {signedIn === false && freeCards < cards.length && (
-          <span className="shrink-0 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-neutral-600">
-            {t.trial.freeBadge(Math.min(index + 1, freeCards), freeCards)}
-          </span>
-        )}
       </header>
 
       <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -246,7 +265,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
             >
               <ChevronLeft className="size-5" />
             </Button>
-            <Button onClick={backToTry} variant="outline" size="lg" className="flex-1 rounded-full">
+            <Button onClick={tryAnother} variant="outline" size="lg" className="flex-1 rounded-full">
               {t.trial.tryAnother}
             </Button>
           </div>
@@ -283,5 +302,49 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Ganti deck tanpa keluar dari layar main. Native `<select>` supaya di HP
+ * muncul pemilih bawaan sistem; deck dikelompokkan per jenis.
+ */
+function DeckPicker({
+  decks,
+  current,
+  onChange,
+}: {
+  decks: TrialDeck[];
+  current: string;
+  onChange: (slug: string) => void;
+}) {
+  const t = useI18n().t;
+  return (
+    <label className="relative min-w-0 flex-1">
+      <span className="sr-only">{t.trial.deckPicker}</span>
+      <select
+        value={current}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full cursor-pointer appearance-none truncate rounded-full border border-white/60 bg-white/80 py-2 pr-9 pl-4 text-sm font-medium text-neutral-800 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+      >
+        {DECK_MODES.map((mode) => {
+          const inMode = decks.filter((deck) => deck.mode === mode);
+          if (inMode.length === 0) return null;
+          return (
+            <optgroup key={mode} label={`${DECK_MODE_META[mode].emoji} ${t.modes[mode].label}`}>
+              {inMode.map((deck) => (
+                <option key={deck.slug} value={deck.slug}>
+                  {deck.emoji} {deck.name}
+                </option>
+              ))}
+            </optgroup>
+          );
+        })}
+      </select>
+      <ChevronDown
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-neutral-500"
+      />
+    </label>
   );
 }
