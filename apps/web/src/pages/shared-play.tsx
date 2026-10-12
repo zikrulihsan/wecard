@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { m } from "framer-motion";
 import { Link2Off } from "lucide-react";
-import { QuizScore } from "@/components/game/quiz-score";
+import { QuizScore, scoreQuiz } from "@/components/game/quiz-score";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LocalPlay } from "@/components/game/local-play";
 import { CopyDeckPanel } from "@/components/share/copy-deck-panel";
@@ -213,7 +213,7 @@ function PlayRound({
       badge={playerName}
       onExit={onExit}
       renderDone={(results) => (
-        <DoneScreen token={token} deck={deck} playerName={playerName} results={results} onAgain={onAgain} />
+        <DoneScreen token={token} deck={deck} playerName={playerName} score={scoreQuiz(cards, results)} onAgain={onAgain} />
       )}
     />
   );
@@ -223,20 +223,18 @@ function DoneScreen({
   token,
   deck,
   playerName,
-  results,
+  score,
   onAgain,
 }: {
   token: string;
   deck: SharedDeck;
   playerName: string;
-  results: Record<string, boolean>;
+  score: ReturnType<typeof scoreQuiz>;
   onAgain: () => void;
 }) {
   const t = useT();
   const signedIn = useSignedIn();
-  const graded = Object.values(results);
-  const correct = graded.filter(Boolean).length;
-  const total = graded.length;
+  const { correct, total } = score;
   const [board, setBoard] = useState<{ status: "loading" | "error" | "ready"; rows: ScoreRow[] }>({
     status: "loading",
     rows: [],
@@ -274,7 +272,7 @@ function DoneScreen({
         <div className="text-7xl">🎉</div>
         <h1 className="text-3xl font-bold">{t.share.doneTitle(playerName)}</h1>
         {total > 0 ? (
-          <QuizScore correct={correct} total={total} />
+          <QuizScore {...score} />
         ) : (
           <p className="leading-relaxed text-muted-foreground">{t.game.doneTalk}</p>
         )}

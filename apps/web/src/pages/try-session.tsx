@@ -5,7 +5,7 @@ import { ChevronDown, ChevronLeft, X } from "lucide-react";
 import { DECK_MODES } from "@flipcard/types";
 import { CardDisplay } from "@/components/cards/card-display";
 import { GameProgressBar } from "@/components/game/progress-bar";
-import { QuizScore } from "@/components/game/quiz-score";
+import { QuizScore, scoreQuiz } from "@/components/game/quiz-score";
 import { ShareActions } from "@/components/share/share-actions";
 import { TrialLock } from "@/components/trial/trial-lock";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -109,7 +109,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
   }
 
   if (index >= cards.length) {
-    const answered = Object.values(results);
+    const score = scoreQuiz(cards, results);
     return (
       <div
         style={deckThemeVars(deck.theme)}
@@ -122,20 +122,18 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
         >
           <div className="text-7xl">🎉</div>
           <h1 className="text-3xl font-bold">{t.trial.deckDone(deck.name)}</h1>
-          {answered.length > 0 && (
-            <QuizScore correct={answered.filter(Boolean).length} total={answered.length} />
-          )}
+          {score.total > 0 && <QuizScore {...score} />}
           <p className="leading-relaxed text-muted-foreground">
             {signedIn
               ? t.trial.doneSignedIn(AI_GENERATION_LIMIT)
               : t.trial.doneGuest}
           </p>
           <ShareActions
-            text={answered.length > 0
-              ? t.share.resultText(answered.filter(Boolean).length, answered.length, deck.name)
+            text={score.total > 0
+              ? t.share.resultText(score.correct, score.total, deck.name)
               : t.share.playedText(deck.name)}
             url={`${window.location.origin}/coba/${deck.slug}`}
-            label={answered.length > 0 ? t.share.shareResult : t.share.inviteFriends}
+            label={score.total > 0 ? t.share.shareResult : t.share.inviteFriends}
             variant="outline"
           />
           <div className="space-y-2">

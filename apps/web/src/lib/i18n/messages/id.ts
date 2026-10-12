@@ -387,6 +387,7 @@ export const id = {
     scoreOkay: "Lumayan! Ulangi sekali lagi supaya makin nempel.",
     scoreLow: "Masih banyak yang bisa dipelajari — coba lagi, ya.",
     scoreLabel: (percent: number) => `jawaban benar (${percent}%)`,
+    scoreSkipped: (count: number) => `${count} soal dilewati tanpa dinilai`,
     confirmExit: "Yakin keluar? Progres tidak akan disimpan.",
     openCard: "Buka Kartu",
     previousCard: "Kartu sebelumnya",

@@ -357,6 +357,8 @@ export const en: Messages = {
     scoreOkay: "Not bad! Go through it once more to make it stick.",
     scoreLow: "Plenty left to learn — give it another go.",
     scoreLabel: (percent: number) => `correct answers (${percent}%)`,
+    scoreSkipped: (count: number) =>
+      `${count} ${count === 1 ? "question" : "questions"} skipped without grading`,
     confirmExit: "Leave the game? Your progress won't be saved.",
     openCard: "Open Card",
     previousCard: "Previous card",
