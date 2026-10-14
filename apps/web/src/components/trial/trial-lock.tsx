@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { m } from "framer-motion";
 import { Lock } from "lucide-react";
+import { scoreQuiz } from "@/components/game/quiz-score";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
@@ -32,7 +33,7 @@ export function TrialLock({
   const remaining = deck.cards.length - freeCards;
   const nextCard = freeCards + 1;
   const redirect = `/coba/${deck.slug}?kartu=${nextCard}`;
-  const answered = Object.values(results);
+  const score = scoreQuiz(deck.cards.slice(0, freeCards), results);
 
   return (
     // my-auto: tengah secara vertikal, tapi tetap bisa digulir di layar pendek.
@@ -74,11 +75,11 @@ export function TrialLock({
           </p>
         </div>
 
-        {answered.length > 0 && (
+        {score.total > 0 && (
           <p className="rounded-xl bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
             {t.lockScoreLead}{" "}
             <strong className="font-semibold">
-              {answered.filter(Boolean).length}/{answered.length}
+              {score.correct}/{score.total}
             </strong>{" "}
             {t.lockScoreRest}
           </p>
