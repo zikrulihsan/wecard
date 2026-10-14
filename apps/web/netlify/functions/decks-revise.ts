@@ -179,7 +179,7 @@ export default async function handler(request: Request): Promise<Response> {
     });
     reportError("revise.gagal", {
       userId: user.id, kind: body.kind, provider, model, message,
-      cause: error instanceof Error ? error.message : String(error),
+      cause: error instanceof Error ? [error.message, error.cause].filter(Boolean).map(String).join(" | ") : String(error),
     });
     return Response.json({ error: message, code }, { status: error instanceof GenerationRefused ? 422 : 502 });
   }

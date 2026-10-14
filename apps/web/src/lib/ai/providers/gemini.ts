@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel, type ThinkingConfig } from "@google/genai";
 import { CARD_TYPES, DECK_THEMES } from "@flipcard/types";
 import { generatedDeckSchema, type GenerateDeckInput } from "../deck-schema";
 import { SYSTEM_PROMPT, buildPrompt } from "../prompt";
@@ -12,9 +12,20 @@ import {
 
 const DEFAULT_MODEL = "gemini-3.5-flash";
 
-/** Model terbaru sering balas 503 saat ramai — sekali ulang biasanya cukup. */
-const RETRY_STATUSES = new Set([429, 503]);
-const RETRY_DELAY_MS = 2000;
+/**
+ * Model cadangan saat model utama penuh. Generasi sebelumnya punya kapasitas
+ * dan kuota sendiri, jadi biasanya masih tersedia ketika model terbaru sedang
+ * ramai. Bisa diganti (atau dimatikan dengan "none") lewat env.
+ */
+const DEFAULT_FALLBACK_MODEL = "gemini-2.5-flash";
+
+/**
+ * Status yang berarti "server sedang penuh/sibuk", bukan salah permintaan:
+ * 429 kuota/rate limit, 500/503/504 overload di sisi Google.
+ */
+const RETRY_STATUSES = new Set([429, 500, 503, 504]);
+/** Jeda sebelum percobaan ke-2 dan ke-3 di model yang sama. */
+const RETRY_DELAYS_MS = [1500, 4000];
 
 /**
  * Skema JSON untuk `responseJsonSchema` Gemini. Ditulis manual (bukan hasil
@@ -136,6 +147,18 @@ const RESPONSE_SCHEMA = {
   propertyOrdering: ["name", "description", "theme", "sections"],
 };
 
+/**
+ * Thinking dimatikan supaya generate lebih cepat dan lebih jarang ditolak
+ * saat server ramai. Gemini 2.x bisa dimatikan penuh lewat budget 0. Gemini
+ * 3+ tidak bisa dimatikan; LOW dipakai karena didukung semua model Gemini 3
+ * (MINIMAL tidak). Model lain dibiarkan memakai default-nya.
+ */
+function thinkingFor(model: string): ThinkingConfig | undefined {
+  if (/^gemini-2\./.test(model)) return { thinkingBudget: 0 };
+  if (/^gemini-[3-9]/.test(model)) return { thinkingLevel: ThinkingLevel.LOW };
+  return undefined;
+}
+
 let client: GoogleGenAI | null = null;
 
 function getClient() {
@@ -145,15 +168,24 @@ function getClient() {
   return client;
 }
 
+function fallbackModels(primary: string): string[] {
+  const raw = process.env.GEMINI_FALLBACK_MODEL ?? DEFAULT_FALLBACK_MODEL;
+  if (raw.trim().toLowerCase() === "none") return [];
+  return raw
+    .split(",")
+    .map((m) => m.trim())
+    .filter((m) => m && m !== primary);
+}
+
 export function createGeminiProvider(): DeckProvider {
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+  const models = [model, ...fallbackModels(model)];
 
   return {
     name: "gemini",
     model,
     async generate(input: GenerateDeckInput, options?: GenerateOptions): Promise<ProviderResult> {
       const request = {
-        model,
         contents: buildPrompt(input, options?.instruction),
         config: {
           systemInstruction: SYSTEM_PROMPT,
@@ -163,8 +195,12 @@ export function createGeminiProvider(): DeckProvider {
         },
       };
 
-      const response = await withRetry(() =>
-        getClient().models.generateContent(request)
+      const { response, model: usedModel } = await withFallback(models, (m) =>
+        getClient().models.generateContent({
+          ...request,
+          model: m,
+          config: { ...request.config, thinkingConfig: thinkingFor(m) },
+        })
       );
 
       const blockReason = response.promptFeedback?.blockReason;
@@ -208,6 +244,7 @@ export function createGeminiProvider(): DeckProvider {
 
       return {
         deck: parsed.data,
+        model: usedModel,
         usage: {
           inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
           outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
@@ -217,27 +254,50 @@ export function createGeminiProvider(): DeckProvider {
   };
 }
 
-async function withRetry<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    const status = (error as { status?: number })?.status;
-    if (!status || !RETRY_STATUSES.has(status)) throw error;
+function isBusy(error: unknown): boolean {
+  const status = (error as { status?: number })?.status;
+  return typeof status === "number" && RETRY_STATUSES.has(status);
+}
 
-    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-    try {
-      return await call();
-    } catch (retryError) {
-      const retryStatus = (retryError as { status?: number })?.status;
-      if (retryStatus && RETRY_STATUSES.has(retryStatus)) {
-        throw new GenerationFailed(
-          "Model AI sedang penuh. Coba lagi beberapa saat lagi.",
-          "busy"
-        );
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms + Math.random() * 500));
+
+/**
+ * Coba model utama sampai 3 kali dengan jeda bertahap. Kalau tetap penuh,
+ * pindah ke model cadangan (sekali coba ulang). Error selain "penuh"
+ * (key salah, permintaan tidak valid) langsung dilempar tanpa diulang.
+ */
+async function withFallback<T>(
+  models: string[],
+  call: (model: string) => Promise<T>
+): Promise<{ response: T; model: string }> {
+  let lastBusy: unknown;
+
+  for (const [index, model] of models.entries()) {
+    const delays = index === 0 ? RETRY_DELAYS_MS : RETRY_DELAYS_MS.slice(0, 1);
+    for (let attempt = 0; attempt <= delays.length; attempt++) {
+      try {
+        return { response: await call(model), model };
+      } catch (error) {
+        // Model cadangan yang tidak bisa dipakai (mis. namanya sudah tidak
+        // ada) jangan menutupi penyebab aslinya: model utama penuh.
+        if (!isBusy(error)) {
+          if (index === 0) throw error;
+          console.warn(`[gemini] model cadangan ${model} gagal`, error);
+          break;
+        }
+        lastBusy = error;
+        if (attempt < delays.length) await sleep(delays[attempt]);
       }
-      throw retryError;
     }
   }
+
+  const status = (lastBusy as { status?: number })?.status;
+  throw new GenerationFailed(
+    "Model AI sedang penuh. Coba lagi beberapa saat lagi.",
+    "busy",
+    { cause: `gemini ${models.join(" → ")} status ${status ?? "?"}` }
+  );
 }
 
 /** Field kartu yang opsional di skema Gemini tapi wajib ada (nullable) di zod. */
