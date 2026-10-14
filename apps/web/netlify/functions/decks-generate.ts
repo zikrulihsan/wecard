@@ -130,7 +130,7 @@ export default async function handler(request: Request): Promise<Response> {
       provider,
       model,
       message,
-      cause: error instanceof Error ? error.message : String(error),
+      cause: error instanceof Error ? [error.message, error.cause].filter(Boolean).map(String).join(" | ") : String(error),
     });
     return Response.json(
       { error: message, code },

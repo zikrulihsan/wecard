@@ -4,6 +4,8 @@ export type ProviderName = "gemini" | "anthropic";
 
 export type ProviderResult = {
   deck: GeneratedDeck;
+  /** Model yang benar-benar menjawab, kalau berbeda dari model utama (fallback). */
+  model?: string;
   usage: { inputTokens: number; outputTokens: number };
 };
 
@@ -34,8 +36,9 @@ export class GenerationFailed extends Error {
    */
   constructor(
     message: string,
-    readonly code: "truncated" | "invalid_output" | "empty_deck" | "busy" = "invalid_output"
+    readonly code: "truncated" | "invalid_output" | "empty_deck" | "busy" = "invalid_output",
+    options?: { cause?: unknown }
   ) {
-    super(message);
+    super(message, options);
   }
 }
