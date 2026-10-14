@@ -1,6 +1,10 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel, type ThinkingConfig } from "@google/genai";
 import { CARD_TYPES, DECK_THEMES } from "@flipcard/types";
-import { generatedDeckSchema, type GenerateDeckInput } from "../deck-schema";
+import {
+  generatedDeckSchema,
+  isKnowledgeMix,
+  type GenerateDeckInput,
+} from "../deck-schema";
 import { SYSTEM_PROMPT, buildPrompt } from "../prompt";
 import {
   GenerationFailed,
@@ -147,6 +151,23 @@ const RESPONSE_SCHEMA = {
   propertyOrdering: ["name", "description", "theme", "sections"],
 };
 
+/**
+ * Thinking dibuat hemat: deck obrolan cukup tanpa "mikir" (lebih cepat, lebih
+ * jarang ditolak saat server ramai), deck kuis diberi sedikit supaya jawaban
+ * dan pilihannya akurat. Gemini 2.x memakai budget token. Gemini 3+ memakai
+ * level, dan LOW dipakai untuk semua deck karena level itu didukung semua
+ * model Gemini 3 (MINIMAL tidak). Model lain dibiarkan memakai default-nya.
+ */
+function thinkingFor(model: string, knowledge: boolean): ThinkingConfig | undefined {
+  if (/^gemini-2\./.test(model)) {
+    return { thinkingBudget: knowledge ? 2048 : 0 };
+  }
+  if (/^gemini-[3-9]/.test(model)) {
+    return { thinkingLevel: ThinkingLevel.LOW };
+  }
+  return undefined;
+}
+
 let client: GoogleGenAI | null = null;
 
 function getClient() {
@@ -183,8 +204,13 @@ export function createGeminiProvider(): DeckProvider {
         },
       };
 
+      const knowledge = isKnowledgeMix(input.cardMix);
       const { response, model: usedModel } = await withFallback(models, (m) =>
-        getClient().models.generateContent({ ...request, model: m })
+        getClient().models.generateContent({
+          ...request,
+          model: m,
+          config: { ...request.config, thinkingConfig: thinkingFor(m, knowledge) },
+        })
       );
 
       const blockReason = response.promptFeedback?.blockReason;
