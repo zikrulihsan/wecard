@@ -119,7 +119,7 @@ Opsional, untuk mengunci versi model:
 ```bash
 AI_PROVIDER=gemini          # paksa provider tertentu
 GEMINI_MODEL=gemini-3.5-flash
-GEMINI_FALLBACK_MODEL=gemini-flash-lite-latest   # dipakai saat model utama penuh; "none" untuk mematikan
+GEMINI_FALLBACK_MODEL=gemini-2.5-flash   # dipakai saat model utama penuh; "none" untuk mematikan
 ANTHROPIC_MODEL=claude-opus-5
 ```
 

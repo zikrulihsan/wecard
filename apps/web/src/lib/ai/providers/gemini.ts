@@ -13,11 +13,11 @@ import {
 const DEFAULT_MODEL = "gemini-3.5-flash";
 
 /**
- * Model cadangan saat model utama penuh. Model "lite" jalan di kapasitas
- * terpisah dari model flash utama, jadi biasanya masih tersedia ketika model
- * utama sedang ramai. Bisa diganti (atau dimatikan dengan "none") lewat env.
+ * Model cadangan saat model utama penuh. Generasi sebelumnya punya kapasitas
+ * dan kuota sendiri, jadi biasanya masih tersedia ketika model terbaru sedang
+ * ramai. Bisa diganti (atau dimatikan dengan "none") lewat env.
  */
-const DEFAULT_FALLBACK_MODEL = "gemini-flash-lite-latest";
+const DEFAULT_FALLBACK_MODEL = "gemini-2.5-flash";
 
 /**
  * Status yang berarti "server sedang penuh/sibuk", bukan salah permintaan:
