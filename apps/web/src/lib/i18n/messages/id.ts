@@ -468,6 +468,7 @@ export const id = {
     aiSpentTitle: "Kreditmu habis",
     aiSpentBody: "Beli paket kredit untuk bikin deck lagi.",
     aiCtaTitle: "Bikin deck pakai AI",
+    aiCtaSubtitle: "Dari topik apa pun yang kamu mau.",
     aiCtaUnlimited: "Bikin deck AI tanpa batas.",
     aiCtaBalance: (balance: number) => `Saldo ${balance} kredit · 1 kredit = 1 deck`,
     draftTitle: "Lanjutkan drafmu",

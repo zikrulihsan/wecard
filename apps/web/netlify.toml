@@ -35,3 +35,10 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Berkas di /assets namanya ber-hash (Vite), jadi aman di-cache selamanya —
+# kunjungan berikutnya tidak perlu bertanya ulang ke server untuk tiap chunk.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

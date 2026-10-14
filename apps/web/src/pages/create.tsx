@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FilePen, Lock, Sparkles } from "lucide-react";
-import { fetchAiAccessDetails, invalidateAiAccess } from "@/lib/ai/access-client";
-import type { AiAccess } from "@/lib/ai/access";
+import { invalidateAiAccess, useAiAccess } from "@/lib/ai/access-client";
 import { createClient } from "@/lib/supabase/client";
 import { BackLink } from "@/components/nav/back-link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,16 +13,8 @@ import { useT } from "@/lib/i18n";
 
 export default function CreateDeckPage() {
   const t = useT();
-  const [access, setAccess] = useState<AiAccess | null>(null);
-  const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
-  useEffect(() => {
-    let active = true;
-    fetchAiAccessDetails().then((value) => {
-      if (active) { setAccess(value); setError(false); }
-    }).catch(() => { if (active) setError(true); });
-    return () => { active = false; };
-  }, [retry]);
+  const { access, error, setAccess } = useAiAccess(retry);
 
   const reload = () => { invalidateAiAccess(); setAccess(null); setRetry((value) => value + 1); };
 
@@ -31,7 +22,7 @@ export default function CreateDeckPage() {
     <div className="max-w-screen-sm mx-auto px-4 py-6">
       <BackLink href="/home" />
       <CreateHeader />
-      {error ? <Card><CardContent className="py-8 text-center space-y-3"><p>{t.create.quotaError}</p><button className="text-primary underline" onClick={() => { setError(false); setRetry((value) => value + 1); }}>{t.common.retry}</button></CardContent></Card> :
+      {error ? <Card><CardContent className="py-8 text-center space-y-3"><p>{t.create.quotaError}</p><button className="text-primary underline" onClick={reload}>{t.common.retry}</button></CardContent></Card> :
         !access ? <CardLoader label={t.create.preparing} /> :
         !access.enabled ? <DisabledNotice /> :
         access.openDraftId ? <DraftOpenNotice draftId={access.openDraftId} onDiscarded={reload} /> :

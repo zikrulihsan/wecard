@@ -438,6 +438,7 @@ export const en: Messages = {
     aiSpentTitle: "You're out of credits",
     aiSpentBody: "Buy a credit pack to make more decks.",
     aiCtaTitle: "Make a deck with AI",
+    aiCtaSubtitle: "From any topic you like.",
     aiCtaUnlimited: "Make unlimited AI decks.",
     aiCtaBalance: (balance: number) => `${balance} credits · 1 credit = 1 deck`,
     draftTitle: "Continue your draft",

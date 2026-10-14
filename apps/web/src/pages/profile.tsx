@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { readCache, writeCache } from "@/lib/cache";
 import { LogoutButton } from "@/components/app/logout-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,9 +10,12 @@ import { useT } from "@/lib/i18n";
 
 type Identity = { name: string; email: string | null };
 
+const PROFILE_CACHE_KEY = "profile";
+
 export default function ProfilePage() {
   const t = useT();
-  const [identity, setIdentity] = useState<Identity | null>(null);
+  // Nama dan email jarang berubah: tampilkan yang tersimpan, segarkan diam-diam.
+  const [identity, setIdentity] = useState<Identity | null>(() => readCache<Identity>(PROFILE_CACHE_KEY) ?? null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
 
@@ -20,14 +24,18 @@ export default function ProfilePage() {
     const supabase = createClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) throw new Error("Sesi tidak ditemukan");
+      const fallback = { name: session.user.user_metadata?.name ?? "Player", email: session.user.email ?? null };
       const { data: profile, error: profileError } = await supabase.from("profiles")
         .select("display_name").eq("id", session.user.id).maybeSingle();
       if (profileError) throw profileError;
-      if (active) setIdentity({
-        name: profile?.display_name ?? session.user.user_metadata?.name ?? "Player",
-        email: session.user.email ?? null,
-      });
-    }).catch((cause) => { if (active) { console.error("[profile] gagal memuat", cause); setError(true); } });
+      const next = { name: profile?.display_name ?? fallback.name, email: fallback.email };
+      writeCache(PROFILE_CACHE_KEY, next, { persist: true });
+      if (active) setIdentity(next);
+    }).catch((cause) => {
+      console.error("[profile] gagal memuat", cause);
+      // Nama tersimpan tetap ditampilkan; galat hanya kalau tidak ada apa-apa.
+      if (active && !readCache<Identity>(PROFILE_CACHE_KEY)) setError(true);
+    });
     return () => { active = false; };
   }, [retry]);
 
