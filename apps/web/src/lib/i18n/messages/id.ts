@@ -71,6 +71,8 @@ export const id = {
       "Konfigurasi layanan login belum tersedia. Coba lagi nanti.",
     checkingSession: "Memeriksa sesi",
     openingPage: "Membuka halaman",
+    crashTitle: "Halaman gagal dibuka",
+    crashDescription: "Mungkin ada versi baru aplikasi. Muat ulang untuk melanjutkan.",
   },
 
   landing: {

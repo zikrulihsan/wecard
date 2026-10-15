@@ -4,6 +4,7 @@ import { MotionProvider } from "@/components/motion-provider";
 import { BottomNav } from "@/components/nav/bottom-nav";
 import { CardLoader } from "@/components/ui/card-loader";
 import { LoadError } from "@/components/ui/load-error";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { createClient, hasStoredSession } from "@/lib/supabase/client";
 import { useDocumentLanguage, useT } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
@@ -134,9 +135,11 @@ function AuthLayout() {
 
 export default function App() {
   const t = useT();
+  const { pathname } = useLocation();
   useDocumentLanguage();
   return (
     <MotionProvider>
+      <ErrorBoundary resetKey={pathname} title={t.app.crashTitle} description={t.app.crashDescription}>
       <Suspense fallback={<div className="mx-auto max-w-screen-sm px-4 py-8"><CardLoader label={t.app.openingPage} /></div>}>
       <Routes>
         <Route path="/" element={<LandingOrCallback />} />
@@ -164,6 +167,7 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
+      </ErrorBoundary>
     </MotionProvider>
   );
 }
