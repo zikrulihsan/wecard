@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { History, Lock, Play, Search, Sparkles, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { readCache, writeCache } from "@/lib/cache";
 import { deckThemeStyle } from "@/lib/deck-theme";
 import { DECK_MODE_META, resolveDeckMode } from "@/lib/deck-mode";
 import { resolveDeckLanguage } from "@/lib/deck-language";
@@ -39,6 +40,22 @@ type Deck = Omit<CategoryRow, "mode" | "language"> & {
   isUnlocked: boolean;
 };
 
+type HomeData = { categories: CategoryRow[]; unlockedIds: string[] };
+
+/**
+ * Daftar deck terakhir disimpan lokal: kembali ke beranda (atau buka ulang
+ * aplikasi) langsung menampilkan deck tanpa loader, lalu daftarnya disegarkan
+ * diam-diam.
+ */
+const HOME_CACHE_KEY = "home";
+
+function initialHomeState() {
+  const cached = readCache<HomeData>(HOME_CACHE_KEY);
+  return cached
+    ? { loading: false, error: false, categories: cached.categories, unlockedIds: new Set(cached.unlockedIds) }
+    : { loading: true, error: false, categories: [], unlockedIds: new Set<string>() };
+}
+
 type Filter = "all" | "free" | "mine" | "locked";
 
 const FILTERS: { value: Filter; label: "filterAll" | "filterFree" | "filterMine" | "filterLocked"; matches: (deck: Deck) => boolean }[] = [
@@ -57,7 +74,7 @@ export default function HomePage() {
     error: boolean;
     categories: CategoryRow[];
     unlockedIds: Set<string>;
-  }>({ loading: true, error: false, categories: [], unlockedIds: new Set() });
+  }>(initialHomeState);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [modeTab, setModeTab] = useState<DeckMode | "all">("all");
@@ -84,10 +101,17 @@ export default function HomePage() {
       if (!active) return;
       if (categoryResult.error) {
         console.error("[home] gagal membaca categories", categoryResult.error);
-        setState({ loading: false, error: true, categories: [], unlockedIds: new Set() });
+        // Daftar tersimpan tetap ditampilkan; galat hanya kalau tidak ada apa-apa.
+        setState((previous) => previous.categories.length > 0
+          ? { ...previous, loading: false }
+          : { loading: false, error: true, categories: [], unlockedIds: new Set() });
         return;
       }
       if (purchaseResult.error) console.error("[home] gagal membaca purchases", purchaseResult.error);
+      else writeCache<HomeData>(HOME_CACHE_KEY, {
+        categories: categoryResult.data ?? [],
+        unlockedIds: purchaseResult.data,
+      }, { persist: true });
       setState({
         loading: false,
         error: false,
@@ -97,7 +121,9 @@ export default function HomePage() {
     }).catch((error) => {
       if (active) {
         console.error("[home] gagal memuat", error);
-        setState({ loading: false, error: true, categories: [], unlockedIds: new Set() });
+        setState((previous) => previous.categories.length > 0
+          ? { ...previous, loading: false }
+          : { loading: false, error: true, categories: [], unlockedIds: new Set() });
       }
     });
     return () => { active = false; };
