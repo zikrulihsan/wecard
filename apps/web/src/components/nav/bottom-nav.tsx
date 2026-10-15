@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, User, ShoppingBag, Sparkles, Lock, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchAiAccessDetails } from "@/lib/ai/access-client";
+import { useAiAccess } from "@/lib/ai/access-client";
 import { useT } from "@/lib/i18n";
 
 interface NavEntry {
@@ -28,18 +27,10 @@ function activeOn(entry: NavEntry, pathname: string) {
 export function BottomNav() {
   const t = useT();
   const { pathname } = useLocation();
-  const [canUseAi, setCanUseAi] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    fetchAiAccessDetails().then((access) => {
-      if (active) setCanUseAi(access.canGenerate || Boolean(access.openDraftId));
-    }).catch(() => {
-      // Jaringan putus tidak mengunci tab; gerbang sebenarnya ada di server.
-      if (active) setCanUseAi(null);
-    });
-    return () => { active = false; };
-  }, [pathname]);
+  // Disegarkan tiap pindah halaman (cache 30 detik menahan kueri berulang).
+  // Gagal dibaca tidak mengunci tab; gerbang sebenarnya ada di server.
+  const { access } = useAiAccess(pathname);
+  const canUseAi = access ? access.canGenerate || Boolean(access.openDraftId) : null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-200 bg-white/95 backdrop-blur safe-bottom">

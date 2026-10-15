@@ -4,28 +4,56 @@ import { MotionProvider } from "@/components/motion-provider";
 import { BottomNav } from "@/components/nav/bottom-nav";
 import { CardLoader } from "@/components/ui/card-loader";
 import { LoadError } from "@/components/ui/load-error";
-import { createClient } from "@/lib/supabase/client";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { createClient, hasStoredSession } from "@/lib/supabase/client";
 import { useDocumentLanguage, useT } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { claimShareReferral } from "@/lib/share/api";
 import { takeReferral } from "@/lib/share/local";
 import LandingPage from "@/pages/landing";
 
+const loadHome = () => import("@/pages/home");
+const loadCreate = () => import("@/pages/create");
+const loadPlay = () => import("@/pages/play");
+const loadSession = () => import("@/pages/session");
+const loadProfile = () => import("@/pages/profile");
+const loadStore = () => import("@/pages/store");
+
 const LoginPage = lazy(() => import("@/pages/login"));
 const RegisterPage = lazy(() => import("@/pages/register"));
-const HomePage = lazy(() => import("@/pages/home"));
-const CreatePage = lazy(() => import("@/pages/create"));
+const HomePage = lazy(loadHome);
+const CreatePage = lazy(loadCreate);
 const DeckReviewPage = lazy(() => import("@/pages/deck-review"));
-const PlayPage = lazy(() => import("@/pages/play"));
-const SessionPage = lazy(() => import("@/pages/session"));
-const ProfilePage = lazy(() => import("@/pages/profile"));
-const StorePage = lazy(() => import("@/pages/store"));
+const PlayPage = lazy(loadPlay);
+const SessionPage = lazy(loadSession);
+const ProfilePage = lazy(loadProfile);
+const StorePage = lazy(loadStore);
 const NotFound = lazy(() => import("@/pages/not-found"));
 const CallbackPage = lazy(() => import("@/pages/callback"));
 const TrySessionPage = lazy(() => import("@/pages/try-session"));
 const SharedPlayPage = lazy(() => import("@/pages/shared-play"));
 const SeriesPage = lazy(() => import("@/pages/series"));
 const RedeemPage = lazy(() => import("@/pages/redeem"));
+
+/**
+ * Halaman tab bawah dan alur main diunduh di belakang layar begitu aplikasi
+ * menganggur, supaya pindah tab tidak menampilkan "Membuka halaman" dulu.
+ */
+function usePrefetchAppPages() {
+  useEffect(() => {
+    const prefetch = () => {
+      for (const load of [loadHome, loadPlay, loadSession, loadCreate, loadProfile, loadStore]) {
+        load().catch(() => {});
+      }
+    };
+    if ("requestIdleCallback" in window) {
+      const handle = window.requestIdleCallback(prefetch, { timeout: 3000 });
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timer = setTimeout(prefetch, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+}
 
 function LandingOrCallback() {
   const { search } = useLocation();
@@ -37,7 +65,11 @@ function LandingOrCallback() {
 function RequireAuth() {
   const t = useT();
   const location = useLocation();
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  // Sesi tersimpan di perangkat → halaman langsung dirender (datanya ikut
+  // menunggu sesi di dalam klien Supabase), bukan menunggu "Memeriksa sesi"
+  // dulu lalu baru mengunduh halaman. Kalau ternyata sesinya tidak berlaku,
+  // pemain tetap diarahkan ke /login.
+  const [authenticated, setAuthenticated] = useState<boolean | null>(() => (hasStoredSession() ? true : null));
   const [supabase] = useState(() => {
     try { return createClient(); } catch { return null; }
   });
@@ -83,6 +115,7 @@ function useClaimReferral() {
 
 function AppLayout() {
   useClaimReferral();
+  usePrefetchAppPages();
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 pb-bottom-nav"><Outlet /></main>
@@ -102,9 +135,11 @@ function AuthLayout() {
 
 export default function App() {
   const t = useT();
+  const { pathname } = useLocation();
   useDocumentLanguage();
   return (
     <MotionProvider>
+      <ErrorBoundary resetKey={pathname} title={t.app.crashTitle} description={t.app.crashDescription}>
       <Suspense fallback={<div className="mx-auto max-w-screen-sm px-4 py-8"><CardLoader label={t.app.openingPage} /></div>}>
       <Routes>
         <Route path="/" element={<LandingOrCallback />} />
@@ -132,6 +167,7 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       </Suspense>
+      </ErrorBoundary>
     </MotionProvider>
   );
 }

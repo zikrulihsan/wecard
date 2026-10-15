@@ -1,9 +1,10 @@
-import type { DeckLanguage, DeckMode, DeckTheme, GameCard } from "@flipcard/types";
+import type { CardTimerSettings, DeckLanguage, DeckMode, DeckTheme, GameCard } from "@flipcard/types";
 import { createClient } from "@/lib/supabase/client";
 import { toGameCards, type CardRow } from "@/lib/cards/to-game-cards";
 import { resolveDeckTheme } from "@/lib/deck-theme";
 import { resolveDeckMode } from "@/lib/deck-mode";
 import { resolveDeckLanguage } from "@/lib/deck-language";
+import { normalizeTimer } from "@/lib/game/timer-settings";
 
 /**
  * Link main (`/main/<token>`): deck custom yang dibagikan pemiliknya dan bisa
@@ -19,12 +20,35 @@ export type SharedDeck = {
   theme: DeckTheme;
   mode: DeckMode;
   language: DeckLanguage;
+  /** Timer per kartu yang diatur pemilik untuk link ini. */
+  timer: CardTimerSettings;
   cards: GameCard[];
 };
 
 export type ScoreRow = { name: string; correct: number; total: number };
 
-export type DeckShare = { token: string; enabled: boolean };
+export type DeckShare = { token: string; enabled: boolean; timer: CardTimerSettings };
+
+type ShareRow = {
+  token: string;
+  enabled: boolean;
+  timer_seconds?: number;
+  timer_auto_advance?: boolean;
+};
+
+const SHARE_COLUMNS = "token, enabled, timer_seconds, timer_auto_advance";
+
+function toDeckShare(row: ShareRow): DeckShare {
+  return {
+    token: row.token,
+    enabled: row.enabled,
+    timer: normalizeTimer(row.timer_seconds, row.timer_auto_advance),
+  };
+}
+
+function timerColumns(timer: CardTimerSettings) {
+  return { timer_seconds: timer.seconds, timer_auto_advance: timer.autoAdvance };
+}
 
 export function sharePath(token: string) {
   return `/main/${token}`;
@@ -46,6 +70,7 @@ export async function fetchSharedDeck(token: string): Promise<SharedDeck | null>
     theme: unknown;
     mode: unknown;
     language: unknown;
+    timer?: { seconds?: unknown; auto_advance?: unknown } | null;
     cards: CardRow[];
   };
   return {
@@ -55,6 +80,8 @@ export async function fetchSharedDeck(token: string): Promise<SharedDeck | null>
     theme: resolveDeckTheme(raw.theme),
     mode: resolveDeckMode(raw.mode),
     language: resolveDeckLanguage(raw.language),
+    // Tanpa migration 00012 field ini tidak ada: main tanpa timer, seperti dulu.
+    timer: normalizeTimer(raw.timer?.seconds, raw.timer?.auto_advance),
     cards: toGameCards(raw.cards ?? []),
   };
 }
@@ -86,34 +113,53 @@ export async function fetchScoreboard(token: string): Promise<ScoreRow[]> {
 export async function fetchDeckShare(categoryId: string): Promise<DeckShare | null> {
   const { data, error } = await createClient()
     .from("deck_shares")
-    .select("token, enabled")
+    .select(SHARE_COLUMNS)
     .eq("category_id", categoryId)
     .maybeSingle();
   if (error) throw error;
-  return data;
+  return data ? toDeckShare(data) : null;
 }
 
-/** Nyalakan link (dibuat kalau belum ada) atau matikan. */
-export async function setDeckShare(categoryId: string, enabled: boolean): Promise<DeckShare> {
+/**
+ * Nyalakan link (dibuat kalau belum ada) atau matikan. Link baru memakai
+ * `timer` sebagai timer awalnya; link yang sudah ada tetap dengan timernya.
+ */
+export async function setDeckShare(
+  categoryId: string,
+  enabled: boolean,
+  timer: CardTimerSettings
+): Promise<DeckShare> {
   const supabase = createClient();
   const existing = await fetchDeckShare(categoryId);
   if (!existing) {
     const { data, error } = await supabase
       .from("deck_shares")
-      .insert({ category_id: categoryId, enabled })
-      .select("token, enabled")
+      .insert({ category_id: categoryId, enabled, ...timerColumns(timer) })
+      .select(SHARE_COLUMNS)
       .single();
     if (error) throw error;
-    return data;
+    return toDeckShare(data);
   }
   const { data, error } = await supabase
     .from("deck_shares")
     .update({ enabled, updated_at: new Date().toISOString() })
     .eq("category_id", categoryId)
-    .select("token, enabled")
+    .select(SHARE_COLUMNS)
     .single();
   if (error) throw error;
-  return data;
+  return toDeckShare(data);
+}
+
+/** Ganti timer yang dipakai pemain lewat link ini. */
+export async function setShareTimer(categoryId: string, timer: CardTimerSettings): Promise<DeckShare> {
+  const { data, error } = await createClient()
+    .from("deck_shares")
+    .update({ ...timerColumns(timer), updated_at: new Date().toISOString() })
+    .eq("category_id", categoryId)
+    .select(SHARE_COLUMNS)
+    .single();
+  if (error) throw error;
+  return toDeckShare(data);
 }
 
 /** Berapa kali deck ini dimainkan lewat link (terbaca oleh pemiliknya saja). */

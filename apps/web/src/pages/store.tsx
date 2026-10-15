@@ -9,8 +9,7 @@ import { fetchPremiumCatalog, giftUrl, type PremiumSeries } from "@/lib/premium"
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchAiAccessDetails, invalidateAiAccess } from "@/lib/ai/access-client";
-import type { AiAccess } from "@/lib/ai/access";
+import { invalidateAiAccess, useAiAccess } from "@/lib/ai/access-client";
 import { CREDIT_PACKS, FREE_CARD_SWAPS, FREE_REGENERATIONS } from "@/lib/credits";
 import { formatIdr } from "@/lib/pricing";
 import { createClient } from "@/lib/supabase/client";
@@ -35,8 +34,6 @@ export default function StorePage() {
   const { t, language } = useI18n();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("order");
-  const [access, setAccess] = useState<AiAccess | null>(null);
-  const [error, setError] = useState(false);
   const [history, setHistory] = useState<LedgerRow[] | null>(null);
   const [buying, setBuying] = useState<string | null>(null);
   const [buyError, setBuyError] = useState(false);
@@ -44,12 +41,10 @@ export default function StorePage() {
     orderId ? { state: "checking" } : null
   );
   const [refresh, setRefresh] = useState(0);
+  const { access, error } = useAiAccess(refresh);
 
   useEffect(() => {
     let active = true;
-    fetchAiAccessDetails()
-      .then((value) => { if (active) setAccess(value); })
-      .catch(() => { if (active) setError(true); });
     createClient().from("credit_ledger")
       .select("id, delta, reason, created_at")
       .order("created_at", { ascending: false })

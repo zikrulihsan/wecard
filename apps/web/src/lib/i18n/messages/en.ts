@@ -46,6 +46,8 @@ export const en: Messages = {
       "The sign-in service isn't configured yet. Please try again later.",
     checkingSession: "Checking your session",
     openingPage: "Opening page",
+    crashTitle: "This page failed to open",
+    crashDescription: "There may be a new version of the app. Reload to continue.",
   },
 
   landing: {
@@ -440,6 +442,7 @@ export const en: Messages = {
     aiSpentTitle: "You're out of credits",
     aiSpentBody: "Buy a credit pack to make more decks.",
     aiCtaTitle: "Make a deck with AI",
+    aiCtaSubtitle: "From any topic you like.",
     aiCtaUnlimited: "Make unlimited AI decks.",
     aiCtaBalance: (balance: number) => `${balance} credits · 1 credit = 1 deck`,
     draftTitle: "Continue your draft",
@@ -774,6 +777,10 @@ export const en: Messages = {
     plays: (count: number) => `Played ${count}× via link`,
     inviteText: (deck: string) =>
       `Let's play “${deck}” together! No sign-up, just enter your name 👇`,
+    timerTitle: "Timer for players",
+    timerOnHint: "Players on this link use this timer. It starts when a card is opened.",
+    timerOffHint: "Players on this link play with no time limit.",
+    timerPerCard: (duration: string) => `${duration} per card`,
     saveFailed: "The link couldn't be changed. Try again in a moment.",
   },
 

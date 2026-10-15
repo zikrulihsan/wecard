@@ -71,6 +71,8 @@ export const id = {
       "Konfigurasi layanan login belum tersedia. Coba lagi nanti.",
     checkingSession: "Memeriksa sesi",
     openingPage: "Membuka halaman",
+    crashTitle: "Halaman gagal dibuka",
+    crashDescription: "Mungkin ada versi baru aplikasi. Muat ulang untuk melanjutkan.",
   },
 
   landing: {
@@ -469,6 +471,7 @@ export const id = {
     aiSpentTitle: "Kreditmu habis",
     aiSpentBody: "Beli paket kredit untuk bikin deck lagi.",
     aiCtaTitle: "Bikin deck pakai AI",
+    aiCtaSubtitle: "Dari topik apa pun yang kamu mau.",
     aiCtaUnlimited: "Bikin deck AI tanpa batas.",
     aiCtaBalance: (balance: number) => `Saldo ${balance} kredit · 1 kredit = 1 deck`,
     draftTitle: "Lanjutkan drafmu",
@@ -808,6 +811,10 @@ export const id = {
     plays: (count: number) => `Dimainkan ${count}× lewat link`,
     inviteText: (deck: string) =>
       `Main “${deck}” bareng yuk! Nggak perlu daftar, cukup isi nama 👇`,
+    timerTitle: "Timer untuk pemain",
+    timerOnHint: "Pemain lewat link memakai timer ini. Timer mulai saat kartu dibuka.",
+    timerOffHint: "Pemain lewat link main tanpa batas waktu.",
+    timerPerCard: (duration: string) => `${duration} per kartu`,
     saveFailed: "Link belum bisa diubah. Coba lagi sebentar.",
   },
 
