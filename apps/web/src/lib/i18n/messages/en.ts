@@ -46,6 +46,8 @@ export const en: Messages = {
       "The sign-in service isn't configured yet. Please try again later.",
     checkingSession: "Checking your session",
     openingPage: "Opening page",
+    crashTitle: "This page failed to open",
+    crashDescription: "There may be a new version of the app. Reload to continue.",
   },
 
   landing: {
