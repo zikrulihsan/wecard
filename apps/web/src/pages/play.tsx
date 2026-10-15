@@ -55,7 +55,7 @@ export default function PlayPage() {
     Promise.all([
       // `*` supaya deck tetap bisa dibuka meski migration `language` belum jalan.
       supabase.from("categories").select("*").eq("id", deckId).eq("is_active", true).single(),
-      supabase.from("sections").select("id, slug, name, icon, sort_order, cards:cards(id, card_type, difficulty)").eq("category_id", deckId).order("sort_order", { ascending: true }),
+      supabase.from("sections").select("id, slug, name, icon, sort_order, cards:cards(id, card_type, difficulty, is_hidden)").eq("category_id", deckId).order("sort_order", { ascending: true }),
       supabase.auth.getSession(),
       // Katalog premium hanya untuk deck berbayar; gagal dibaca = dianggap
       // deck biasa (RLS kartu tetap menjaga isi yang terkunci).
@@ -88,7 +88,7 @@ export default function PlayPage() {
         })(),
         sections: (sections.data ?? []).map((section) => ({
           id: section.id, slug: section.slug, name: section.name,
-          icon: section.icon, cardCount: section.cards?.length ?? 0,
+          icon: section.icon, cardCount: section.cards?.filter((card) => !card.is_hidden).length ?? 0,
         })),
       };
       // Draf tidak disimpan: setelah disimpan di halaman review, versi
@@ -116,7 +116,7 @@ export default function PlayPage() {
         status === "error" ? <LoadError title={t.play.errorTitle} description={t.play.errorDescription} onRetry={() => { setState({ status: "loading", forId: deckId }); setRetry((value) => value + 1); }} /> :
         current.deck && <div style={deckThemeVars(current.deck.theme)}>
           <header className="mb-6"><h1 className="text-3xl font-bold">{current.deck.name}</h1>{current.deck.description && <p className="text-muted-foreground mt-2">{current.deck.description}</p>}
-            {current.deck.isOwn && current.deck.isAi && <Link to={`/create/${current.deck.id}`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"><PencilLine className="size-4" />{t.play.editDeck}</Link>}
+            {current.deck.isOwn && <Link to={`/create/${current.deck.id}`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"><PencilLine className="size-4" />{t.play.editDeck}</Link>}
           </header>
           {current.deck.premium && !current.deck.premium.owned && (
             <PremiumLockedBanner previewCount={current.deck.premium.previewCount} cardTotal={current.deck.premium.cardTotal} seriesSlug={current.deck.premium.seriesSlug} />

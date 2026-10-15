@@ -2,13 +2,14 @@ import { useState, type ReactNode } from "react";
 import { AnimatePresence, m, type Variants } from "framer-motion";
 import { ChevronLeft, X } from "lucide-react";
 import { CardDisplay } from "@/components/cards/card-display";
+import { CardTimer } from "@/components/game/card-timer";
 import { GameProgressBar } from "@/components/game/progress-bar";
 import { Button } from "@/components/ui/button";
 import { hasAnswerSide } from "@/lib/cards/formats";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import type { DeckLanguage, DeckTheme, GameCard } from "@flipcard/types";
+import type { CardTimerSettings, DeckLanguage, DeckTheme, GameCard } from "@flipcard/types";
 
 // direction: 1 = maju, -1 = mundur — sama seperti layar main yang asli.
 const cardVariants: Variants = {
@@ -22,6 +23,8 @@ const cardVariants: Variants = {
   }),
 };
 
+const noop = () => {};
+
 /**
  * Layar main yang hidup di state lokal — untuk link main dan preview deck
  * premium. Sengaja tidak memakai `useGameStore`: store itu dipersist dan
@@ -33,6 +36,7 @@ export function LocalPlay({
   language,
   cards,
   badge,
+  timer,
   onExit,
   renderDone,
 }: {
@@ -41,6 +45,8 @@ export function LocalPlay({
   cards: GameCard[];
   /** Label kecil di pojok kanan atas, mis. nama pemain atau "Preview". */
   badge?: string;
+  /** Timer per kartu; tanpa ini (atau 0 detik) main tanpa timer. */
+  timer?: CardTimerSettings;
   onExit: () => void;
   renderDone: (results: Record<string, boolean>) => ReactNode;
 }) {
@@ -85,6 +91,14 @@ export function LocalPlay({
         <div className="flex-1 px-2">
           <GameProgressBar current={index} total={cards.length} />
         </div>
+        {timer && timer.seconds > 0 && (
+          <CardTimer
+            key={card.id}
+            seconds={timer.seconds}
+            running={revealed}
+            onExpire={timer.autoAdvance ? goNext : noop}
+          />
+        )}
         {badge && (
           <span className="max-w-[8rem] shrink-0 truncate rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-neutral-600">
             {badge}
