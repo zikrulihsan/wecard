@@ -116,6 +116,7 @@ export function SectionPicker({
       `
       )
       .in("section_id", sectionIds)
+      .eq("is_hidden", false)
       .order("sort_order", { ascending: true });
 
     if (fetchError) {
