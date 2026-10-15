@@ -86,12 +86,12 @@ export async function generateDeck(
   options?: GenerateOptions
 ): Promise<GenerateResult> {
   const provider = resolveProvider();
-  const { deck, usage } = await provider.generate(input, options);
+  const { deck, usage, model } = await provider.generate(input, options);
 
   return {
     deck: normalizeDeck(deck, input),
     provider: provider.name,
-    model: provider.model,
+    model: model ?? provider.model,
     usage,
   };
 }

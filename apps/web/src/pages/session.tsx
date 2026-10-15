@@ -13,7 +13,7 @@ import { useGameStore } from "@/stores/game-store";
 import { CardDisplay } from "@/components/cards/card-display";
 import { CardTimer } from "@/components/game/card-timer";
 import { GameProgressBar } from "@/components/game/progress-bar";
-import { QuizScore } from "@/components/game/quiz-score";
+import { QuizScore, scoreQuiz } from "@/components/game/quiz-score";
 import { SessionSkeleton } from "@/components/game/session-skeleton";
 import { Button } from "@/components/ui/button";
 import { hasAnswerSide } from "@/lib/cards/formats";
@@ -120,6 +120,7 @@ export default function SessionPage() {
       <CompletionScreen
         deckId={deckId}
         deckTheme={deckTheme}
+        cards={cards}
         results={results}
         onEnd={endSession}
       />
@@ -352,17 +353,18 @@ function SwipeableCard({
 function CompletionScreen({
   deckId,
   deckTheme,
+  cards,
   results,
   onEnd,
 }: {
   deckId: string;
   deckTheme: DeckTheme;
+  cards: GameCard[];
   results: Record<string, boolean>;
   onEnd: () => void;
 }) {
   const t = useT();
-  const graded = Object.values(results);
-  const correct = graded.filter(Boolean).length;
+  const score = scoreQuiz(cards, results);
 
   const navigate = useNavigate();
 
@@ -391,8 +393,8 @@ function CompletionScreen({
       >
         <div className="text-7xl">🎉</div>
         <h1 className="text-3xl font-bold">{t.game.done}</h1>
-        {graded.length > 0 ? (
-          <QuizScore correct={correct} total={graded.length} />
+        {score.total > 0 ? (
+          <QuizScore {...score} />
         ) : (
           <p className="text-muted-foreground leading-relaxed">
             {t.game.doneTalk}

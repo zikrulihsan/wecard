@@ -29,7 +29,6 @@ const ProfilePage = lazy(loadProfile);
 const StorePage = lazy(loadStore);
 const NotFound = lazy(() => import("@/pages/not-found"));
 const CallbackPage = lazy(() => import("@/pages/callback"));
-const TryPage = lazy(() => import("@/pages/try"));
 const TrySessionPage = lazy(() => import("@/pages/try-session"));
 const SharedPlayPage = lazy(() => import("@/pages/shared-play"));
 const SeriesPage = lazy(() => import("@/pages/series"));
@@ -146,7 +145,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
         </Route>
         <Route path="/callback" element={<CallbackPage />} />
-        <Route path="/coba" element={<TryPage />} />
+        <Route path="/coba" element={<TrySessionPage />} />
         <Route path="/coba/:deckSlug" element={<TrySessionPage />} />
         <Route path="/main/:token" element={<SharedPlayPage />} />
         <Route path="/seri/:slug" element={<SeriesPage />} />
