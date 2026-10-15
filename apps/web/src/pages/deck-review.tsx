@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Loader2, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, PencilLine, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import type { CardDetails } from "@flipcard/types";
+import { CardEditor } from "@/components/app/card-editor";
 import { BackLink } from "@/components/nav/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -26,6 +27,7 @@ type ReviewCard = {
   details: unknown;
   level: number | null;
   sort_order: number;
+  is_hidden: boolean;
 };
 
 type ReviewSection = { id: string; name: string; icon: string | null; cards: ReviewCard[] };
@@ -36,6 +38,7 @@ type ReviewDeck = {
   description: string | null;
   theme: string | null;
   status: string;
+  isAi: boolean;
   revisionRegens: number;
   revisionSwaps: number;
   sections: ReviewSection[];
@@ -44,10 +47,12 @@ type ReviewDeck = {
 type LoadState = { status: "loading" | "error" | "not-found" | "ready"; forId?: string; deck?: ReviewDeck };
 
 /**
- * Draf hasil generate (dan revisi deck AI yang sudah tersimpan). Di sini
- * pemain melihat semua kartunya, generate ulang seluruh deck atau ganti kartu
- * satu per satu — gratis sampai batas per deck — lalu menyimpan draf dengan
- * 1 kredit. Kredit baru terpotong di tombol simpan (`save_deck`).
+ * Draf hasil generate (dan revisi deck milik sendiri yang sudah tersimpan).
+ * Di sini pemain melihat semua kartunya, lalu bisa mengedit, menyembunyikan,
+ * atau menghapus kartu sendiri. Deck AI juga bisa generate ulang seluruh deck
+ * atau ganti kartu satu per satu — gratis sampai batas per deck — lalu
+ * menyimpan draf dengan 1 kredit. Kredit baru terpotong di tombol simpan
+ * (`save_deck`). Edit manual langsung lewat RLS dan tidak memakai kredit.
  */
 export default function DeckReviewPage() {
   const t = useT();
@@ -56,7 +61,8 @@ export default function DeckReviewPage() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [retry, setRetry] = useState(0);
   const [access, setAccess] = useState<AiAccess | null>(null);
-  const [busy, setBusy] = useState<null | "regenerate" | "save" | "discard" | { swap: string }>(null);
+  const [busy, setBusy] = useState<null | "regenerate" | "save" | "discard" | { swap: string } | { card: string }>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; buy?: boolean } | null>(null);
 
   useEffect(() => {
@@ -66,7 +72,7 @@ export default function DeckReviewPage() {
       supabase.auth.getSession(),
       supabase.from("categories").select("*").eq("id", deckId).maybeSingle(),
       supabase.from("sections")
-        .select("id, name, icon, sort_order, cards:cards(id, content_text, card_type, details, level, sort_order)")
+        .select("id, name, icon, sort_order, cards:cards(id, content_text, card_type, details, level, sort_order, is_hidden)")
         .eq("category_id", deckId)
         .order("sort_order", { ascending: true }),
     ]).then(([session, category, sections]) => {
@@ -77,7 +83,7 @@ export default function DeckReviewPage() {
         return;
       }
       const row = category.data;
-      if (!row || !row.is_ai_generated || row.created_by !== session.data.session?.user.id) {
+      if (!row || row.created_by !== session.data.session?.user.id) {
         setState({ status: "not-found", forId: deckId });
         return;
       }
@@ -90,13 +96,16 @@ export default function DeckReviewPage() {
           description: row.description,
           theme: row.theme,
           status: row.status ?? "saved",
+          isAi: row.is_ai_generated === true,
           revisionRegens: row.revision_regens ?? 0,
           revisionSwaps: row.revision_swaps ?? 0,
           sections: (sections.data ?? []).map((section) => ({
             id: section.id,
             name: section.name,
             icon: section.icon,
-            cards: [...(section.cards ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+            cards: [...(section.cards ?? [])]
+              .map((card) => ({ ...card, is_hidden: card.is_hidden === true }))
+              .sort((a, b) => a.sort_order - b.sort_order),
           })),
         },
       });
@@ -146,7 +155,7 @@ export default function DeckReviewPage() {
     invalidateAiAccess();
     fetchAiAccessDetails().then(setAccess).catch(() => {});
     return data as {
-      card?: ReviewCard;
+      card?: Omit<ReviewCard, "is_hidden">;
       revision: { regensUsed: number; swapsUsed: number } | null;
     };
   }
@@ -184,7 +193,7 @@ export default function DeckReviewPage() {
             revisionSwaps: result.revision?.swapsUsed ?? previous.deck.revisionSwaps + 1,
             sections: previous.deck.sections.map((section) => ({
               ...section,
-              cards: section.cards.map((item) => item.id === card.id ? card : item),
+              cards: section.cards.map((item) => item.id === card.id ? { ...item, ...card } : item),
             })),
           },
         } : previous);
@@ -194,6 +203,55 @@ export default function DeckReviewPage() {
     } finally {
       setBusy(null);
     }
+  }
+
+  /** Ubah satu kartu di layar setelah tersimpan di database. */
+  function patchCards(update: (cards: ReviewCard[]) => ReviewCard[]) {
+    setState((previous) => previous.deck ? {
+      ...previous,
+      deck: { ...previous.deck, sections: previous.deck.sections.map((section) => ({ ...section, cards: update(section.cards) })) },
+    } : previous);
+  }
+
+  async function onEditSave(cardId: string, value: Pick<ReviewCard, "content_text" | "details">) {
+    setMessage(null);
+    const { error } = await createClient().from("cards").update(value).eq("id", cardId);
+    if (error) {
+      console.error("[review] gagal mengedit kartu", error);
+      setMessage({ text: t.review.cardActionFailed });
+      return;
+    }
+    patchCards((cards) => cards.map((card) => card.id === cardId ? { ...card, ...value } : card));
+    setEditing(null);
+  }
+
+  async function onToggleHidden(card: ReviewCard) {
+    if (busy) return;
+    setBusy({ card: card.id });
+    setMessage(null);
+    const { error } = await createClient().from("cards").update({ is_hidden: !card.is_hidden }).eq("id", card.id);
+    setBusy(null);
+    if (error) {
+      console.error("[review] gagal menyembunyikan kartu", error);
+      setMessage({ text: t.review.cardActionFailed });
+      return;
+    }
+    patchCards((cards) => cards.map((item) => item.id === card.id ? { ...item, is_hidden: !card.is_hidden } : item));
+  }
+
+  async function onDelete(card: ReviewCard) {
+    if (busy || !confirm(t.review.deleteConfirm)) return;
+    setBusy({ card: card.id });
+    setMessage(null);
+    const { error } = await createClient().from("cards").delete().eq("id", card.id);
+    setBusy(null);
+    if (error) {
+      console.error("[review] gagal menghapus kartu", error);
+      setMessage({ text: t.review.cardActionFailed });
+      return;
+    }
+    if (editing === card.id) setEditing(null);
+    patchCards((cards) => cards.filter((item) => item.id !== card.id));
   }
 
   async function onSave() {
@@ -228,10 +286,11 @@ export default function DeckReviewPage() {
     navigate("/create");
   }
 
-  // Nomor urut kartu di seluruh deck, untuk label tombol ganti.
-  const cardNumbers = new Map(
-    (deck?.sections ?? []).flatMap((section) => section.cards).map((card, index) => [card.id, index + 1]),
-  );
+  // Nomor urut kartu di seluruh deck, untuk label tombol.
+  const allCards = (deck?.sections ?? []).flatMap((section) => section.cards);
+  const cardNumbers = new Map(allCards.map((card, index) => [card.id, index + 1]));
+  const visibleCount = allCards.filter((card) => !card.is_hidden).length;
+  const hiddenCount = allCards.length - visibleCount;
 
   return (
     <div className="max-w-screen-sm mx-auto px-4 py-6">
@@ -248,10 +307,10 @@ export default function DeckReviewPage() {
                 {deck.name}
               </h1>
               {deck.description && <p className="text-muted-foreground">{deck.description}</p>}
-              <p className="text-sm leading-relaxed text-muted-foreground">{isDraft ? t.review.introDraft : t.review.introSaved}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{isDraft ? t.review.introDraft : deck.isAi ? t.review.introSaved : t.review.introManual}</p>
             </header>
 
-            <Card className="mb-6 space-y-3 p-4">
+            {deck.isAi && <Card className="mb-6 space-y-3 p-4">
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 <span>{t.review.freeRegens(regensLeft, FREE_REGENERATIONS)}</span>
                 <span>{t.review.freeSwaps(swapsLeft, FREE_CARD_SWAPS)}</span>
@@ -269,7 +328,9 @@ export default function DeckReviewPage() {
                 {busy === "regenerate" ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
                 {busy === "regenerate" ? t.review.regenerating : t.review.regenerate}
               </Button>
-            </Card>
+            </Card>}
+
+            {hiddenCount > 0 && <p className="mb-4 text-sm text-muted-foreground">{t.review.hiddenSummary(hiddenCount)}</p>}
 
             <div className={cn("space-y-6", busy === "regenerate" && "pointer-events-none opacity-50")}>
               {deck.sections.map((section) => (
@@ -281,27 +342,53 @@ export default function DeckReviewPage() {
                   <ol className="space-y-2">
                     {section.cards.map((card) => {
                       const number = cardNumbers.get(card.id) ?? 0;
-                      const swapping = typeof busy === "object" && busy?.swap === card.id;
+                      const swapping = typeof busy === "object" && busy !== null && "swap" in busy && busy.swap === card.id;
+                      const acting = typeof busy === "object" && busy !== null && "card" in busy && busy.card === card.id;
                       const answer = answerPreview(card, t);
+                      const type = isCardType(card.card_type) ? card.card_type : null;
+                      if (editing === card.id && type) {
+                        return (
+                          <li key={card.id} className="rounded-xl border border-primary/40 bg-white p-3 shadow-sm">
+                            <CardEditor
+                              type={type}
+                              content={card.content_text}
+                              details={card.details}
+                              onCancel={() => setEditing(null)}
+                              onSave={(value) => onEditSave(card.id, value)}
+                            />
+                          </li>
+                        );
+                      }
                       return (
-                        <li key={card.id} className={cn("flex items-start gap-3 rounded-xl border border-neutral-200 bg-white p-3", swapping && "opacity-60")}>
-                          <span aria-hidden className="pt-0.5 text-lg">{isCardType(card.card_type) ? CARD_FORMAT_EMOJI[card.card_type] : "🃏"}</span>
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <p className="text-sm leading-relaxed">{card.content_text}</p>
-                            {answer && <p className="text-xs text-muted-foreground"><span className="font-medium">{t.review.answer}:</span> {answer}</p>}
+                        <li key={card.id} className={cn("rounded-xl border border-neutral-200 bg-white p-3", (swapping || acting) && "opacity-60", card.is_hidden && "border-dashed bg-neutral-50")}>
+                          <div className={cn("flex items-start gap-3", card.is_hidden && "opacity-60")}>
+                            <span aria-hidden className="pt-0.5 text-lg">{type ? CARD_FORMAT_EMOJI[type] : "🃏"}</span>
+                            <div className="min-w-0 flex-1 space-y-1">
+                              {card.is_hidden && <Badge variant="outline">{t.review.hiddenBadge}</Badge>}
+                              <p className="text-sm leading-relaxed">{card.content_text}</p>
+                              {answer && <p className="text-xs text-muted-foreground"><span className="font-medium">{t.review.answer}:</span> {answer}</p>}
+                            </div>
                           </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="shrink-0 rounded-full"
-                            disabled={busy !== null}
-                            aria-label={t.review.swapLabel(number)}
-                            onClick={() => onSwap(card.id)}
-                          >
-                            {swapping ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                            {swapping ? t.review.swapping : t.review.swap}
-                          </Button>
+                          <div className="mt-2 flex flex-wrap justify-end gap-1">
+                            {type && (
+                              <Button type="button" size="sm" variant="ghost" className="rounded-full" disabled={busy !== null || editing !== null} aria-label={t.review.editLabel(number)} onClick={() => setEditing(card.id)}>
+                                <PencilLine className="size-4" />{t.review.edit}
+                              </Button>
+                            )}
+                            <Button type="button" size="sm" variant="ghost" className="rounded-full" disabled={busy !== null} aria-label={card.is_hidden ? t.review.unhideLabel(number) : t.review.hideLabel(number)} onClick={() => onToggleHidden(card)}>
+                              {card.is_hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                              {card.is_hidden ? t.review.unhide : t.review.hide}
+                            </Button>
+                            {deck.isAi && (
+                              <Button type="button" size="sm" variant="ghost" className="rounded-full" disabled={busy !== null} aria-label={t.review.swapLabel(number)} onClick={() => onSwap(card.id)}>
+                                {swapping ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                                {swapping ? t.review.swapping : t.review.swap}
+                              </Button>
+                            )}
+                            <Button type="button" size="sm" variant="ghost" className="rounded-full text-muted-foreground hover:text-destructive" disabled={busy !== null} aria-label={t.review.deleteLabel(number)} onClick={() => onDelete(card)}>
+                              <Trash2 className="size-4" />{t.review.delete}
+                            </Button>
+                          </div>
                         </li>
                       );
                     })}
@@ -323,7 +410,8 @@ export default function DeckReviewPage() {
               )}
               {isDraft ? (
                 <>
-                  <Button type="button" size="lg" className="w-full rounded-full shadow-lg" disabled={busy !== null} onClick={onSave}>
+                  {visibleCount === 0 && <p className="text-center text-sm text-muted-foreground">{t.review.noVisibleCards}</p>}
+                  <Button type="button" size="lg" className="w-full rounded-full shadow-lg" disabled={busy !== null || visibleCount === 0} onClick={onSave}>
                     {busy === "save" ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
                     {busy === "save" ? t.review.saving : unlimited ? t.review.saveUnlimited : t.review.save}
                   </Button>

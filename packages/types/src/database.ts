@@ -144,6 +144,8 @@ export interface Card {
   details: CardDetails | null;
   level: CardLevel | null;
   is_free_preview: boolean;
+  /** Disembunyikan pemilik: tetap ada di halaman revisi, tidak ikut dimainkan. */
+  is_hidden: boolean;
   sort_order: number;
   created_at: string;
 }
