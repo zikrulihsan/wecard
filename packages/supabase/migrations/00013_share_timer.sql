@@ -10,7 +10,8 @@
 --
 -- get_shared_deck sekarang ikut mengembalikan 'timer'.
 --
--- Butuh migration 00009, 00010, dan 00011.
+-- Butuh migration 00009, 00010, 00011, dan 00012_card_hidden.sql
+-- (kartu tersembunyi tidak ikut dibagikan).
 -- Aman dijalankan ulang.
 -- ============================================================
 
@@ -39,7 +40,7 @@ BEGIN
   END IF;
 END $$;
 
--- Sama dengan versi 00011, ditambah 'timer'.
+-- Sama dengan versi 00012_card_hidden, ditambah 'timer'.
 CREATE OR REPLACE FUNCTION public.get_shared_deck(p_token TEXT)
 RETURNS JSONB
 LANGUAGE sql
@@ -73,6 +74,7 @@ AS $$
       FROM sections s
       JOIN cards k ON k.section_id = s.id
       WHERE s.category_id = c.id
+        AND NOT k.is_hidden
     ), '[]'::jsonb)
   )
   FROM deck_shares d
