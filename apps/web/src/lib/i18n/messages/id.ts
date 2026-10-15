@@ -811,6 +811,10 @@ export const id = {
     plays: (count: number) => `Dimainkan ${count}× lewat link`,
     inviteText: (deck: string) =>
       `Main “${deck}” bareng yuk! Nggak perlu daftar, cukup isi nama 👇`,
+    timerTitle: "Timer untuk pemain",
+    timerOnHint: "Pemain lewat link memakai timer ini. Timer mulai saat kartu dibuka.",
+    timerOffHint: "Pemain lewat link main tanpa batas waktu.",
+    timerPerCard: (duration: string) => `${duration} per kartu`,
     saveFailed: "Link belum bisa diubah. Coba lagi sebentar.",
   },
 

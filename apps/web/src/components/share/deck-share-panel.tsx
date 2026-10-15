@@ -1,20 +1,27 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, Link2, Users } from "lucide-react";
+import { Check, Copy, Link2, Timer, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareActions } from "@/components/share/share-actions";
+import { TimerFields } from "@/components/game/timer-fields";
+import { parseTimerSettings, readStoredTimer } from "@/lib/game/timer-settings";
 import {
   countSharedPlays,
   fetchDeckShare,
   setDeckShare,
+  setShareTimer,
   shareUrl,
   type DeckShare,
 } from "@/lib/share/api";
 import { useT } from "@/lib/i18n";
+import type { CardTimerSettings } from "@flipcard/types";
 
 /**
  * Panel pemilik deck custom: buat link main, salin/bagikan ke grup, dan
  * matikan kapan saja. Mematikan tidak menghapus link — menyalakannya lagi
  * memakai token yang sama, jadi link yang sudah tersebar di grup hidup lagi.
+ *
+ * Timer per kartu untuk pemain lewat link juga diatur di sini. Link baru
+ * memakai timer terakhir yang dipilih pemilik di perangkat ini.
  */
 export function DeckSharePanel({ deckId, deckName }: { deckId: string; deckName: string }) {
   const t = useT().share;
@@ -49,12 +56,30 @@ export function DeckSharePanel({ deckId, deckName }: { deckId: string; deckName:
     setBusy(true);
     setError(false);
     try {
-      setShare(await setDeckShare(deckId, enabled));
+      setShare(await setDeckShare(deckId, enabled, parseTimerSettings(readStoredTimer())));
     } catch (err) {
       console.error("[share] gagal mengubah link main", err);
       setError(true);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function changeTimer(timer: CardTimerSettings) {
+    if (!share) return;
+    const previous = share;
+    // Langsung terlihat berubah; dikembalikan kalau gagal tersimpan.
+    setShare({ ...share, timer });
+    setError(false);
+    try {
+      // Hasilnya tidak dipasang ulang: kalau pemilik mengetuk beberapa
+      // pilihan beruntun, jawaban yang datang belakangan tidak boleh
+      // menimpa pilihan terakhirnya.
+      await setShareTimer(deckId, timer);
+    } catch (err) {
+      console.error("[share] gagal mengubah timer link main", err);
+      setShare(previous);
+      setError(true);
     }
   }
 
@@ -96,6 +121,18 @@ export function DeckSharePanel({ deckId, deckName }: { deckId: string; deckName:
             </Button>
           </div>
           <ShareActions text={t.inviteText(deckName)} url={url} label={t.inviteFriends} />
+          <div className="space-y-3 rounded-xl bg-neutral-50 p-3">
+            <div className="space-y-0.5">
+              <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                <Timer className="size-4" />
+                {t.timerTitle}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {share.timer.seconds > 0 ? t.timerOnHint : t.timerOffHint}
+              </p>
+            </div>
+            <TimerFields value={share.timer} onChange={changeTimer} />
+          </div>
           <button
             type="button"
             disabled={busy}

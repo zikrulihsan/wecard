@@ -17,6 +17,7 @@ import { LoadError } from "@/components/ui/load-error";
 import { DECK_MODE_META } from "@/lib/deck-mode";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { shuffle } from "@/lib/game/shuffle";
+import { timerLabel } from "@/lib/game/timer-settings";
 import {
   fetchScoreboard,
   fetchSharedDeck,
@@ -157,6 +158,7 @@ function NameStep({ deck, onStart }: { deck: SharedDeck; onStart: (name: string)
         <div className={cn("rounded-3xl bg-gradient-to-br p-6 text-white shadow-xl", theme.card)}>
           <p className="text-xs font-medium uppercase tracking-wide text-white/80">
             {DECK_MODE_META[deck.mode].emoji} {t.modes[deck.mode].label} · {t.common.cards(deck.cards.length)}
+            {deck.timer.seconds > 0 && <> · ⏱ {t.share.timerPerCard(timerLabel(deck.timer.seconds, t.picker))}</>}
           </p>
           <h1 className="mt-2 text-2xl font-bold leading-snug">{deck.name}</h1>
           {deck.description && <p className="mt-2 text-sm leading-relaxed text-white/85">{deck.description}</p>}
@@ -211,6 +213,7 @@ function PlayRound({
       language={deck.language}
       cards={cards}
       badge={playerName}
+      timer={deck.timer}
       onExit={onExit}
       renderDone={(results) => (
         <DoneScreen token={token} deck={deck} playerName={playerName} score={scoreQuiz(cards, results)} onAgain={onAgain} />

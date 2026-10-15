@@ -777,6 +777,10 @@ export const en: Messages = {
     plays: (count: number) => `Played ${count}× via link`,
     inviteText: (deck: string) =>
       `Let's play “${deck}” together! No sign-up, just enter your name 👇`,
+    timerTitle: "Timer for players",
+    timerOnHint: "Players on this link use this timer. It starts when a card is opened.",
+    timerOffHint: "Players on this link play with no time limit.",
+    timerPerCard: (duration: string) => `${duration} per card`,
     saveFailed: "The link couldn't be changed. Try again in a moment.",
   },
 
