@@ -16,7 +16,7 @@ import { GameProgressBar } from "@/components/game/progress-bar";
 import { QuizScore, scoreQuiz } from "@/components/game/quiz-score";
 import { SessionSkeleton } from "@/components/game/session-skeleton";
 import { Button } from "@/components/ui/button";
-import { hasAnswerSide } from "@/lib/cards/formats";
+import { hasBackSide } from "@/lib/cards/formats";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -129,7 +129,7 @@ export default function SessionPage() {
 
   const theme = deckThemeStyle(deckTheme);
   const awaitingAnswer =
-    isCardRevealed && hasAnswerSide(currentCard.cardType) && !isAnswerRevealed;
+    isCardRevealed && hasBackSide(currentCard.cardType) && !isAnswerRevealed;
 
   const goNext = () => {
     setDirection(1);
@@ -242,7 +242,7 @@ export default function SessionPage() {
                 size="lg"
                 className="flex-1 rounded-full"
               >
-                {t.game.showAnswer}
+                {currentCard.cardType === "opinion" ? t.game.showStance : t.game.showAnswer}
               </Button>
             ) : (
               <Button

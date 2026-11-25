@@ -3,7 +3,10 @@
 
 /**
  * Format kartu. talk/action/special adalah kartu obrolan tanpa jawaban;
- * sisanya kartu kuis & latihan yang punya sisi jawaban (lihat CardDetails).
+ * opinion adalah pernyataan untuk latihan berpendapat — balik kartunya
+ * memperlihatkan sisi (Agree/Disagree) yang harus dibela pembuka, diundi saat
+ * main; sisanya kartu kuis & latihan yang punya sisi jawaban (lihat
+ * CardDetails).
  */
 export const CARD_TYPES = [
   "talk",
@@ -15,6 +18,7 @@ export const CARD_TYPES = [
   "clue",
   "ordering",
   "listening",
+  "opinion",
 ] as const;
 
 export type CardType = (typeof CARD_TYPES)[number];
@@ -64,6 +68,13 @@ export interface CardDetails {
   questions?: ListeningQuestion[];
 }
 export type CardDifficulty = "easy" | "medium" | "hard";
+
+/**
+ * Sisi yang harus dibela pembuka di kartu opinion. Tidak disimpan di kartu:
+ * diundi tiap kali deck dimainkan, jadi kartu yang sama bisa keluar sisi
+ * berbeda di permainan berikutnya.
+ */
+export type OpinionStance = "agree" | "disagree";
 export type SpecialCardKind = "free_pass" | "switch" | "double";
 export type PurchaseStatus = "pending" | "completed" | "refunded";
 
@@ -95,8 +106,9 @@ export type DeckTheme = (typeof DECK_THEMES)[number];
  *   tantangan  semua kartu tantangan yang langsung dikerjakan
  *   kuis       kuis pengetahuan dengan jawaban di balik kartu
  *   mendengar  teks dibacakan, lalu pendengar menjawab pertanyaannya
+ *   berpendapat pernyataan untuk diperdebatkan; pembuka membela sisi acak
  */
-export const DECK_MODES = ["ngobrol", "tantangan", "kuis", "mendengar"] as const;
+export const DECK_MODES = ["ngobrol", "tantangan", "kuis", "mendengar", "berpendapat"] as const;
 
 export type DeckMode = (typeof DECK_MODES)[number];
 

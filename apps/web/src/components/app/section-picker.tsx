@@ -3,7 +3,7 @@ import { Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@/lib/supabase/client";
 import { useGameStore } from "@/stores/game-store";
-import { shuffle } from "@/lib/game/shuffle";
+import { dealCards } from "@/lib/cards/stance";
 import { DECK_THEME_STYLES } from "@/lib/deck-theme";
 import { cn } from "@/lib/utils";
 import { toGameCards } from "@/lib/cards/to-game-cards";
@@ -147,7 +147,7 @@ export function SectionPicker({
       return;
     }
 
-    const shuffled = shuffle(gameCards);
+    const shuffled = dealCards(gameCards);
 
     saveTimerSettings(timer);
     startSession(deckId, deckName, deckTheme, deckLanguage, selectedSlugs, shuffled, timer);

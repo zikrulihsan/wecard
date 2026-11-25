@@ -379,6 +379,22 @@ const TRIAL_DECKS_ID: TrialDeck[] = [
       }],
     ]
   ),
+  deck(
+    "berpendapat",
+    "berpendapat",
+    "Setuju atau Tidak?",
+    "🗣️",
+    "Baca pernyataannya, balik kartu, lalu bela sisi yang keluar — setuju atau tidak — sementara yang lain membantah.",
+    "teal",
+    [
+      ["opinion", "easy", "Sarapan adalah waktu makan paling penting dalam sehari."],
+      ["opinion", "easy", "Lebih baik punya sedikit teman dekat daripada banyak teman."],
+      ["opinion", "medium", "Murid sebaiknya tidak diberi PR di akhir pekan."],
+      ["opinion", "medium", "Bekerja dari rumah lebih baik daripada bekerja di kantor."],
+      ["opinion", "hard", "Anak di bawah 12 tahun sebaiknya belum punya HP sendiri."],
+      ["opinion", "hard", "Orang sebaiknya memperbaiki barang daripada membeli yang baru."],
+    ]
+  ),
 ];
 
 /**
@@ -683,6 +699,22 @@ const TRIAL_DECKS_EN: TrialDeck[] = [
           { question: "What did Mr. Joe do to fix it?", answer: "Moved the pots to an open spot" },
         ],
       }],
+    ]
+  ),
+  deck(
+    "agree-or-disagree",
+    "berpendapat",
+    "Agree or Disagree",
+    "🗣️",
+    "Read the statement, flip the card, and defend the side you get — agree or disagree — while everyone else pushes back.",
+    "teal",
+    [
+      ["opinion", "easy", "Breakfast is the most important meal of the day."],
+      ["opinion", "easy", "It is better to have a few close friends than many friends."],
+      ["opinion", "medium", "Students should not get homework on weekends."],
+      ["opinion", "medium", "Working from home is better than working in an office."],
+      ["opinion", "hard", "Children under twelve should not have their own smartphone."],
+      ["opinion", "hard", "People should repair things instead of buying new ones."],
     ]
   ),
 ];

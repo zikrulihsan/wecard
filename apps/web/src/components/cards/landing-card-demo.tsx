@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { m } from "framer-motion";
 import { CardDisplay } from "@/components/cards/card-display";
-import { hasAnswerSide } from "@/lib/cards/formats";
+import { hasBackSide } from "@/lib/cards/formats";
 import { useI18n } from "@/lib/i18n";
 
 // Satu kartu per keluarga format, supaya pengunjung merasakan alur ngobrol
@@ -18,7 +18,7 @@ export function LandingCardDemo() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const currentCard = demoCards[currentIndex];
-  const withAnswer = hasAnswerSide(currentCard.cardType);
+  const withAnswer = hasBackSide(currentCard.cardType);
 
   // Sampul → soal → (kartu kuis) jawaban → kembali ke sampul.
   function flip() {

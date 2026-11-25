@@ -11,7 +11,8 @@ import { TrialLock } from "@/components/trial/trial-lock";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { CardLoader } from "@/components/ui/card-loader";
 import { AI_GENERATION_LIMIT } from "@/lib/ai/quota";
-import { hasAnswerSide } from "@/lib/cards/formats";
+import { hasBackSide } from "@/lib/cards/formats";
+import { assignStances } from "@/lib/cards/stance";
 import { DECK_MODE_META, isDeckMode } from "@/lib/deck-mode";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { useSignedIn } from "@/lib/supabase/use-signed-in";
@@ -76,8 +77,9 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
 
   // Urutan kurasi, tidak diacak: kartu gratis harus selalu kartu yang sama,
   // dan "lanjut dari kartu ke-N" setelah login harus menunjuk kartu yang
-  // memang belum dimainkan.
-  const cards = deck.cards;
+  // memang belum dimainkan. Sisi kartu opinion tetap diundi — urutannya
+  // tidak berubah.
+  const [cards] = useState(() => assignStances(deck.cards));
   const freeCards = freeCardCount(cards.length);
   const [index, setIndex] = useState(() => startIndex(searchParams.get("kartu"), cards.length));
   const [revealed, setRevealed] = useState(false);
@@ -174,7 +176,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
 
   const card = cards[index];
   const awaitingAnswer =
-    revealed && hasAnswerSide(card.cardType) && !answerRevealed;
+    revealed && hasBackSide(card.cardType) && !answerRevealed;
   const goNext = () => {
     setDirection(1);
     setRevealed(false);
@@ -289,7 +291,7 @@ function TrialSession({ deck }: { deck: TrialDeck }) {
                 size="lg"
                 className="flex-1 rounded-full"
               >
-                {t.game.showAnswer}
+                {card.cardType === "opinion" ? t.game.showStance : t.game.showAnswer}
               </Button>
             ) : (
               <Button onClick={goNext} size="lg" className="flex-1 rounded-full">

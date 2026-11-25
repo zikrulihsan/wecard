@@ -317,12 +317,20 @@ export const en: Messages = {
       label: "LISTENING",
       hint: "Read the text aloud, then answer the questions",
     },
+    opinion: {
+      label: "OPINION",
+      hint: "Read the statement, then flip to see your side",
+    },
   },
 
   card: {
     talkDifficulty: { easy: "Light", medium: "Deep", hard: "Intimate" },
     plainDifficulty: { easy: "Easy", medium: "Medium", hard: "Hard" },
     answerHeader: "✅ ANSWER",
+    stanceHeader: "🗣️ YOUR SIDE",
+    stanceRule:
+      "Open the discussion from this side and hold it to the end, whatever you really think. Everyone else is free to push back.",
+    stancePhrases: "Opening phrases",
     tapToOpen: "Tap to open",
     fact: "Fact",
     myth: "Myth",
@@ -365,6 +373,7 @@ export const en: Messages = {
     openCard: "Open Card",
     previousCard: "Previous card",
     showAnswer: "See Answer",
+    showStance: "See Your Side",
     nextCard: "Next Card",
     skip: "Skip",
     swipeHint: "Swipe the card left to continue, right to go back",
@@ -401,6 +410,7 @@ export const en: Messages = {
     tantangan: { label: "Challenges", hint: "Challenges you do together on the spot." },
     kuis: { label: "Quiz", hint: "Test your knowledge — answers on the back." },
     mendengar: { label: "Listening", hint: "One reads aloud, the others answer." },
+    berpendapat: { label: "Opinion", hint: "Argue a random side — agree or disagree — and hold it." },
   },
 
   home: {
@@ -486,6 +496,9 @@ export const en: Messages = {
       topicHint: "The subject to test. Leave empty for general knowledge.",
       storyPlaceholder: "E.g. animals at the zoo",
       topicPlaceholder: "E.g. AI Engineering, the solar system, Islamic history",
+      opinionTopic: "Statement topic (optional)",
+      opinionTopicHint: "Leave empty for everyday topics: school, technology, habits, the environment.",
+      opinionTopicPlaceholder: "E.g. social media, school, city life",
       tone: "Card mood",
       difficulty: "Difficulty",
       depth: "Depth",

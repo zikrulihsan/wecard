@@ -49,6 +49,7 @@ function cardMixFor(mode: DeckMode, withChallenges: boolean) {
     case "tantangan": return "action";
     case "kuis": return "kuis";
     case "mendengar": return "mendengar";
+    case "berpendapat": return "berpendapat";
   }
 }
 
@@ -117,8 +118,8 @@ export function CreateForm({ balance }: CreateFormProps) {
           cardsPerSection,
           cardMix,
           // Kartu special dan topik hanya berlaku di jenis deck masing-masing.
-          includeSpecial: knowledge ? false : includeSpecial,
-          topic: knowledge ? topic.trim() || undefined : undefined,
+          includeSpecial: knowledge || opinion ? false : includeSpecial,
+          topic: withTopic ? topic.trim() || undefined : undefined,
           context: context.trim() || undefined,
           avoid: avoid.trim() || undefined,
         }),
@@ -155,6 +156,9 @@ export function CreateForm({ balance }: CreateFormProps) {
   const placeholders = t.placeholders[audience] ?? t.placeholders.pasangan;
   const knowledge = isKnowledgeMix(cardMix);
   const listening = cardMix === "mendengar";
+  const opinion = cardMix === "berpendapat";
+  // Kolom topik dipakai deck kuis/mendengar dan deck berpendapat.
+  const withTopic = knowledge || opinion;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -199,17 +203,21 @@ export function CreateForm({ balance }: CreateFormProps) {
         </Label>
       )}
 
-      {knowledge && (
+      {withTopic && (
         <Field
-          label={listening ? t.form.storyTheme : t.form.topic}
-          hint={listening ? t.form.storyHint : t.form.topicHint}
+          label={opinion ? t.form.opinionTopic : listening ? t.form.storyTheme : t.form.topic}
+          hint={opinion ? t.form.opinionTopicHint : listening ? t.form.storyHint : t.form.topicHint}
         >
           <Input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             maxLength={120}
             placeholder={
-              listening ? t.form.storyPlaceholder : t.form.topicPlaceholder
+              opinion
+                ? t.form.opinionTopicPlaceholder
+                : listening
+                  ? t.form.storyPlaceholder
+                  : t.form.topicPlaceholder
             }
             disabled={isGenerating}
           />
@@ -309,7 +317,7 @@ export function CreateForm({ balance }: CreateFormProps) {
         {t.form.total(totalCards)}
       </p>
 
-      {!knowledge && (
+      {!knowledge && !opinion && (
         <div className="space-y-3">
           <Label className="items-start gap-3">
             <Checkbox
