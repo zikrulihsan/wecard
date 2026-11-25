@@ -10,13 +10,13 @@ import { CARD_TYPES, DECK_THEMES, type DeckMode } from "@flipcard/types";
 // kamus i18n (`create.*`), dicocokkan lewat `value`.
 export const AUDIENCES = [
   { value: "pasangan", modes: ["ngobrol", "tantangan"], label: "Pasangan" },
-  { value: "sahabat", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Sahabat / teman dekat" },
-  { value: "keluarga", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Keluarga" },
-  { value: "anak-orang-tua", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Anak & orang tua" },
-  { value: "rekan-kerja", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Rekan kerja / tim" },
-  { value: "kenalan-baru", modes: ["ngobrol", "tantangan"], label: "Kenalan baru" },
+  { value: "sahabat", modes: ["ngobrol", "tantangan", "kuis", "mendengar", "berpendapat"], label: "Sahabat / teman dekat" },
+  { value: "keluarga", modes: ["ngobrol", "tantangan", "kuis", "mendengar", "berpendapat"], label: "Keluarga" },
+  { value: "anak-orang-tua", modes: ["ngobrol", "tantangan", "kuis", "mendengar", "berpendapat"], label: "Anak & orang tua" },
+  { value: "rekan-kerja", modes: ["ngobrol", "tantangan", "kuis", "mendengar", "berpendapat"], label: "Rekan kerja / tim" },
+  { value: "kenalan-baru", modes: ["ngobrol", "tantangan", "berpendapat"], label: "Kenalan baru" },
   { value: "belajar-sendiri", modes: ["kuis"], label: "Diri sendiri — belajar & uji kemampuan" },
-  { value: "lainnya", modes: ["ngobrol", "tantangan", "kuis", "mendengar"], label: "Lainnya (jelaskan di konteks)" },
+  { value: "lainnya", modes: ["ngobrol", "tantangan", "kuis", "mendengar", "berpendapat"], label: "Lainnya (jelaskan di konteks)" },
 ] as const;
 
 type AudienceOption = {
@@ -70,6 +70,10 @@ export const CARD_MIXES = [
     value: "mendengar",
     label: "Latihan mendengar & konsentrasi",
   },
+  {
+    value: "berpendapat",
+    label: "Latihan berpendapat — pernyataan untuk diperdebatkan",
+  },
 ] as const;
 
 /** Jenis deck yang tersimpan di `categories.mode` untuk tiap isi kartu. */
@@ -79,6 +83,7 @@ export const CARD_MIX_MODE: Record<(typeof CARD_MIXES)[number]["value"], DeckMod
   action: "tantangan",
   kuis: "kuis",
   mendengar: "mendengar",
+  berpendapat: "berpendapat",
 };
 
 export function modeForCardMix(mix: string): DeckMode {
@@ -113,7 +118,10 @@ export const generateDeckInputSchema = z.object({
     .enum(CARD_MIXES.map((m) => m.value) as [string, ...string[]])
     .default("campuran"),
   includeSpecial: z.boolean().default(false),
-  /** Topik pengetahuan untuk deck kuis/mendengar, misal "AI Engineering". */
+  /**
+   * Topik pengetahuan untuk deck kuis/mendengar (misal "AI Engineering"),
+   * atau topik pernyataan untuk deck berpendapat (misal "media sosial").
+   */
   topic: z.string().trim().max(120).optional(),
   context: z.string().trim().max(500).optional(),
   avoid: z.string().trim().max(300).optional(),
@@ -145,7 +153,7 @@ export const generatedCardSchema = z.object({
   cardType: z
     .enum(CARD_TYPES)
     .describe(
-      "talk = pertanyaan obrolan, action = tantangan, special = kartu mekanik, quiz = tanya jawab, multiple_choice = pilihan ganda, true_false = mitos/fakta, clue = tebak dari clue, ordering = urutkan, listening = teks dibacakan lalu dijawab"
+      "talk = pertanyaan obrolan, action = tantangan, special = kartu mekanik, quiz = tanya jawab, multiple_choice = pilihan ganda, true_false = mitos/fakta, clue = tebak dari clue, ordering = urutkan, listening = teks dibacakan lalu dijawab, opinion = pernyataan untuk diperdebatkan (latihan berpendapat)"
     ),
   difficulty: z
     .enum(["easy", "medium", "hard"])

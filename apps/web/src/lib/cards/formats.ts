@@ -25,6 +25,7 @@ export const CARD_FORMAT_EMOJI: Record<CardType, string> = {
   clue: "🔍",
   ordering: "🔢",
   listening: "👂",
+  opinion: "🗣️",
 };
 
 export function isCardType(value: unknown): value is CardType {
@@ -33,6 +34,14 @@ export function isCardType(value: unknown): value is CardType {
 
 export function hasAnswerSide(type: CardType): type is AnswerCardType {
   return (ANSWER_CARD_TYPES as readonly CardType[]).includes(type);
+}
+
+/**
+ * Format yang kartunya dibalik sekali lagi setelah dibuka: kartu berjawaban,
+ * plus kartu opinion yang balikannya memperlihatkan sisi yang harus dibela.
+ */
+export function hasBackSide(type: CardType) {
+  return hasAnswerSide(type) || type === "opinion";
 }
 
 /** Format yang benar/salahnya bisa dinilai aplikasi dari pilihan pemain. */

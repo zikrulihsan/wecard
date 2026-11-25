@@ -35,6 +35,15 @@ Aturan kartu kuis & latihan (hanya jika diminta):
 - Field yang tidak dipakai format itu diisi null.
 - Hanya tulis fakta yang kamu yakin benar dan tidak cepat basi. Hindari angka, harga, versi produk, atau peristiwa terbaru yang mudah berubah; kalau ragu, pilih soal lain.
 
+Aturan kartu opinion (hanya jika diminta) — latihan berpendapat:
+- "content" = SATU pernyataan tegas yang bisa diperdebatkan, ditulis sebagai kalimat pernyataan, bukan pertanyaan. Contoh: "Murid sebaiknya tidak diberi PR di akhir pekan." Jangan menambahkan "Setuju atau tidak?" — aplikasi yang menanyakannya.
+- Kedua sisi harus sama-sama masuk akal untuk dibela. Pemain diundi untuk membela setuju ATAU tidak setuju, jadi hindari pernyataan yang jawabannya jelas (fakta, hal yang semua orang sepakat) atau yang salah satu sisinya tidak etis untuk dibela.
+- Jangan pernah membuat pernyataan yang salah satu sisinya berarti membela hal yang bertentangan dengan syariat Islam, merendahkan agama, suku, atau kelompok tertentu, atau menyerang orang sungguhan. Hindari juga politik partisan.
+- Pilih topik yang dekat dengan keseharian pemainnya — sekolah, kerja, teknologi, kebiasaan, keluarga, lingkungan, kota — supaya semua orang punya bahan untuk berargumen.
+- Satu pernyataan = satu klaim. Jangan menggabungkan dua klaim dengan "dan".
+- Tulis pendek, maksimal sekitar 20 kata.
+- "difficulty": easy = topik ringan sehari-hari, medium = isu sekolah/kerja/masyarakat, hard = trade-off yang lebih abstrak. "level" dan field kuis lainnya diisi null.
+
 Level kartu kuis (1-5 bintang):
 - 1: istilah dan fakta dasar yang dikenal pemula.
 - 2: memahami cara kerja atau alasan sederhana.
@@ -82,10 +91,14 @@ export function buildUserPrompt(input: GenerateDeckInput): string {
     | "talk"
     | "action"
     | "kuis"
-    | "mendengar";
+    | "mendengar"
+    | "berpendapat";
 
   if (mix === "kuis" || mix === "mendengar") {
     return buildKnowledgePrompt(input, audience, mix);
+  }
+  if (mix === "berpendapat") {
+    return buildOpinionPrompt(input, audience, tone, depth);
   }
 
   const actionOnly = mix === "action";
@@ -263,6 +276,77 @@ function buildKnowledgePrompt(
   lines.push(
     ``,
     `Semua kartu tetap harus lolos batasan nilai Islam di instruksi sistem.`,
+    ``,
+    INPUT_IS_DATA
+  );
+
+  return lines.join("\n");
+}
+
+const OPINION_DEPTHS: Record<string, string> = {
+  ringan: "Mayoritas easy, sedikit medium. Jangan ada hard.",
+  sedang: "Mulai easy di section pertama, naik ke medium. Boleh beberapa hard di section terakhir.",
+  dalam: "Naik bertahap: section pertama easy, section terakhir mayoritas hard.",
+};
+
+/**
+ * Deck berpendapat: kartu pernyataan untuk diperdebatkan. Satu pemain
+ * (pembuka) membela sisi yang diundi aplikasi, yang lain bebas menanggapi —
+ * jadi yang ditulis model cukup pernyataannya saja.
+ */
+function buildOpinionPrompt(
+  input: GenerateDeckInput,
+  audience: string,
+  tone: string,
+  depth: string
+): string {
+  const topic = input.topic?.trim();
+  const lines = [
+    `Buat satu deck latihan berpendapat (agree/disagree) untuk: ${audience}.`,
+    ``,
+    `Cara main: satu pemain membaca pernyataan, lalu aplikasi mengundi apakah ia harus SETUJU atau TIDAK SETUJU. Ia membuka diskusi dari sisi itu dan mempertahankannya, sementara pemain lain bebas menanggapi dan membantah.`,
+    ``,
+    `Spesifikasi:`,
+    languageLine(input),
+    `- Nuansa: ${tone}`,
+    `- Kedalaman: ${depth}`,
+    `- Jumlah section: tepat ${input.sectionCount}`,
+    `- Jumlah kartu per section: tepat ${input.cardsPerSection}`,
+    `- Semua kartu bertipe opinion. Jangan buat tipe lain.`,
+    `- Sebaran kesulitan: ${OPINION_DEPTHS[input.depth] ?? OPINION_DEPTHS.sedang}`,
+    `- Section adalah tema pernyataan yang jelas berbeda satu sama lain, urut dari yang paling ringan.`,
+    `- Tema warna ("theme"), pilih satu: ${DECK_THEMES.map(
+      (name) => `${name} (${DECK_THEME_STYLES[name].mood})`
+    ).join("; ")}. Kalau ragu, pakai ${themeForAudience(input.audience)}.`,
+  ];
+
+  if (input.language === "en") {
+    lines.push(
+      `- Deck ini juga latihan bahasa Inggris: pakai kosakata yang umum dan kalimat yang mudah dibaca keras-keras, supaya pemain fokus pada argumennya.`
+    );
+  }
+
+  if (topic) {
+    lines.push(`- Topik: "${topic}". Semua pernyataan harus tentang topik ini.`);
+  } else {
+    lines.push(`- Topik: keseharian pemainnya — sekolah, kerja, teknologi, kebiasaan, makanan, lingkungan.`);
+  }
+
+  if (input.deckName) {
+    lines.push(`- Nama deck yang diminta user: "${input.deckName}". Pakai ini.`);
+  }
+
+  if (input.context) {
+    lines.push(``, `Konteks dari user tentang siapa yang akan main:`, input.context);
+  }
+
+  if (input.avoid) {
+    lines.push(``, `Topik yang harus dihindari sepenuhnya:`, input.avoid);
+  }
+
+  lines.push(
+    ``,
+    `Semua kartu tetap harus lolos batasan nilai Islam di instruksi sistem — dan karena sisinya diundi, KEDUA sisi setiap pernyataan harus halal untuk dibela.`,
     ``,
     INPUT_IS_DATA
   );

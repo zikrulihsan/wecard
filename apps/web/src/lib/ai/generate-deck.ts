@@ -106,6 +106,7 @@ export function normalizeDeck(
   input: GenerateDeckInput
 ): NormalizedDeck {
   const knowledge = isKnowledgeMix(input.cardMix);
+  const opinionDeck = input.cardMix === "berpendapat";
 
   const sections = deck.sections.slice(0, input.sectionCount).map((section) => ({
     ...section,
@@ -115,6 +116,9 @@ export function normalizeDeck(
       // Deck kuis hanya berisi kartu berjawaban, deck obrolan sebaliknya —
       // model kadang menyelipkan tipe yang tidak diminta.
       .filter((card) => hasAnswerSide(card.cardType) === knowledge)
+      // Begitu juga kartu opinion: hanya di deck berpendapat, dan deck
+      // berpendapat hanya berisi kartu opinion.
+      .filter((card) => (card.cardType === "opinion") === opinionDeck)
       .flatMap((card): NormalizedCard[] => {
         const answerCard = hasAnswerSide(card.cardType);
         const details = parseCardDetails(card.cardType, card);

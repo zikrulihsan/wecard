@@ -10,6 +10,7 @@ export const DECK_MODE_META: Record<DeckMode, { emoji: string }> = {
   tantangan: { emoji: "🎯" },
   kuis: { emoji: "🧠" },
   mendengar: { emoji: "👂" },
+  berpendapat: { emoji: "🗣️" },
 };
 
 export const DEFAULT_DECK_MODE: DeckMode = "ngobrol";

@@ -7,8 +7,10 @@ import {
   OPTION_LETTERS,
   difficultyForLevel,
   hasAnswerSide,
+  hasBackSide,
   isAutoGraded,
 } from "@/lib/cards/formats";
+import { STANCE_COPY, stanceOf } from "@/lib/cards/stance";
 import { shuffle } from "@/lib/game/shuffle";
 import { cn } from "@/lib/utils";
 import { LOCALES, guessTextLanguage, useT, type Language } from "@/lib/i18n";
@@ -99,7 +101,10 @@ export function CardDisplay({
       ? t.card.talkDifficulty[difficulty]
       : t.card.plainDifficulty[card.difficulty];
   const details = card.details ?? {};
-  const withAnswer = hasAnswerSide(card.cardType);
+  // Kartu opinion tidak punya jawaban, tapi tetap dibalik sekali lagi untuk
+  // memperlihatkan sisi yang harus dibela pembuka.
+  const withAnswer = hasBackSide(card.cardType);
+  const opinion = card.cardType === "opinion";
 
   // 0 = sampul, 180 = pertanyaan, 360 = jawaban. Dua sisi fisik cukup:
   // sisi depan (0/360) berganti isi dari sampul ke jawaban saat ia sedang
@@ -149,15 +154,22 @@ export function CardDisplay({
         {/* Sisi depan: sampul sebelum dibuka, jawaban setelah dibalik lagi */}
         {withAnswer && answerShown ? (
           <Face>
-            <FaceHeader label={t.card.answerHeader} badge={badge} />
+            <FaceHeader
+              label={opinion ? t.card.stanceHeader : t.card.answerHeader}
+              badge={badge}
+            />
             <div className="flex-1 min-h-0 overflow-y-auto -mx-2 px-2">
-              <AnswerBody
-                card={card}
-                details={details}
-                picked={picked}
-              />
+              {opinion ? (
+                <StanceBody card={card} language={language} />
+              ) : (
+                <AnswerBody
+                  card={card}
+                  details={details}
+                  picked={picked}
+                />
+              )}
             </div>
-            {!isAutoGraded(card.cardType) && (
+            {hasAnswerSide(card.cardType) && !isAutoGraded(card.cardType) && (
               <SelfGrade value={currentResult} onChange={record} />
             )}
           </Face>
@@ -631,6 +643,46 @@ function AnswerBody({
     default:
       return null;
   }
+}
+
+function StanceBody({
+  card,
+  language,
+}: {
+  card: GameCard;
+  language?: Language;
+}) {
+  const t = useT();
+  const stance = stanceOf(card);
+  const copy = STANCE_COPY[language ?? guessTextLanguage(card.content)][stance];
+  const agree = stance === "agree";
+
+  return (
+    <div className="min-h-full flex flex-col justify-center gap-3">
+      <p className="text-center text-sm text-neutral-500">{card.content}</p>
+      <p
+        className={cn(
+          "rounded-2xl py-3 text-center text-2xl font-extrabold tracking-wide",
+          agree ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+        )}
+      >
+        <span aria-hidden>{agree ? "👍" : "👎"}</span> {copy.label}
+      </p>
+      <p className="text-center text-xs leading-relaxed text-neutral-500">
+        {t.card.stanceRule}
+      </p>
+      <div>
+        <div className="mb-1.5 inline-block rounded-md bg-neutral-800 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+          {t.card.stancePhrases}
+        </div>
+        <ul className="space-y-0.5 text-sm italic text-neutral-700">
+          {copy.phrases.map((phrase) => (
+            <li key={phrase}>“{phrase}”</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 function Verdict({ correct, picked }: { correct: boolean; picked: string }) {

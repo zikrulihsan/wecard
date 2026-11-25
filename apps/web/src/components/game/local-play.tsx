@@ -5,7 +5,7 @@ import { CardDisplay } from "@/components/cards/card-display";
 import { CardTimer } from "@/components/game/card-timer";
 import { GameProgressBar } from "@/components/game/progress-bar";
 import { Button } from "@/components/ui/button";
-import { hasAnswerSide } from "@/lib/cards/formats";
+import { hasBackSide } from "@/lib/cards/formats";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -61,7 +61,7 @@ export function LocalPlay({
   if (index >= cards.length) return <>{renderDone(results)}</>;
 
   const card = cards[index];
-  const awaitingAnswer = revealed && hasAnswerSide(card.cardType) && !answerRevealed;
+  const awaitingAnswer = revealed && hasBackSide(card.cardType) && !answerRevealed;
   const goNext = () => {
     setDirection(1);
     setRevealed(false);
@@ -150,7 +150,7 @@ export function LocalPlay({
             </Button>
             {awaitingAnswer ? (
               <Button onClick={() => setAnswerRevealed(true)} size="lg" className="flex-1 rounded-full">
-                {t.game.showAnswer}
+                {card.cardType === "opinion" ? t.game.showStance : t.game.showAnswer}
               </Button>
             ) : (
               <Button onClick={goNext} size="lg" className="flex-1 rounded-full">

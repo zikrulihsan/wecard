@@ -15,6 +15,9 @@ Selain kartu obrolan, deck bisa berisi kartu kuis & latihan yang punya sisi jawa
 | Tebak clue | `clue` | `clues`, `answer` |
 | Urutkan | `ordering` | `items` (urutan benar; diacak saat main) |
 | Mendengar | `listening` | `questions[{question, answer}]` — teks yang dibacakan ada di `content_text` |
+| Berpendapat | `opinion` | — (pernyataan ada di `content_text`; sisi Agree/Disagree diundi saat main) |
+
+Kartu berpendapat (`opinion`, deck berjenis `berpendapat`) dibuka seperti kartu lain: sampul → pernyataan, lalu dibalik sekali lagi untuk melihat sisi yang harus dibela pembuka — AGREE atau DISAGREE, beserta frasa pembuka dalam bahasa deck. Sisinya tidak disimpan di kartu: tiap kali deck dimainkan, aplikasi mengundinya seimbang (separuh agree, separuh disagree) di `apps/web/src/lib/cards/stance.ts`. Pemain lain bebas menanggapi; kartu ini tidak dinilai.
 
 Semua format kuis boleh punya `explanation`. Tingkat kesulitannya memakai kolom `level` (1–5 bintang). Pilihan ganda & mitos/fakta dinilai otomatis; format lain dinilai sendiri oleh pemain (Benar/Belum), dan skornya tampil di layar selesai. Bentuk `details` didefinisikan di `packages/types/src/database.ts` dan divalidasi di `apps/web/src/lib/cards/formats.ts`.
 
@@ -40,13 +43,14 @@ pnpm install
 
 1. Buat project di [Supabase](https://supabase.com)
 2. Di SQL Editor, jalankan migration: `packages/supabase/migrations/00001_initial_schema.sql`
-3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Lalu `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris). Lalu `00009_share_links.sql` (link main tanpa akun, papan skor grup, atribusi pendaftaran — lihat [Link Main](#link-main)). Lalu `00010_credits.sql` (saldo kredit, draf deck, revisi, pesanan paket kredit — lihat [Kredit, draf & revisi](#kredit-draf--revisi)). **Jalankan `00010` sebelum mendeploy versi web yang memakainya** — generate menyimpan draf berstatus `draft`, kolom yang baru ada setelah migration ini. Terakhir `00011_premium.sql` (seri premium, pembelian volume/seri, hadiah, versi pribadi, salin deck — lihat [Deck Premium](#deck-premium)).
+3. Jalankan migration AI deck berurutan: `packages/supabase/migrations/00002_ai_decks.sql`, `00003_ai_access.sql`, `00004_deck_theme.sql` (warna deck), `00005_ai_quota.sql` (akses AI untuk semua akun + kuota 2 deck), lalu `20260930094439_unlimited_ai_for_zikrulihsanmd.sql` (pengecualian kuota untuk satu akun). Sampai migration terakhir dijalankan, aplikasi tetap memakai kuota bawaan. Setelah itu jalankan `00006_card_formats.sql` (format kartu kuis & mendengar) sebagai eksekusi tersendiri. Lalu `00007_deck_mode.sql` (jenis deck: ngobrol, tantangan, kuis, mendengar). Lalu `00008_deck_language.sql` (bahasa isi deck: Indonesia atau Inggris). Lalu `00009_share_links.sql` (link main tanpa akun, papan skor grup, atribusi pendaftaran — lihat [Link Main](#link-main)). Lalu `00010_credits.sql` (saldo kredit, draf deck, revisi, pesanan paket kredit — lihat [Kredit, draf & revisi](#kredit-draf--revisi)). **Jalankan `00010` sebelum mendeploy versi web yang memakainya** — generate menyimpan draf berstatus `draft`, kolom yang baru ada setelah migration ini. Lalu `00011_premium.sql` (seri premium, pembelian volume/seri, hadiah, versi pribadi, salin deck — lihat [Deck Premium](#deck-premium)), `00012_card_hidden.sql`, `00013_share_timer.sql`, dan terakhir `00014_opinion_cards.sql` (format kartu berpendapat) sebagai eksekusi tersendiri.
 4. Lalu jalankan seed data (urut):
    - `packages/supabase/seed.sql` — kategori **Pasangan**
    - `packages/supabase/seed_anak_orang_tua.sql` — kategori **Anak & Orang Tua**
    - `packages/supabase/seed_kuis_mendengar.sql` — deck **Latihan Mendengar** dan **Uji Diri: AI Engineering** (butuh migration `00006` dan `00007`)
    - `packages/supabase/seed_english.sql` — versi English keempat deck di atas: **Couples**, **Kids & Parents**, **Listening Practice**, **Self-Test: AI Engineering** (butuh migration `00006`–`00008`)
    - `packages/supabase/seed_english_speaking.sql` — seri premium **English Speaking Practice**, 3 volume × 24 kartu (butuh migration `00011`)
+   - `packages/supabase/seed_berpendapat.sql` — deck gratis **Agree or Disagree** untuk latihan berpendapat, 3 section × 8 kartu (butuh migration `00014`, jalankan terpisah)
 5. Salin `.env.example` ke `apps/web/.env.local`, lalu isi URL dan anon key:
 
 ```bash

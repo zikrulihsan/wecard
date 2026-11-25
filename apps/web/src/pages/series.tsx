@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { m } from "framer-motion";
 import { Check, Gift, Lock, Play } from "lucide-react";
 import { LocalPlay } from "@/components/game/local-play";
+import { assignStances } from "@/lib/cards/stance";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { CardLoader } from "@/components/ui/card-loader";
@@ -70,7 +71,7 @@ export default function SeriesPage() {
         return { ...row, section_name: section?.name ?? "", section_slug: section?.slug ?? "", sectionOrder: section?.sort_order ?? 0 };
       })
       .sort((a, b) => a.sectionOrder - b.sectionOrder || a.sort_order - b.sort_order);
-    setPreview({ volume, cards: toGameCards(rows) });
+    setPreview({ volume, cards: assignStances(toGameCards(rows)) });
   }
 
   async function buy(product: CheckoutProduct) {

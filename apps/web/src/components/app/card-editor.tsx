@@ -101,7 +101,7 @@ export function CardEditor({
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="space-y-1">
-        <Label>{type === "listening" ? e.passage : type === "true_false" ? e.statement : e.content}</Label>
+        <Label>{type === "listening" ? e.passage : type === "true_false" || type === "opinion" ? e.statement : e.content}</Label>
         <Textarea value={draft.content} onChange={(ev) => set("content", ev.target.value)} maxLength={type === "listening" ? 1200 : 400} rows={3} disabled={busy} autoFocus />
       </div>
 

@@ -1,0 +1,25 @@
+-- ============================================================
+-- FORMAT KARTU BARU: OPINION (LATIHAN BERPENDAPAT)
+--
+--   opinion  satu pernyataan untuk diperdebatkan. Kartu dibuka
+--            (sampul → pernyataan), lalu dibalik sekali lagi untuk
+--            melihat sisi yang harus dibela pembuka: AGREE atau
+--            DISAGREE. Pemain lain bebas menanggapi.
+--
+-- Sisinya TIDAK disimpan di kartu: diundi seimbang di aplikasi
+-- setiap kali deck mulai dimainkan (apps/web/src/lib/cards/stance.ts),
+-- jadi kartu yang sama bisa keluar sisi berbeda di permainan
+-- berikutnya. Karena itu kartu opinion tidak memakai `details`.
+--
+-- Jenis deck barunya, 'berpendapat', cukup nilai baru di kolom
+-- `categories.mode` (TEXT tanpa CHECK, lihat 00007) — tidak butuh
+-- perubahan skema.
+--
+-- Catatan: nilai enum baru tidak boleh dipakai di transaksi yang
+-- sama dengan ALTER TYPE ... ADD VALUE. Jalankan seed contoh
+-- (seed_berpendapat.sql) terpisah, setelah file ini.
+--
+-- Aman dijalankan ulang.
+-- ============================================================
+
+ALTER TYPE card_type ADD VALUE IF NOT EXISTS 'opinion';

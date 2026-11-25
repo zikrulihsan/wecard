@@ -5,6 +5,7 @@ import type {
   CardDifficulty,
   DeckLanguage,
   DeckTheme,
+  OpinionStance,
   SpecialCardKind,
 } from "./database";
 
@@ -18,6 +19,12 @@ export interface GameCard {
   details?: CardDetails | null;
   /** Bintang 1–5 untuk kartu kuis/mendengar; kartu lama memakai difficulty. */
   level?: CardLevel | null;
+  /**
+   * Kartu opinion: sisi yang harus dibela pembuka, diundi saat deck mulai
+   * dimainkan (lihat dealCards). Kosong di jalur yang tidak mengundi —
+   * tampilan kartu lalu memakai sisi turunan dari id kartu.
+   */
+  stance?: OpinionStance;
   sectionName: string;
   sectionSlug: string;
 }

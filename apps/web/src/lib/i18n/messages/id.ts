@@ -347,12 +347,20 @@ export const id = {
       label: "MENDENGAR",
       hint: "Bacakan teksnya, lalu jawab pertanyaannya",
     },
+    opinion: {
+      label: "BERPENDAPAT",
+      hint: "Baca pernyataannya, lalu balik untuk lihat sisimu",
+    },
   } as Record<CardType, { label: string; hint: string }>,
 
   card: {
     talkDifficulty: { easy: "Santai", medium: "Dalam", hard: "Intimate" },
     plainDifficulty: { easy: "Santai", medium: "Sedang", hard: "Sulit" },
     answerHeader: "✅ JAWABAN",
+    stanceHeader: "🗣️ SISIMU",
+    stanceRule:
+      "Buka obrolan dari sisi ini dan pertahankan sampai akhir, apa pun pendapatmu sebenarnya. Yang lain bebas membantah.",
+    stancePhrases: "Frasa pembuka",
     tapToOpen: "Ketuk untuk buka",
     fact: "Fakta",
     myth: "Mitos",
@@ -394,6 +402,7 @@ export const id = {
     openCard: "Buka Kartu",
     previousCard: "Kartu sebelumnya",
     showAnswer: "Lihat Jawaban",
+    showStance: "Lihat Sisimu",
     nextCard: "Kartu Berikutnya",
     skip: "Lewati",
     swipeHint: "Geser kartu ke kiri untuk lanjut, ke kanan untuk kembali",
@@ -430,6 +439,7 @@ export const id = {
     tantangan: { label: "Tantangan", hint: "Tantangan yang langsung dikerjakan bareng." },
     kuis: { label: "Kuis", hint: "Uji pengetahuan, jawabannya di balik kartu." },
     mendengar: { label: "Mendengar", hint: "Satu membacakan, yang lain menjawab." },
+    berpendapat: { label: "Berpendapat", hint: "Bela sisi acak — setuju atau tidak — lalu pertahankan." },
   } as Record<DeckMode, { label: string; hint: string }>,
 
   home: {
@@ -515,6 +525,9 @@ export const id = {
       topicHint: "Bidang yang mau diuji. Kosongkan untuk pengetahuan umum.",
       storyPlaceholder: "Misal: hewan di kebun binatang",
       topicPlaceholder: "Misal: AI Engineering, tata surya, sejarah Islam",
+      opinionTopic: "Topik pernyataan (opsional)",
+      opinionTopicHint: "Kosongkan untuk topik sehari-hari: sekolah, teknologi, kebiasaan, lingkungan.",
+      opinionTopicPlaceholder: "Misal: media sosial, sekolah, kehidupan kota",
       tone: "Nuansa kartu",
       difficulty: "Tingkat kesulitan",
       depth: "Kedalaman",

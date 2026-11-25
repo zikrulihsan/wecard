@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { LoadError } from "@/components/ui/load-error";
 import { DECK_MODE_META } from "@/lib/deck-mode";
 import { deckThemeStyle, deckThemeVars } from "@/lib/deck-theme";
-import { shuffle } from "@/lib/game/shuffle";
+import { dealCards } from "@/lib/cards/stance";
 import { timerLabel } from "@/lib/game/timer-settings";
 import {
   fetchScoreboard,
@@ -112,7 +112,7 @@ function SharedSession({ token, deck }: { token: string; deck: SharedDeck }) {
   const start = (name: string) => {
     savePlayerName(name);
     setPlayerName(name);
-    setCards(shuffle(deck.cards));
+    setCards(dealCards(deck.cards));
     setRound((value) => value + 1);
   };
 
